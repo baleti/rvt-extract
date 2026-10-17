@@ -42,12 +42,12 @@ def _segments(cd, fams):
     return pos
 
 
-def scan_family_docs(prj, keep=True):
+def scan_family_docs(prj, keep=True, raw=False, only=None):
     """-> ({family_id: {'name','guid','l2p':{local:project},'records':{project_id: record}}}, stats). Heavy: run big files on remote-host."""
     fams = {}
     for r in prj.families():
         f = r['fields']; d = f.get('m_oFamDoc')
-        if not d: continue
+        if not d or (only and f.get('m_name') not in only): continue
         o = d['obj']
         fams[r['id']] = {'name': f.get('m_name'), 'guid': o['m_contentDocGUID']['m_guid'],
                          'l2p': {eid(p['first']): _sid(p['second']) for p in o['m_big2SmallMap2']}, 'records': {}}
@@ -81,6 +81,7 @@ def scan_family_docs(prj, keep=True):
                 if owner is None: st['unowned'] += 1; continue
                 if e in fams[owner]['records']: st['superseded'] += 1  # later copy of an element wins
                 r['A'] = struct.unpack_from('<I', chunk, i)[0]; r['len'] = q - i; r['where'] = (pn, i)
+                if raw: r['raw'] = bytes(chunk[i:q])
                 if not keep: r = {k: r[k] for k in ('id', 'class', 'A')}
                 fams[owner]['records'][e] = r; st['ok'] += 1
     return fams, dict(st)
