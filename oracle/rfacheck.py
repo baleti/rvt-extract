@@ -1,0 +1,14 @@
+#!/usr/bin/env python3
+"""oracle/rfacheck.py YEAR RFA_DIR OUT_DIR : open every .rfa (flat or nested dirs are flattened) in Revit YEAR, report facts and LoadFamily into a new project -> OUT_DIR/rfacheck.tsv (write-lab harness, takes the VM lock)"""
+import sys, os, re, shutil, glob, subprocess
+WL = os.path.expanduser('~/rvt-research/write-lab'); sys.path.insert(0, WL + '/campaign')
+import guest
+year, src, od = int(sys.argv[1]), os.path.abspath(sys.argv[2]), os.path.abspath(sys.argv[3])
+tag = 'rc_' + re.sub(r'\W', '_', os.path.basename(src.rstrip('/')))[:30]
+files = sorted(glob.glob(os.path.join(src, '**', '*.rfa'), recursive=True))
+cs = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rfacheck.cs')).read().replace('__DIR__', 'C:/wl/in_' + tag).replace('__TAG__', tag)
+with guest.vmlock():
+    guest.script("Remove-Item -Recurse -Force C:/wl/in_%s -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force C:/wl/in_%s | Out-Null" % (tag, tag))
+    for f in files: guest.put(f, 'C:/wl/in_%s/%s' % (tag, os.path.basename(f)))
+    p = guest.fresh(year); o = guest.run_job(year, p, cs, tag, 2400); print(len(files), 'files', o[-400:].replace('\n', ' '))
+    shutil.rmtree(od, ignore_errors=True); guest.get('C:/wl/out/' + tag, od); guest.down(year)

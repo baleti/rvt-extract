@@ -1,0 +1,37 @@
+// rfacheck.cs - open each .rfa in a folder, report facts, then LoadFamily it into a new project. placeholders __DIR__ (guest folder with .rfa files, flat) __TAG__
+using Autodesk.Revit.DB; using System.Linq; using System.IO; using System.Text; using System.Collections.Generic; using System.Globalization;
+var app = UIApp.Application; var dir = @"__DIR__"; var outd = @"C:\wl\out\__TAG__"; Directory.CreateDirectory(outd);
+var sb = new StringBuilder(); Func<double, string> N = (x) => x.ToString("R", CultureInfo.InvariantCulture);
+Func<object, string, object> Prop = (o, n) => { try { var pi = o.GetType().GetProperty(n); return pi == null ? null : pi.GetValue(o, null); } catch { return null; } };
+Document proj = null;
+try { proj = app.NewProjectDocument(UnitSystem.Imperial); } catch (Exception ex) { sb.AppendLine("NOPROJECT\t" + ex.Message.Split((char)10)[0]); }
+foreach (var path in Directory.GetFiles(dir, "*.rfa").OrderBy(x => x)) {
+  var name = Path.GetFileName(path); Document d = null;
+  try { d = app.OpenDocumentFile(ModelPathUtils.ConvertUserVisiblePathToModelPath(path), new OpenOptions()); }
+  catch (Exception ex) { sb.AppendLine("OPENFAIL\t" + name + "\t" + ex.GetType().Name + ": " + ex.Message.Split((char)10)[0]); continue; }
+  try {
+    var f = d.OwnerFamily; sb.AppendLine("OPEN\t" + name + "\tisFam=" + d.IsFamilyDocument + "\tfam=" + (f != null ? f.Name : "null") + "\tcat=" + (d.OwnerFamily != null && d.OwnerFamily.FamilyCategory != null ? d.OwnerFamily.FamilyCategory.Name : "none"));
+    var fm = d.FamilyManager;
+    foreach (FamilyType t in fm.Types) sb.AppendLine("TYPE\t" + name + "\t" + t.Name);
+    foreach (FamilyParameter p in fm.Parameters) {
+      string dt = ""; try { var gd = p.Definition.GetType().GetMethod("GetDataType"); if (gd != null) dt = Convert.ToString(Prop(gd.Invoke(p.Definition, null), "TypeId")); } catch { }
+      sb.AppendLine("PARAM\t" + name + "\t" + p.Definition.Name + "\tinst=" + p.IsInstance + "\tstore=" + p.StorageType + "\tformula=" + (p.Formula ?? "") + "\tshared=" + p.IsShared + "\tdt=" + dt); }
+    var cnt = new SortedDictionary<string, int>();
+    foreach (var e in new FilteredElementCollector(d).WhereElementIsNotElementType().ToElements()) { string k = e.GetType().Name; int c; cnt.TryGetValue(k, out c); cnt[k] = c + 1; }
+    foreach (var kv in cnt) sb.AppendLine("CNT\t" + name + "\t" + kv.Key + "\t" + kv.Value);
+    var opt = new Options(); opt.DetailLevel = ViewDetailLevel.Fine; opt.ComputeReferences = false;
+    foreach (var gf in new FilteredElementCollector(d).OfClass(typeof(GenericForm)).Cast<GenericForm>()) {
+      double vol = 0; int ns = 0; try { foreach (var go in gf.get_Geometry(opt)) { var s = go as Solid; if (s != null && s.Volume > 0) { vol += s.Volume; ns++; } } } catch { }
+      BoundingBoxXYZ bb = null; try { bb = gf.get_BoundingBox(null); } catch { }
+      sb.AppendLine("FORM\t" + name + "\t" + gf.GetType().Name + "\t" + gf.Id + "\tsolid=" + gf.IsSolid + "\tvol=" + N(vol) + "\tnsolids=" + ns + "\tbbox=" + (bb == null ? "none" : N(bb.Min.X) + "," + N(bb.Min.Y) + "," + N(bb.Min.Z) + ":" + N(bb.Max.X) + "," + N(bb.Max.Y) + "," + N(bb.Max.Z))); }
+    foreach (var rp in new FilteredElementCollector(d).OfClass(typeof(ReferencePlane)).Cast<ReferencePlane>()) sb.AppendLine("REFPLANE\t" + name + "\t" + rp.Name);
+    if (proj != null) {
+      try { Family lf = null; proj.LoadFamily(path, out lf);
+        if (lf == null) { foreach (var fm2 in new FilteredElementCollector(proj).OfClass(typeof(Family)).Cast<Family>()) if (f != null && fm2.Name == f.Name) lf = fm2; }
+        sb.AppendLine("LOAD\t" + name + "\t" + (lf != null ? "ok symbols=" + lf.GetFamilySymbolIds().Count : "null")); }
+      catch (Exception ex) { sb.AppendLine("LOADFAIL\t" + name + "\t" + ex.Message.Split((char)10)[0]); }
+    }
+  } catch (Exception ex) { sb.AppendLine("CHECKFAIL\t" + name + "\t" + ex.Message.Split((char)10)[0]); }
+  finally { try { d.Close(false); } catch { } }
+}
+File.WriteAllText(Path.Combine(outd, "rfacheck.tsv"), sb.ToString(), new UTF8Encoding(false)); Console.WriteLine("DONE");
