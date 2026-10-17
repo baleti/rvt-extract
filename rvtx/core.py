@@ -47,12 +47,14 @@ def scan_family_docs(prj, keep=True, raw=False, only=None):
     fams = {}
     for r in prj.families():
         f = r['fields']; d = f.get('m_oFamDoc')
-        if not d or (only and f.get('m_name') not in only): continue
+        if not d: continue
         o = d['obj']
         fams[r['id']] = {'name': f.get('m_name'), 'guid': o['m_contentDocGUID']['m_guid'],
                          'l2p': {eid(p['first']): _sid(p['second']) for p in o['m_big2SmallMap2']}, 'records': {}}
     o, cls, ids = S.load(prj.path); IDW = S.id_size(cls); dec = D.make_dec(D.Schema(cls), idsize=IDW)
     cd = rvtfmt.inflate_stream(o.openstream('Global/ContentDocuments').read())[1]
+    if only:
+        for k in [k for k, v in fams.items() if v['name'] not in only]: fams[k]['skip'] = True
     seg = _segments(cd, fams); starts = [s for s, _ in seg]
     seg_of = {}
     for a in range(4):
@@ -78,7 +80,7 @@ def scan_family_docs(prj, keep=True, raw=False, only=None):
                 except Exception: continue
                 if r['fields'].get('m_id') != e: continue
                 owner = seg_of[e]
-                if owner is None: st['unowned'] += 1; continue
+                if owner is None or fams[owner].get('skip'): st['unowned'] += 1; continue
                 if e in fams[owner]['records']: st['superseded'] += 1  # later copy of an element wins
                 r['A'] = struct.unpack_from('<I', chunk, i)[0]; r['len'] = q - i; r['where'] = (pn, i)
                 if raw: r['raw'] = bytes(chunk[i:q])
