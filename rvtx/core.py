@@ -20,9 +20,9 @@ def eid(v):
 
 
 class Project:
-    def __init__(self, path):
+    def __init__(self, path, x=None):
         self.path = path
-        self.x = X.get_x(path)
+        self.x = x if x is not None else X.get_x(path)
         self.recs = self.x['recs']                       # {(id, class): record}
         self.W = self.x['W']
         self.by_class = collections.defaultdict(list)
