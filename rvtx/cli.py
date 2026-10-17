@@ -21,7 +21,7 @@ def write_json(path, data):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog='rvt-extract', description='Extract families and other content from a Revit project without Revit.')
-    ap.add_argument('rvt'); ap.add_argument('--out', default=None, help='output folder')
+    ap.add_argument('rvt', nargs='?'); ap.add_argument('--out', default=None, help='output folder')
     ap.add_argument('--only', default=None, help='comma list of output types (see --list-kinds): ' + ','.join(KINDS))
     ap.add_argument('--list', action='store_true', help='print what the file contains and exit')
     ap.add_argument('--list-kinds', action='store_true', help='print the output types and exit')
@@ -29,6 +29,7 @@ def main(argv=None):
     if a.list_kinds:
         for k in KINDS: print('%-20s %s' % (k, HELP.get(k, '')))
         return 0
+    if not a.rvt: ap.error('rvt file required')
     only = [k.strip() for k in a.only.split(',')] if a.only else KINDS
     bad = [k for k in only if k not in KINDS]
     if bad: ap.error('unknown output type(s): %s' % ','.join(bad))
