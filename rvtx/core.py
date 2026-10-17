@@ -10,6 +10,11 @@ from . import RESEARCH  # noqa
 import rvt_scan as S, rvt_decode as D, rvt2text as T, rvt_inventory as I, rvtfmt, rvt_xcache as X
 
 
+def _sid(v):
+    if isinstance(v, dict): v = v['m_id'] if 'm_id' in v else v['m_id64']
+    return eid(v)
+
+
 def eid(v):
     return int(getattr(v, 'v', v))
 
@@ -45,7 +50,7 @@ def scan_family_docs(prj, keep=True):
         if not d: continue
         o = d['obj']
         fams[r['id']] = {'name': f.get('m_name'), 'guid': o['m_contentDocGUID']['m_guid'],
-                         'l2p': {eid(p['first']): eid(p['second']['m_id'] if isinstance(p['second'], dict) else p['second']) for p in o['m_big2SmallMap2']}, 'records': {}}
+                         'l2p': {eid(p['first']): _sid(p['second']) for p in o['m_big2SmallMap2']}, 'records': {}}
     o, cls, ids = S.load(prj.path); IDW = S.id_size(cls); dec = D.make_dec(D.Schema(cls), idsize=IDW)
     cd = rvtfmt.inflate_stream(o.openstream('Global/ContentDocuments').read())[1]
     seg = _segments(cd, fams); starts = [s for s, _ in seg]
