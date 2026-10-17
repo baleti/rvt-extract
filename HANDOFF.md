@@ -21,3 +21,9 @@ Rule from user (2026-10-17): remote-host is the daily driver. Heavy/whole-projec
 - layer A: JSON/manifest extraction (names, category, types, params, geometry) from the reader; CLI skeleton rvt-extract
 - layer B: .rfa assembly (re-key ids A<->project id, rebuild ElemTable/Global/Latest/History/PartAtom), validate in Revit oracle
 - ask c3-writer (write-lab) what it knows about rfa assembly (NEEDS-FROM-ORACLE.md)
+
+## Result 1 (2026-10-17, tools/famcensus.py, remote-host 14 s / <1.5 GB for one file): 2020 rst_basic
+41 of 50 Family elements carry an embedded family doc; 18,056 family-internal records decoded across them
+(RefPlane, CurveElem, VarSketch, ExtrusionElem, SweepElem, BlendElem?, FilledRegion, ParamElemFamily, FamilySymbol, Alignment...).
+E.g. M_Baluster - Square: 448 records (14 RefPlane, 19 CurveElem, 2 ExtrusionElem, 7 VarSketch, 3 ParamElemFamily).
+Output out/fam_rst20.json (local only).
