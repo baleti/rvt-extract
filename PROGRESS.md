@@ -5,3 +5,4 @@
 - studyx sample extended with 21 files from the other project archives (user lifted the folder restriction; ids continue studyx-051..071, local only).
 - corpus batch running on remote-host (started). State dirs landed in literal dir ~/src/rvt-extract-test/\$HOME/scratch-famtest/state_{corpus,studyx} on remote-host (quoting quirk, harmless); .rfa outputs in out_* beside. studyx batch chained after corpus (waiter on remote-host is a sleeping ssh loop).
 - merged main (c3-fam: multi-partition docs, W=4, Contents samples) into test; corpus rerun 'corpus2' to measure.
+- chain_years: Revit 2024 open check of 12 families per older-year sample (corpus2 output), after the 2024 structural split run.
