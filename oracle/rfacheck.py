@@ -6,6 +6,8 @@ import guest
 year, src, od = int(sys.argv[1]), os.path.abspath(sys.argv[2]), os.path.abspath(sys.argv[3])
 tag = 'rc_' + re.sub(r'\W', '_', os.path.basename(src.rstrip('/')))[:30]
 files = sorted(glob.glob(os.path.join(src, '**', '*.rfa'), recursive=True))
+if os.environ.get('RFA_SLICE'):
+    a, b = os.environ['RFA_SLICE'].split(':'); files = files[int(a):int(b)]
 cs = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rfacheck.cs')).read().replace('__DIR__', 'C:/wl/in_' + tag).replace('__TAG__', tag).replace('__LOAD__', os.environ.get('RFA_LOAD', '0'))
 with guest.vmlock():
     guest.script("Remove-Item -Recurse -Force C:/wl/in_%s -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force C:/wl/in_%s | Out-Null" % (tag, tag))
