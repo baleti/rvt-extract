@@ -59,3 +59,16 @@ joined payload (all gzip members concatenated, frames removed) = 3 chains, then 
  44-byte header: u64 9 | 7b03 | 0000 | element count u32 | 7c0e 04000000 | x1_0 | comp_0+8 | x2_0 | 0x65 ...; whole stream is ECC-paged (write-lab rvtw.Stream/ecc.parity).
  Element record stamp = adler32(body after L). Shared elements (GStyleElem, MaterialElem, patterns, assets) copied into a family doc have Element.m_famId (8 bytes at record offset 74) set to the family id (project has -1) and stamp recomputed; family-own records are byte-identical to the project ones.
  Global/Latest of an rfa = project Global/Latest verbatim runs + family content-doc segment parts (ADocument decodes with u16 tag at offset 0, fields from 2). Global/History etc. small, GUIDs fresh.
+
+## MILESTONE 2026-10-18: lifted .rfa open in Revit 2024 (oracle: oracle/rfacheck.py)
+Callout Head and SFD_Rectangle (2024 Snowdon Structural) lifted from the project with rvtx/rfa.py: Revit 2024 opens them; API facts (category, types, 22 params + formulas,
+element-class counts, forms/bbox) are IDENTICAL to Revit's own EditFamily+SaveAs rfa (gt_fam). Stream-level: Global/Latest and Global/ElemTable are byte-identical to Revit's;
+partition items: R records 100% equal, Z equal except 1 regen cache, H equal except 3 own cosmetic (flags/parents). Recipe (rvtx/rfa.py Builder):
+ - partition = project doc k (own H/R/Z, k via Family.m_oFamDoc.m_big2SmallMap2) + shared standard elements from the main doc (builtin-category GStyleElem + referenced Material/patterns/assets/
+   PropertySets + materials Default/Poche/Phase-*; + dependency closure of the family's own records) with m_familyId/m_famId := family id, m_deletion += family id, flags &= ~0x10, regenHistory cleared;
+   KeynoteTable/AssemblyCodeTable re-created (ids max+1, max+2, blank resource references); Family record: m_familyIds, m_nextAbsorbedIndex, versions, famDocGUID, deletion list.
+ - Latest = ADocument tree: family blob (ContentDocuments segment) with handles shifted, tracking sets filled from the project's (filtered to ids present), ESSchemaStorage copied (rvtx/latest.py, encoder rvtx/enc.py, exact round trip).
+ - ElemTable rows rvtx/elemtable.py; small streams rvtx/smallstreams.py; container rvtx/cfbw.py; partition framing/ECC paging rvtx/partition.py (last page size must be one Revit writes: rvtx/nladder.py + odd-u L=2047 ladder).
+ - Contents stream: Revit validates its 46-byte tail (depends on exact compressed bytes): a Revit-written instance is reused (SS.CONTENTS_STREAM + GUID). The 64-byte partition tail blob may be zero.
+ - LoadFamily into a project in the same oracle session poisons later opens: rfacheck RFA_LOAD=1 only for a dedicated run.
+Next: all 177 families (lift_all.py on remote-host) + oracle open/facts diff vs gt_fam; nested families; 2026 and older years; CLI wiring; README.
