@@ -13,7 +13,7 @@ def rss(): return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
 def year_of(p):
     import olefile
     o = olefile.OleFileIO(p); b = o.openstream('BasicFileInfo').read().decode('utf-16le', 'ignore'); o.close()
-    m = re.search(r'Format:\s*(\d{4})', b) or re.search(r'Autodesk Revit (\d{4})', b) or re.search(r'(20\d\d)', b)
+    m = re.match(r'\s*(20[12]\d)\b', b) or re.search(r'Format:\s*(20[12]\d)', b)
     return int(m.group(1)) if m else None
 meta = json.load(open(J('.meta.json'))) if os.path.exists(J('.meta.json')) else {}
 t0 = time.time(); meta.setdefault('id', fid); meta['size'] = os.path.getsize(path)
