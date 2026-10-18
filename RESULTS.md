@@ -3,13 +3,130 @@ Anonymised. Corpus = Autodesk samples (ids corp-YEAR-NN); studyx-NNN = real-worl
 Pipeline per file: rvt-extract equivalent (manifest + .rfa lift per embedded family + every other extractor), remote-host, resumable. "embedded" = families with an embedded family document; "built" = .rfa written. Revit-open and facts-diff columns: see the oracle section (in progress).
 
 ## Headline
+- RUN 2 (merged code): corpus .rfa built 9508/10191 (93.3%): 2018-2023, 2025, 2026 100%, 2024 1333/1345; only 2017 (671 VarSketch decode failures) and 12 DataStorage decode failures remain. BUILT is not the same as OPENS IN REVIEW: Revit 2024 open check pending for most years.
+- (run 1 numbers below are the earlier state: 2024 89%, 2026 76%, other years 0%.)
 - Corpus, 78 files 2017-2026: .rfa built for 2024: 1196/1345 (89%), 2026: 1027/1345 (76%); every other year 0%.
 - The gap in 2024/2026 is three whole files (2024 Site, 2026 Electrical, 2026 Facades) failing with "family has no embedded document"; every other 2024/2026 file builds 100%.
 - Years other than 2024/2026 stop at "no Revit-written Contents stream known for format N" (needs per-year template), 2018-2020 additionally at a KeyError (fix on branch test), 2017/2018 at VarSketch decode.
 - Real-world, 71 files: 41 ran, 30 exceeded the 7 GB per-file memory cap (remote-host slice is 9 GB; files up to 300 MB). Of the 41 only 2024 files build .rfa.
 - Other extractors (patterns, parameters, filters, phases, levels/grids, views, images, project_info, links, materials): no crash on any file that loaded.
 
-## Corpus
+## Corpus, run 2 (after c3-fam multi-partition/W=4/Contents work merged; .rfa BUILT, Revit-open status below/pending)
+| file | year | MB | families | embedded | .rfa built | kinds failed | s | peak MB | note |
+|---|---|---|---|---|---|---|---|---|---|
+| corp-2017-00 | 2017 | 5 | 50 | 41 | 3 | 0 | 8.0 | 755 |  |
+| corp-2017-01 | 2017 | 12 | 145 | 137 | 13 | 0 | 24.7 | 1293 |  |
+| corp-2017-02 | 2017 | 13 | 110 | 98 | 5 | 0 | 34.2 | 1435 |  |
+| corp-2017-03 | 2017 | 14 | 116 | 104 | 5 | 0 | 17.4 | 1510 |  |
+| corp-2017-04 | 2017 | 26 | 159 | 147 | 7 | 0 | 31.5 | 2712 |  |
+| corp-2017-05 | 2017 | 31 | 196 | 184 | 7 | 0 | 42.6 | 3208 |  |
+| corp-2018-06 | 2018 | 5 | 50 | 41 | 41 | 0 | 38.4 | 798 |  |
+| corp-2018-07 | 2018 | 12 | 145 | 137 | 137 | 0 | 143.0 | 1310 |  |
+| corp-2018-08 | 2018 | 13 | 110 | 98 | 98 | 0 | 156.1 | 1602 |  |
+| corp-2018-09 | 2018 | 14 | 116 | 104 | 104 | 0 | 146.6 | 2178 |  |
+| corp-2018-10 | 2018 | 27 | 159 | 147 | 147 | 0 | 263.6 | 3051 |  |
+| corp-2018-11 | 2018 | 32 | 196 | 184 | 184 | 0 | 262.6 | 3508 |  |
+| corp-2019-12 | 2019 | 5 | 50 | 41 | 41 | 0 | 37.5 | 783 |  |
+| corp-2019-13 | 2019 | 12 | 145 | 137 | 137 | 0 | 134.8 | 1433 |  |
+| corp-2019-14 | 2019 | 13 | 110 | 98 | 98 | 0 | 130.2 | 1604 |  |
+| corp-2019-15 | 2019 | 14 | 116 | 104 | 104 | 0 | 96.9 | 1557 |  |
+| corp-2019-16 | 2019 | 27 | 159 | 147 | 147 | 0 | 200.9 | 3500 |  |
+| corp-2019-17 | 2019 | 32 | 196 | 184 | 184 | 0 | 262.2 | 4201 |  |
+| corp-2020-18 | 2020 | 5 | 50 | 41 | 41 | 0 | 46.2 | 1182 |  |
+| corp-2020-19 | 2020 | 7 | 65 | 57 | 57 | 0 | 93.8 | 1113 |  |
+| corp-2020-20 | 2020 | 9 | 94 | 84 | 84 | 0 | 193.3 | 1251 |  |
+| corp-2020-21 | 2020 | 12 | 145 | 137 | 137 | 0 | 169.9 | 1344 |  |
+| corp-2020-22 | 2020 | 27 | 159 | 147 | 147 | 0 | 547.4 | 2939 |  |
+| corp-2020-23 | 2020 | 33 | 196 | 184 | 184 | 0 | 702.1 | 3496 |  |
+| corp-2021-24 | 2021 | 5 | 50 | 41 | 41 | 0 | 66.2 | 810 |  |
+| corp-2021-25 | 2021 | 13 | 145 | 137 | 137 | 0 | 232.8 | 1663 |  |
+| corp-2021-26 | 2021 | 14 | 110 | 98 | 98 | 0 | 126.2 | 2050 |  |
+| corp-2021-27 | 2021 | 15 | 116 | 104 | 104 | 0 | 107.9 | 1647 |  |
+| corp-2021-28 | 2021 | 28 | 159 | 147 | 147 | 0 | 173.8 | 3117 |  |
+| corp-2021-29 | 2021 | 34 | 196 | 184 | 184 | 0 | 234.2 | 4610 |  |
+| corp-2021-60 | 2021 | 15 | 178 | 170 | 170 | 0 | 172.5 | 2569 |  |
+| corp-2021-61 | 2021 | 15 | 178 | 170 | 170 | 0 | 174.4 | 2862 |  |
+| corp-2021-62 | 2021 | 4 | 81 | 73 | 73 | 0 | 70.0 | 624 |  |
+| corp-2022-30 | 2022 | 6 | 50 | 41 | 41 | 0 | 46.3 | 832 |  |
+| corp-2022-31 | 2022 | 13 | 145 | 137 | 137 | 0 | 139.6 | 1759 |  |
+| corp-2022-32 | 2022 | 14 | 110 | 98 | 98 | 0 | 111.6 | 1738 |  |
+| corp-2022-33 | 2022 | 15 | 116 | 104 | 104 | 0 | 109.1 | 1807 |  |
+| corp-2022-34 | 2022 | 29 | 159 | 147 | 147 | 0 | 179.9 | 3214 |  |
+| corp-2022-35 | 2022 | 34 | 196 | 184 | 184 | 0 | 228.4 | 3658 |  |
+| corp-2022-63 | 2022 | 15 | 178 | 170 | 170 | 0 | 170.5 | 1679 |  |
+| corp-2022-64 | 2022 | 15 | 178 | 170 | 170 | 0 | 168.2 | 1775 |  |
+| corp-2022-65 | 2022 | 4 | 81 | 73 | 73 | 0 | 76.1 | 791 |  |
+| corp-2023-36 | 2023 | 6 | 50 | 41 | 41 | 0 | 42.9 | 975 |  |
+| corp-2023-37 | 2023 | 13 | 145 | 137 | 137 | 0 | 136.2 | 1389 |  |
+| corp-2023-38 | 2023 | 14 | 111 | 99 | 99 | 0 | 113.0 | 2274 |  |
+| corp-2023-39 | 2023 | 15 | 116 | 104 | 104 | 0 | 105.9 | 1622 |  |
+| corp-2023-40 | 2023 | 29 | 159 | 147 | 147 | 0 | 176.6 | 3069 |  |
+| corp-2023-41 | 2023 | 35 | 196 | 184 | 184 | 0 | 223.4 | 3675 |  |
+| corp-2023-66 | 2023 | 15 | 178 | 170 | 170 | 0 | 175.5 | 1564 |  |
+| corp-2023-67 | 2023 | 15 | 178 | 170 | 170 | 0 | 176.6 | 1580 |  |
+| corp-2023-68 | 2023 | 4 | 81 | 73 | 73 | 0 | 70.1 | 563 |  |
+| corp-2024-42 | 2024 | 21 | 94 | 87 | 86 | 0 | 87.4 | 1518 |  |
+| corp-2024-43 | 2024 | 26 | 185 | 177 | 177 | 0 | 180.0 | 1936 |  |
+| corp-2024-44 | 2024 | 38 | 218 | 211 | 211 | 0 | 229.2 | 3041 |  |
+| corp-2024-45 | 2024 | 39 | 209 | 202 | 202 | 0 | 222.1 | 3651 |  |
+| corp-2024-46 | 2024 | 50 | 115 | 107 | 107 | 0 | 157.9 | 2204 |  |
+| corp-2024-47 | 2024 | 51 | 160 | 148 | 137 | 0 | 182.0 | 3293 |  |
+| corp-2024-69 | 2024 | 15 | 178 | 170 | 170 | 0 | 172.1 | 1543 |  |
+| corp-2024-70 | 2024 | 16 | 178 | 170 | 170 | 0 | 178.5 | 1546 |  |
+| corp-2024-71 | 2024 | 5 | 81 | 73 | 73 | 0 | 77.5 | 565 |  |
+| corp-2025-48 | 2025 | 21 | 94 | 87 | 87 | 0 | 94.0 | 1554 |  |
+| corp-2025-49 | 2025 | 26 | 185 | 177 | 177 | 0 | 190.1 | 1982 |  |
+| corp-2025-50 | 2025 | 38 | 218 | 211 | 211 | 0 | 234.0 | 3041 |  |
+| corp-2025-51 | 2025 | 39 | 209 | 202 | 202 | 0 | 220.2 | 3671 |  |
+| corp-2025-52 | 2025 | 50 | 115 | 107 | 107 | 0 | 152.8 | 2168 |  |
+| corp-2025-53 | 2025 | 51 | 160 | 148 | 148 | 0 | 204.1 | 3145 |  |
+| corp-2025-72 | 2025 | 16 | 178 | 170 | 170 | 0 | 176.9 | 1555 |  |
+| corp-2025-73 | 2025 | 16 | 178 | 170 | 170 | 0 | 175.7 | 1552 |  |
+| corp-2025-74 | 2025 | 5 | 81 | 73 | 73 | 0 | 74.2 | 583 |  |
+| corp-2026-54 | 2026 | 21 | 94 | 87 | 87 | 0 | 95.8 | 1559 |  |
+| corp-2026-55 | 2026 | 26 | 185 | 177 | 177 | 0 | 175.5 | 1927 |  |
+| corp-2026-56 | 2026 | 39 | 218 | 211 | 211 | 0 | 228.6 | 3074 |  |
+| corp-2026-57 | 2026 | 39 | 209 | 202 | 202 | 0 | 207.6 | 3687 |  |
+| corp-2026-58 | 2026 | 50 | 115 | 107 | 107 | 0 | 135.9 | 2195 |  |
+| corp-2026-59 | 2026 | 57 | 160 | 148 | 148 | 0 | 180.6 | 3280 |  |
+| corp-2026-75 | 2026 | 15 | 178 | 170 | 170 | 0 | 155.0 | 1540 |  |
+| corp-2026-76 | 2026 | 16 | 178 | 170 | 170 | 0 | 156.6 | 1542 |  |
+| corp-2026-77 | 2026 | 4 | 81 | 73 | 73 | 0 | 68.3 | 565 |  |
+
+files 78, embedded families 10191, built 9508 (93.3%)
+
+by year:
+  2017 files 6 embedded 711 built 40
+  2018 files 6 embedded 711 built 711
+  2019 files 6 embedded 711 built 711
+  2020 files 6 embedded 650 built 650
+  2021 files 9 embedded 1124 built 1124
+  2022 files 9 embedded 1124 built 1124
+  2023 files 9 embedded 1125 built 1125
+  2024 files 9 embedded 1345 built 1333
+  2025 files 9 embedded 1345 built 1345
+  2026 files 9 embedded 1345 built 1345
+
+family failure causes:
+   671  AssertionError: record not fully decoded (VarSketch)
+    12  AssertionError: record not fully decoded (DataStorage)
+
+extractor kinds (files run, crashed, empty):
+ fill_patterns        [78, 0, 0]
+ line_patterns        [78, 0, 0]
+ shared_parameters    [78, 0, 6]
+ project_parameters   [78, 0, 12]
+ filters              [78, 0, 18]
+ phases               [78, 0, 0]
+ levels_grids         [78, 0, 0]
+ views                [78, 0, 0]
+ images               [78, 0, 0]
+ project_info         [78, 0, 0]
+ links                [78, 0, 0]
+ materials            [78, 0, 0]
+
+
+## Corpus, run 1 (before the merge, kept for comparison)
 | file | year | MB | families | embedded | .rfa built | kinds failed | s | peak MB | note |
 |---|---|---|---|---|---|---|---|---|---|
 | corp-2017-00 | 2017 | 5 | 50 | 41 | 0 | 0 | 7.5 | 717 |  |
