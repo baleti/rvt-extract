@@ -72,3 +72,11 @@ partition items: R records 100% equal, Z equal except 1 regen cache, H equal exc
  - Contents stream: Revit validates its 46-byte tail (depends on exact compressed bytes): a Revit-written instance is reused (SS.CONTENTS_STREAM + GUID). The 64-byte partition tail blob may be zero.
  - LoadFamily into a project in the same oracle session poisons later opens: rfacheck RFA_LOAD=1 only for a dedicated run.
 Next: all 177 families (lift_all.py on remote-host) + oracle open/facts diff vs gt_fam; nested families; 2026 and older years; CLI wiring; README.
+
+## USER REQUEST 2026-10-18 (priority): broad testing across years 2017-2026 and real studyx office projects
+Rules: studyx files only (never officeA/officeB), files stay local, never committed; anonymous ids studyx-NNN; private mapping in private/map.tsv (git-ignored; out/ and private/ are ignored and were purged from history).
+Candidate list: private/studyx_all.tsv (1145 rvt, via the `search` CLI), format scan private/studyx_versions.tsv (tools/scan_versions.py on remote-host).
+Plan: pick 30-60 files (years/sizes/disciplines) + Autodesk samples; run `rvt-extract` per file on remote-host with per-family error capture (tools/lift_all.py style, robust); oracle opens (2024/2026; older = upgrade);
+facts diff vs EditFamily+SaveAs for a sample per file; failure classification and fixes; RESULTS.md (anonymised) + README limits.
+Known state: 2024 Snowdon: 177 families lift OK; Revit opens ~all except Profiles/Rebar Shape/Level Head families (being diagnosed: Rebar Shape lacks ParamElemExternal shared parameter closure; others VarSketch R diffs);
+2026: Latest/ET/PartitionTable/ContentDocuments byte-identical to Revit's for Callout Head. Oracle jobs must stay < 280 s per job (10-file slices).
