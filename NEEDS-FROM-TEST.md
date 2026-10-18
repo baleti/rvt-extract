@@ -10,3 +10,5 @@ Update (corpus 32 of 89 files, 2017-2021): still 0 .rfa built outside 2024/2026 
  - 2021: all 1017 embedded families fail with `NotImplementedError: no Revit-written Contents stream known for format N` (rvtx/smallstreams.py): the Contents tail needs a Revit-written instance per format year. Needs one Revit-saved .rfa (any family) per year 2017-2023, 2025; oracle can only produce 2020/2024/2026. Decision for c3-fam: write older-year projects' families in the 2024 layout (Revit upgrades on open) or only support years with a known Contents instance.
  - 2018-2020 KeyError (2109 cases so far): minimal fix committed on branch test (rfa.py `.get(..., [])`); retest pending remote-host gate.
  - `filters` empty in 13 of 31 files, shared_parameters empty 4, project_parameters empty 1: probably genuine (sample files without them); to verify against Revit on the 2024/2026 files.
+
+fix1 result (2019 rst_basic, 41 embedded families, remote-host): with the `.get` fix the KeyError disappears; all 41 now stop at `NotImplementedError: no Revit-written Contents stream known for format 2019`. So the Contents-per-year instance is the real gate for every year other than 2024/2026.
