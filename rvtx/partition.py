@@ -1,0 +1,118 @@
+"""Partition stream model and writer (own analysis; see HANDOFF.md 'PARTITION FORMAT').
+
+A partition payload holds, per document, three item chains:  H  [id][L][body]  (ElementHeader records, hs 16 with A),
+R  [A][id][stamp][L][body]  (element records, stamp = adler32(body)),  Z  same layout (graphics/dummy 'zone' records).
+Every chain ends with a terminator (id = -1, L = 0); A = L of the previous item (0 at a chain start, no A at the very first item).
+The payload is cut into gzip members (<= LIMIT raw bytes, cut right after an A field, every chain starts a new member) with 32-byte frames."""
+import struct, zlib, sys, os
+WL = os.path.expanduser('~/rvt-research/write-lab')
+if WL not in sys.path: sys.path.append(WL)
+LIMIT = 131071
+GZH = bytes.fromhex('1f8b080000000000000b')
+REGION_CODE = {'H': 101, 'R': 102, 'Z': 103}
+
+
+def adler(body):
+    return zlib.adler32(body) & 0xFFFFFFFF
+
+
+def parse_joined(j, W=8):
+    """-> list of docs {'H': [(id, body)], 'R': [(id, body, stamp)], 'Z': [...]}; stops at the trailing zero A"""
+    docs = []; p = 0; NEG = (1 << (8 * W)) - 1
+    while p + W + 4 <= len(j):
+        doc = {'H': [], 'R': [], 'Z': []}
+        first = (p == 0)
+        while True:
+            if not first: p += 4
+            first = False
+            idv = int.from_bytes(j[p:p + W], 'little'); L, = struct.unpack_from('<I', j, p + W)
+            doc['H'].append((idv, bytes(j[p + W + 4:p + W + 4 + L]))); p += W + 4 + L
+            if idv == NEG: break
+        for r in ('R', 'Z'):
+            while True:
+                p += 4
+                idv = int.from_bytes(j[p:p + W], 'little'); st, L = struct.unpack_from('<II', j, p + W)
+                doc[r].append((idv, bytes(j[p + W + 8:p + W + 8 + L]), st)); p += W + 8 + L
+                if idv == NEG: break
+        docs.append(doc)
+        if p + 4 >= len(j) or j[p:p + 4] == b'\0\0\0\0' and p + 4 + W + 4 > len(j): break
+    return docs
+
+
+def serialize(docs, W=8):
+    """-> (joined bytes, items) ; items = list of (region, doc_index, id_pos, apos_or_None)"""
+    NEG = (1 << (8 * W)) - 1
+    out = bytearray(); items = []; prevL = None
+    for di, doc in enumerate(docs):
+        for reg in ('H', 'R', 'Z'):
+            recs = doc[reg]
+            for idv, body, *stamp in recs:
+                L = len(body)
+                if reg == 'H':
+                    apos = None if prevL is None else len(out)
+                    if prevL is not None: out += struct.pack('<I', prevL)
+                    items.append((reg, di, len(out), apos)); out += idv.to_bytes(W, 'little') + struct.pack('<I', L) + body
+                else:
+                    apos = len(out); out += struct.pack('<I', prevL)
+                    st = 1 if idv == NEG else adler(body)
+                    items.append((reg, di, len(out), apos)); out += idv.to_bytes(W, 'little') + struct.pack('<II', st, L) + body
+                prevL = L
+    out += struct.pack('<I', prevL)
+    return bytes(out), items
+
+
+def cut_points(items, total, limit=LIMIT):
+    """member start offsets: region starts are forced, otherwise greedy to the largest id-start within limit"""
+    cuts = [0]; idpos = [it[2] for it in items]
+    reg_of = [(it[0], it[1]) for it in items]
+    starts = {}
+    for k, r in enumerate(reg_of): starts.setdefault(r, k)
+    first_idx = set(starts.values())
+    for k, p in enumerate(idpos):
+        if k in first_idx and p != cuts[-1]: cuts.append(p); continue
+        nxt = idpos[k + 1] if k + 1 < len(idpos) else total
+        if nxt - cuts[-1] > limit and p > cuts[-1]: cuts.append(p)
+    return cuts
+
+
+def build_payload(docs, W=8, element_count=None, blob=None, text_len_pad=0):
+    """-> payload bytes (before ECC paging) for the Partitions/N stream"""
+    joined, items = serialize(docs, W)
+    cuts = cut_points(items, len(joined)); cuts.append(len(joined))
+    apos = [it[3] for it in items if it[3] is not None]
+    # region code per member
+    reg_at = {}
+    for it in items: reg_at.setdefault(it[2], (it[0], it[1]))
+    idpos = sorted(reg_at)
+    members = []
+    import bisect
+    for k in range(len(cuts) - 1):
+        lo, hi = cuts[k], cuts[k + 1]; raw = joined[lo:hi]
+        x1 = sum(1 for a in apos if lo <= a < hi)
+        reg = items[bisect.bisect_right([it[2] for it in items], lo) - 1][0] if True else 'H'
+        # region of the member = region of the first item that starts at lo
+        first = next(it for it in items if it[2] == lo)
+        hs = 16 if first[0] == 'H' else 20
+        x2 = len(raw) - hs * x1
+        co = zlib.compressobj(6, zlib.DEFLATED, -15)
+        comp = co.compress(raw) + co.flush()
+        gz = GZH + comp + struct.pack('<II', zlib.crc32(raw) & 0xFFFFFFFF, len(raw) & 0xFFFFFFFF)
+        members.append(dict(gz=gz, x1=x1, x2=x2, code=REGION_CODE[first[0]] + 3 * 0, doc=first[1], region=first[0]))
+    n_elem = len([1 for it in items if it[0] == 'H' and it[1] == 0]) - 1 if element_count is None else element_count
+    m0 = members[0]
+    hdr = struct.pack('<Q', 9) + b'\x7b\x03' + b'\0\0\0\0' + struct.pack('<I', n_elem) + b'\x7c\x0e' + struct.pack('<I', 4) + struct.pack('<III', m0['x1'], len(m0['gz']) - 10 + 2, m0['x2']) + bytes([m0['code']]) + b'\0' * 7
+    # NB: the stored comp length field is (deflate stream length + 8) = len(gz) - 10 - 8 + 8 ; recompute precisely below
+    def comp_field(m): return len(m['gz']) - 10
+    hdr = struct.pack('<Q', 9) + b'\x7b\x03' + b'\0\0\0\0' + struct.pack('<I', n_elem) + b'\x7c\x0e' + struct.pack('<I', 4) + struct.pack('<III', m0['x1'], comp_field(m0), m0['x2']) + bytes([m0['code']]) + b'\0' * 7
+    assert len(hdr) == 44, len(hdr)
+    out = bytearray(hdr)
+    for k, m in enumerate(members):
+        out += m['gz']
+        if k + 1 < len(members):
+            n = members[k + 1]
+            out += b'\x75\x0e' + struct.pack('<I', comp_field(m)) + b'\x7c\x0e' + struct.pack('<I', 4) + struct.pack('<III', n['x1'], comp_field(n), n['x2']) + bytes([n['code']]) + b'\0' * 7
+    out += b'\x75\x0e' + struct.pack('<I', comp_field(members[-1])) + b'\x7c\x0e' + b'\0' * 18
+    out += b'\x8f\x0e' + struct.pack('<I', 64) + (blob or b'\0' * 64)
+    t = 'Data generated by Autodesk® Revit®'
+    out += struct.pack('<I', len(t)) + t.encode('utf-16le') + b'\x7b\x03\0\0\0\0\xff\xff\xff\xff' + b'\0' * 4
+    return bytes(out) + b'\0' * text_len_pad
