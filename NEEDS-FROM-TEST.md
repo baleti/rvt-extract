@@ -12,3 +12,10 @@ Update (corpus 32 of 89 files, 2017-2021): still 0 .rfa built outside 2024/2026 
  - `filters` empty in 13 of 31 files, shared_parameters empty 4, project_parameters empty 1: probably genuine (sample files without them); to verify against Revit on the 2024/2026 files.
 
 fix1 result (2019 rst_basic, 41 embedded families, remote-host): with the `.get` fix the KeyError disappears; all 41 now stop at `NotImplementedError: no Revit-written Contents stream known for format 2019`. So the Contents-per-year instance is the real gate for every year other than 2024/2026.
+
+## FULL CORPUS RESULT (78 files, 2017-2026; 10191 families with embedded doc; remote-host batch, no process crash, max RSS 4.2 GB)
+ built .rfa: 2024 1196/1345 (89%), 2026 1027/1345 (76%), every other year 0.
+ Top causes (families): 3687 `no Revit-written Contents stream known for format N` (2021-2023, 2025: needs a per-year Contents instance), 2109 KeyError m_externalResourceReferencesExpanded (2018-2020; fix on branch test, then falls into the Contents cause), 633 VarSketch not fully decoded (2017/2018 decoder), 466 `family has no embedded document` in 2024/2026 (see 4).
+ 4. WHOLE-FILE failure in 3 files: 2024 Site (corp-2024-47, 148 families), 2026 Electrical (corp-2026-56, 211), 2026 Facades (corp-2026-58, 107): every family with an embedded doc ends in `AssertionError: family has no embedded document` after ~15-20 s (the other six 2026 and eight 2024 files are 100%). Probably family_doc_index returns None for these (m_big2SmallMap2 ids not in docs[].id_doc) or the partition parse of the Site/Facades/Electrical files stops early. Repro: python3 tools/batch.py (one line tsv) or lift_all.py on those files; ids in tools/corpus.tsv.
+ 5. 1 family `record not fully decoded (DataStorage)` in 2024; 2 `KeyError: N`.
+ Other extractors: no crash on any of the 78 files. Empty outputs: filters 18/78, project_parameters 12/78, shared_parameters 6/78 (to be checked vs Revit).
