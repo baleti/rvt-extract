@@ -176,7 +176,7 @@ class Builder:
                     o = cell.get('obj') or {}
                     if 'm_externalResourceReferences' in o:
                         o['m_externalResourceReferences'] = []
-                        for e in o['m_externalResourceReferencesExpanded']:
+                        for e in o.get('m_externalResourceReferencesExpanded', []):
                             for r in e['second']['m_refs']:
                                 x = r['second']; x['m_displayPath'] = ''; x['m_version'] = ''
                                 x['m_referenceInformation'] = [{'first': 'ModelIdentity', 'second': '00000000-0000-0000-0000-000000000000'}, {'first': 'Path', 'second': ''}, {'first': 'PathType', 'second': 'Absolute'}]
