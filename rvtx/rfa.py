@@ -32,12 +32,27 @@ class ProjectDocs:
     def __init__(self, prj):
         self.prj = prj; path = prj.path; self.path = path
         self.o, self.cls, self.ids = S.load(path); self.W = S.id_size(self.cls); self.sch = D.Schema(self.cls)
-        pn = [y for y in ['/'.join(e) for e in self.o.listdir(streams=True)] if y.startswith('Partitions/')][0]
-        j = T.joined(self.o.openstream(pn).read()); self.docs = PT.parse_joined(j, self.W); del j
+        self.byid = {i: r for (i, c), r in prj.recs.items()}
+        # items of the main document that may be copied into family documents (graphics styles, materials, patterns, assets, property sets, keynote/assembly tables)
+        keep = {i for i, r in self.byid.items() if r['class'] in TARGET or r['class'] in ('GStyleElem', 'KeynoteTable', 'AssemblyCodeTable')}
+        self.docs = [None]; self.doc0 = {'H': {}, 'R': {}, 'Z': {}}
+        pns = sorted((y for y in ['/'.join(e) for e in self.o.listdir(streams=True)] if y.startswith('Partitions/')), key=lambda s_: int(s_.split('/')[1]))
+        for pn in pns:
+            try:
+                j = T.joined(self.o.openstream(pn).read()); ds = PT.parse_joined(j, self.W); del j
+            except Exception as e:
+                self.errors = getattr(self, 'errors', []) + ['%s: %s' % (pn, e)]; continue
+            for kdoc, d in enumerate(ds):
+                if kdoc == 0:      # first document of every partition = part of the main document
+                    for i, b_ in d['H']:
+                        if i in keep: self.doc0['H'][i] = b_
+                    for i, b_, st_ in d['R']:
+                        if i in keep: self.doc0['R'][i] = (b_, st_)
+                    for i, b_, st_ in d['Z']:
+                        if i in keep: self.doc0['Z'][i] = (b_, st_)
+                else: self.docs.append(d)
         self.cd = rvtfmt.inflate_stream(self.o.openstream('Global/ContentDocuments').read())[1]
         self.formats_raw = self.o.openstream('Formats/Latest').read()
-        self.byid = {i: r for (i, c), r in prj.recs.items()}
-        self.doc0 = {'H': dict(self.docs[0]['H']), 'R': {i: (b, s) for i, b, s in self.docs[0]['R']}, 'Z': {i: (b, s) for i, b, s in self.docs[0]['Z']}}
         self.id_doc = {}
         for k, d in enumerate(self.docs):
             if k == 0: continue
