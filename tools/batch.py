@@ -10,6 +10,10 @@ for l in open(lst):
     fid, path = l.rstrip('\n').split('\t')[:2]
     mj = os.path.join(sd, fid + '.meta.json')
     if os.path.exists(mj) and json.load(open(mj)).get('finished'): continue
+    ap = os.path.join(sd, fid + '.attempts'); n = int(open(ap).read()) if os.path.exists(ap) else 0
+    if n >= maxr:   # the whole unit was OOM-killed mid-file maxr times: record and move on
+        m = json.load(open(mj)) if os.path.exists(mj) else {'id': fid}; m.update(finished=True, failed=True, killed=True); json.dump(m, open(mj, 'w')); continue
+    open(ap, 'w').write(str(n + 1))
     for attempt in range(maxr):
         t = time.time(); p = subprocess.run([sys.executable, os.path.join(here, 'batch_one.py'), path, fid, sd, od], preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS, (LIM, LIM)), stdout=open(os.path.join(sd, fid + '.log'), 'a'), stderr=subprocess.STDOUT)
         print(fid, 'attempt', attempt, 'rc', p.returncode, '%.0fs' % (time.time() - t), flush=True)
