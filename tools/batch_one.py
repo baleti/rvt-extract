@@ -10,11 +10,18 @@ path, fid, sd, od = sys.argv[1:5]
 os.makedirs(sd, exist_ok=True); os.makedirs(os.path.join(od, fid), exist_ok=True)
 J = lambda n: os.path.join(sd, fid + n)
 def rss(): return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
+def basic_year(raw):
+    import re
+    for off in (0, 1):
+        b = raw[off:].decode('utf-16le', 'ignore')
+        m = re.search(r'Format:\s*(20[12]\d)', b) or re.search(r'Autodesk Revit (20[12]\d)', b)
+        if m: return int(m.group(1))
+    m = re.search(r'(20[12]\d)', raw[:40].decode('utf-16le', 'ignore'))
+    return int(m.group(1)) if m else None
 def year_of(p):
     import olefile
-    o = olefile.OleFileIO(p); b = o.openstream('BasicFileInfo').read().decode('utf-16le', 'ignore'); o.close()
-    m = re.search(r'(20[12]\d)', b) or re.search(r'Format:\s*(20[12]\d)', b)
-    return int(m.group(1)) if m else None
+    o = olefile.OleFileIO(p); b = o.openstream('BasicFileInfo').read(); o.close()
+    return basic_year(b)
 meta = json.load(open(J('.meta.json'))) if os.path.exists(J('.meta.json')) else {}
 t0 = time.time(); meta.setdefault('id', fid); meta['size'] = os.path.getsize(path)
 try: meta['year'] = year_of(path)
