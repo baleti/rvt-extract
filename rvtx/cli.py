@@ -23,6 +23,7 @@ def main(argv=None):
     ap = argparse.ArgumentParser(prog='rvt-extract', description='Extract families and other content from a Revit project without Revit.')
     ap.add_argument('rvt', nargs='?'); ap.add_argument('--out', default=None, help='output folder')
     ap.add_argument('--only', default=None, help='comma list of output types (see --list-kinds): ' + ','.join(KINDS))
+    ap.add_argument('--no-rfa', action='store_true', help='families: only the manifest, do not assemble .rfa files')
     ap.add_argument('--list', action='store_true', help='print what the file contains and exit')
     ap.add_argument('--list-kinds', action='store_true', help='print the output types and exit')
     a = ap.parse_args(argv)
@@ -45,6 +46,18 @@ def main(argv=None):
         res['families'] = ents
         if a.list or not a.out:
             for e in ents: print('%-28s %-50s types=%-3d params=%-3d records=%d' % (e['category'], e['name'], len(e['types']), len(e['parameters']), e['embedded_records']))
+    if 'families' in only and a.out and not a.no_rfa and not a.list:
+        from . import rfa as RFA
+        pd = RFA.ProjectDocs(prj); B = RFA.Builder(pd); byid = {e['family_id']: e for e in res['families']}
+        for fr in prj.families():
+            e = byid.get(fr['id'])
+            if e is None or not e['embedded_doc']: continue
+            try:
+                B.build(fr)
+                d = os.path.join(a.out, 'families', safe(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, safe(e['name']) + '.rfa')
+                B.write(fn, e['name'], e['category']); e['rfa'] = {'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': 'not validated in Revit'}
+            except Exception as ex:
+                e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
     for k in only:
         if k == 'families': continue
         try:
