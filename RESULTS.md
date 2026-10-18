@@ -1,0 +1,245 @@
+# rvt-extract test campaign RESULTS (c6-famtest, 2026-10-18)
+Anonymised. Corpus = Autodesk samples (ids corp-YEAR-NN); studyx-NNN = real-world office project files (map kept private). No names, paths or clients here.
+Pipeline per file: rvt-extract equivalent (manifest + .rfa lift per embedded family + every other extractor), remote-host, resumable. "embedded" = families with an embedded family document; "built" = .rfa written. Revit-open and facts-diff columns: see the oracle section (in progress).
+
+## Headline
+- Corpus, 78 files 2017-2026: .rfa built for 2024: 1196/1345 (89%), 2026: 1027/1345 (76%); every other year 0%.
+- The gap in 2024/2026 is three whole files (2024 Site, 2026 Electrical, 2026 Facades) failing with "family has no embedded document"; every other 2024/2026 file builds 100%.
+- Years other than 2024/2026 stop at "no Revit-written Contents stream known for format N" (needs per-year template), 2018-2020 additionally at a KeyError (fix on branch test), 2017/2018 at VarSketch decode.
+- Real-world, 71 files: 41 ran, 30 exceeded the 7 GB per-file memory cap (remote-host slice is 9 GB; files up to 300 MB). Of the 41 only 2024 files build .rfa.
+- Other extractors (patterns, parameters, filters, phases, levels/grids, views, images, project_info, links, materials): no crash on any file that loaded.
+
+## Corpus
+| file | year | MB | families | embedded | .rfa built | kinds failed | s | peak MB | note |
+|---|---|---|---|---|---|---|---|---|---|
+| corp-2017-00 | 2017 | 5 | 50 | 41 | 0 | 0 | 7.5 | 717 |  |
+| corp-2017-01 | 2017 | 12 | 145 | 137 | 0 | 0 | 31.5 | 1302 |  |
+| corp-2017-02 | 2017 | 13 | 110 | 98 | 0 | 0 | 54.7 | 1426 |  |
+| corp-2017-03 | 2017 | 14 | 116 | 104 | 0 | 0 | 34.6 | 1506 |  |
+| corp-2017-04 | 2017 | 26 | 159 | 147 | 0 | 0 | 171.4 | 2774 |  |
+| corp-2017-05 | 2017 | 31 | 196 | 184 | 0 | 0 | 88.8 | 3256 |  |
+| corp-2018-06 | 2018 | 5 | 50 | 41 | 0 | 0 | 80.6 | 808 |  |
+| corp-2018-07 | 2018 | 12 | 145 | 137 | 0 | 0 | 236.6 | 1299 |  |
+| corp-2018-08 | 2018 | 13 | 110 | 98 | 0 | 0 | 113.0 | 1616 |  |
+| corp-2018-09 | 2018 | 14 | 116 | 104 | 0 | 0 | 83.6 | 2203 |  |
+| corp-2018-10 | 2018 | 27 | 159 | 147 | 0 | 0 | 159.4 | 3062 |  |
+| corp-2018-11 | 2018 | 32 | 196 | 184 | 0 | 0 | 212.9 | 3524 |  |
+| corp-2019-12 | 2019 | 5 | 50 | 41 | 0 | 0 | 32.7 | 794 |  |
+| corp-2019-13 | 2019 | 12 | 145 | 137 | 0 | 0 | 100.7 | 1435 |  |
+| corp-2019-14 | 2019 | 13 | 110 | 98 | 0 | 0 | 120.3 | 1625 |  |
+| corp-2019-15 | 2019 | 14 | 116 | 104 | 0 | 0 | 74.7 | 1562 |  |
+| corp-2019-16 | 2019 | 27 | 159 | 147 | 0 | 0 | 168.2 | 3505 |  |
+| corp-2019-17 | 2019 | 32 | 196 | 184 | 0 | 0 | 222.6 | 4200 |  |
+| corp-2020-18 | 2020 | 5 | 50 | 41 | 0 | 0 | 44.8 | 1181 |  |
+| corp-2020-19 | 2020 | 7 | 65 | 57 | 0 | 0 | 119.8 | 1115 |  |
+| corp-2020-20 | 2020 | 9 | 94 | 84 | 0 | 0 | 216.8 | 1250 |  |
+| corp-2020-21 | 2020 | 12 | 145 | 137 | 0 | 0 | 227.7 | 1341 |  |
+| corp-2020-22 | 2020 | 27 | 159 | 147 | 0 | 0 | 703.5 | 2986 |  |
+| corp-2020-23 | 2020 | 33 | 196 | 184 | 0 | 0 | 734.4 | 3538 |  |
+| corp-2021-24 | 2021 | 5 | 50 | 41 | 0 | 0 | 57.4 | 819 |  |
+| corp-2021-25 | 2021 | 13 | 145 | 137 | 0 | 0 | 124.3 | 1663 |  |
+| corp-2021-26 | 2021 | 14 | 110 | 98 | 0 | 0 | 99.6 | 2049 |  |
+| corp-2021-27 | 2021 | 15 | 116 | 104 | 0 | 0 | 92.0 | 1653 |  |
+| corp-2021-28 | 2021 | 28 | 159 | 147 | 0 | 0 | 156.4 | 3106 |  |
+| corp-2021-29 | 2021 | 34 | 196 | 184 | 0 | 0 | 214.5 | 4607 |  |
+| corp-2021-60 | 2021 | 15 | 178 | 170 | 0 | 0 | 152.6 | 2570 |  |
+| corp-2021-61 | 2021 | 15 | 178 | 170 | 0 | 0 | 158.4 | 2861 |  |
+| corp-2021-62 | 2021 | 4 | 81 | 73 | 0 | 0 | 58.9 | 625 |  |
+| corp-2022-30 | 2022 | 6 | 50 | 41 | 0 | 0 | 38.6 | 845 |  |
+| corp-2022-31 | 2022 | 13 | 145 | 137 | 0 | 0 | 123.1 | 1667 |  |
+| corp-2022-32 | 2022 | 14 | 110 | 98 | 0 | 0 | 99.2 | 1604 |  |
+| corp-2022-33 | 2022 | 15 | 116 | 104 | 0 | 0 | 96.4 | 1815 |  |
+| corp-2022-34 | 2022 | 29 | 159 | 147 | 0 | 0 | 151.9 | 3237 |  |
+| corp-2022-35 | 2022 | 34 | 196 | 184 | 0 | 0 | 195.2 | 3698 |  |
+| corp-2022-63 | 2022 | 15 | 178 | 170 | 0 | 0 | 148.1 | 1678 |  |
+| corp-2022-64 | 2022 | 15 | 178 | 170 | 0 | 0 | 157.5 | 1775 |  |
+| corp-2022-65 | 2022 | 4 | 81 | 73 | 0 | 0 | 63.6 | 793 |  |
+| corp-2023-36 | 2023 | 6 | 50 | 41 | 0 | 0 | 42.6 | 1001 |  |
+| corp-2023-37 | 2023 | 13 | 145 | 137 | 0 | 0 | 123.9 | 1380 |  |
+| corp-2023-38 | 2023 | 14 | 111 | 99 | 0 | 0 | 18.3 | 2207 |  |
+| corp-2023-39 | 2023 | 15 | 116 | 104 | 0 | 0 | 102.4 | 1622 |  |
+| corp-2023-40 | 2023 | 29 | 159 | 147 | 0 | 0 | 143.2 | 3118 |  |
+| corp-2023-41 | 2023 | 35 | 196 | 184 | 0 | 0 | 181.3 | 3708 |  |
+| corp-2023-66 | 2023 | 15 | 178 | 170 | 0 | 0 | 148.8 | 1537 |  |
+| corp-2023-67 | 2023 | 15 | 178 | 170 | 0 | 0 | 158.7 | 1579 |  |
+| corp-2023-68 | 2023 | 4 | 81 | 73 | 0 | 0 | 62.7 | 563 |  |
+| corp-2024-42 | 2024 | 21 | 94 | 87 | 86 | 0 | 88.9 | 1556 |  |
+| corp-2024-43 | 2024 | 26 | 185 | 177 | 177 | 0 | 185.6 | 1980 |  |
+| corp-2024-44 | 2024 | 38 | 218 | 211 | 211 | 0 | 217.0 | 3054 |  |
+| corp-2024-45 | 2024 | 39 | 209 | 202 | 202 | 0 | 203.2 | 3671 |  |
+| corp-2024-46 | 2024 | 50 | 115 | 107 | 107 | 0 | 149.8 | 2196 |  |
+| corp-2024-47 | 2024 | 51 | 160 | 148 | 0 | 0 | 19.3 | 2953 |  |
+| corp-2024-69 | 2024 | 15 | 178 | 170 | 170 | 0 | 175.7 | 1521 |  |
+| corp-2024-70 | 2024 | 16 | 178 | 170 | 170 | 0 | 186.5 | 1525 |  |
+| corp-2024-71 | 2024 | 5 | 81 | 73 | 73 | 0 | 89.7 | 574 |  |
+| corp-2025-48 | 2025 | 21 | 94 | 87 | 0 | 0 | 8.2 | 1472 |  |
+| corp-2025-49 | 2025 | 26 | 185 | 177 | 0 | 0 | 10.6 | 1885 |  |
+| corp-2025-50 | 2025 | 38 | 218 | 211 | 0 | 0 | 18.6 | 2729 |  |
+| corp-2025-51 | 2025 | 39 | 209 | 202 | 0 | 0 | 19.7 | 3320 |  |
+| corp-2025-52 | 2025 | 50 | 115 | 107 | 0 | 0 | 13.9 | 1908 |  |
+| corp-2025-53 | 2025 | 51 | 160 | 148 | 0 | 0 | 16.7 | 2835 |  |
+| corp-2025-72 | 2025 | 16 | 178 | 170 | 0 | 0 | 148.9 | 1526 |  |
+| corp-2025-73 | 2025 | 16 | 178 | 170 | 0 | 0 | 162.1 | 1528 |  |
+| corp-2025-74 | 2025 | 5 | 81 | 73 | 0 | 0 | 69.1 | 585 |  |
+| corp-2026-54 | 2026 | 21 | 94 | 87 | 87 | 0 | 96.7 | 1590 |  |
+| corp-2026-55 | 2026 | 26 | 185 | 177 | 177 | 0 | 169.8 | 1966 |  |
+| corp-2026-56 | 2026 | 39 | 218 | 211 | 0 | 0 | 18.9 | 2773 |  |
+| corp-2026-57 | 2026 | 39 | 209 | 202 | 202 | 0 | 209.6 | 3707 |  |
+| corp-2026-58 | 2026 | 50 | 115 | 107 | 0 | 0 | 14.6 | 2042 |  |
+| corp-2026-59 | 2026 | 57 | 160 | 148 | 148 | 0 | 178.1 | 3361 |  |
+| corp-2026-75 | 2026 | 15 | 178 | 170 | 170 | 0 | 152.0 | 1520 |  |
+| corp-2026-76 | 2026 | 16 | 178 | 170 | 170 | 0 | 150.3 | 1520 |  |
+| corp-2026-77 | 2026 | 4 | 81 | 73 | 73 | 0 | 63.8 | 560 |  |
+
+files 78, embedded families 10191, built 2223 (21.8%)
+
+by year:
+  2017 files 6 embedded 711 built 0
+  2018 files 6 embedded 711 built 0
+  2019 files 6 embedded 711 built 0
+  2020 files 6 embedded 650 built 0
+  2021 files 9 embedded 1124 built 0
+  2022 files 9 embedded 1124 built 0
+  2023 files 9 embedded 1125 built 0
+  2024 files 9 embedded 1345 built 1196
+  2025 files 9 embedded 1345 built 0
+  2026 files 9 embedded 1345 built 1027
+
+family failure causes:
+  3687  NotImplementedError: no Revit-written Contents stream known for format N
+  2109  KeyError: 'm_externalResourceReferencesExpanded'
+  1536  AssertionError: family has no embedded document
+   633  AssertionError: record not fully decoded (VarSketch)
+     2  KeyError: N
+     1  AssertionError: record not fully decoded (DataStorage)
+
+extractor kinds (files run, crashed, empty):
+ fill_patterns        [78, 0, 0]
+ line_patterns        [78, 0, 0]
+ shared_parameters    [78, 0, 6]
+ project_parameters   [78, 0, 12]
+ filters              [78, 0, 18]
+ phases               [78, 0, 0]
+ levels_grids         [78, 0, 0]
+ views                [78, 0, 0]
+ images               [78, 0, 0]
+ project_info         [78, 0, 0]
+ links                [78, 0, 0]
+ materials            [78, 0, 0]
+
+
+## Real-world (anonymised)
+| file | year | MB | families | embedded | .rfa built | kinds failed | s | peak MB | note |
+|---|---|---|---|---|---|---|---|---|---|
+| studyx-001 | 2019 | 15 | 956 | 165 | 0 | 0 | 119.0 | 2259 |  |
+| studyx-002 | 2019 | 36 | 99 | 92 | 0 | 0 | 128.0 | 4786 |  |
+| studyx-003 | 2019 | 57 | 137 | 129 | 0 | 0 | 213.9 | 7137 |  |
+| studyx-004 | 2019 | 72 | 164 | 156 | 0 | 0 | None | None | FAILED |
+| studyx-005 | 2019 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-006 | 2019 | 9 | 103 | 95 | 0 | 0 | 65.8 | 1296 |  |
+| studyx-007 | 2019 | 18 | 103 | 95 | 0 | 0 | 74.6 | 3336 |  |
+| studyx-008 | 2019 | 62 | 189 | 74 | 0 | 0 | 109.3 | 4946 |  |
+| studyx-009 | 2019 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-010 | 2019 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-011 | 2019 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-012 | 2019 | 5 | 103 | 95 | 0 | 0 | 63.2 | 976 |  |
+| studyx-013 | 2019 | 11 | 103 | 95 | 0 | 0 | 70.5 | 2436 |  |
+| studyx-014 | 2019 | 18 | 103 | 95 | 0 | 0 | 76.7 | 3333 |  |
+| studyx-015 | 2022 | 50 | 62 | 42 | 0 | 0 | 76.8 | 5103 |  |
+| studyx-016 | 2020 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-017 | 2019 | 111 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-018 | 2019 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-019 | 2022 | 34 | 79 | 71 | 0 | 0 | 86.9 | 5311 |  |
+| studyx-020 | 2022 | 40 | 149 | 141 | 0 | 0 | 139.6 | 3418 |  |
+| studyx-021 | 2022 | 45 | 233 | 226 | 0 | 0 | 67.0 | 4083 |  |
+| studyx-022 | 2022 | 51 | 115 | 107 | 0 | 0 | 3.6 | 3543 |  |
+| studyx-023 | 2022 | 70 | 130 | 122 | 0 | 0 | 4.5 | 5334 |  |
+| studyx-024 | 2019 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-025 | 2022 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-026 | 2022 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-027 | 2021 | 256 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-028 | 2024 | 29 | 84 | 47 | 47 | 0 | 54.6 | 4759 |  |
+| studyx-029 | 2019 | 42 | 103 | 95 | 0 | 0 | 4.8 | 5074 |  |
+| studyx-030 | 2022 | 56 | 140 | 132 | 0 | 0 | 3.9 | 3908 |  |
+| studyx-031 | 2022 | 75 | 147 | 132 | 0 | 0 | 8.4 | 4635 |  |
+| studyx-032 | 2019 | 87 | 103 | 95 | 0 | 0 | None | None | FAILED |
+| studyx-033 | 2019 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-034 | 2022 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-035 | 2024 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-036 | 2022 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-037 | 2024 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-038 | 2022 | 29 | 52 | 44 | 0 | 0 | 55.9 | 5585 |  |
+| studyx-039 | 2022 | 56 | 214 | 206 | 0 | 0 | None | None | FAILED |
+| studyx-040 | 2022 | 78 | 226 | 219 | 0 | 0 | 287.8 | 5415 |  |
+| studyx-041 | 2024 | 129 | 291 | 238 | 237 | 0 | 5.8 | 6229 |  |
+| studyx-042 | 2022 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-043 | 2024 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-044 | 2022 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-045 | 2018 | 3 | 43 | 35 | 7 | 0 | 19.3 | 1037 |  |
+| studyx-046 | 2024 | 7 | 108 | 100 | 0 | 0 | 25.4 | 824 |  |
+| studyx-047 | 2024 | 24 | 78 | 70 | 69 | 0 | 76.4 | 3594 |  |
+| studyx-048 | 2024 | 63 | 103 | 95 | 95 | 0 | None | None | FAILED |
+| studyx-049 | 2024 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-050 | 2022 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-051 | 2015 | 3 | 60 | 52 | 32 | 0 | 21.5 | 468 |  |
+| studyx-052 | 2025 | 5 | 42 | 34 | 0 | 0 | 33.8 | 699 |  |
+| studyx-053 | 2024 | 11 | 79 | 71 | 0 | 0 | 54.5 | 2098 |  |
+| studyx-054 | 2025 | 18 | 44 | 26 | 0 | 0 | 30.0 | 2358 |  |
+| studyx-055 | 2025 | 19 | 44 | 24 | 0 | 0 | 30.7 | 2390 |  |
+| studyx-056 | 2025 | 19 | 42 | 24 | 0 | 0 | 28.7 | 2612 |  |
+| studyx-057 | 2025 | 19 | 42 | 24 | 0 | 0 | 31.1 | 2590 |  |
+| studyx-058 | 2025 | 20 | 39 | 23 | 0 | 0 | 36.6 | 2740 |  |
+| studyx-059 | 2025 | 20 | 44 | 26 | 0 | 0 | 30.5 | 2523 |  |
+| studyx-060 | 2024 | 51 | 126 | 116 | 113 | 0 | 298.5 | 4436 |  |
+| studyx-061 | 2025 | 60 | 97 | 66 | 0 | 0 | 4.0 | 4168 |  |
+| studyx-062 | 2024 | 80 | 232 | 221 | 138 | 0 | 4.9 | 4565 |  |
+| studyx-063 | 2025 | 112 | 151 | 141 | 0 | 0 | 83.8 | 4272 |  |
+| studyx-064 | 2025 | 123 | 206 | 193 | 0 | 0 | 138.0 | 5630 |  |
+| studyx-065 | 2025 | 125 | 120 | 110 | 0 | 0 | 114.7 | 4943 |  |
+| studyx-066 | 2025 | 129 | 161 | 153 | 0 | 0 | 125.7 | 5906 |  |
+| studyx-067 | 2024 | 145 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-068 | 2021 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-069 | 2024 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-070 | 2024 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-071 | 2021 | 0 | 0 | 0 | 0 | 0 | None | None | FAILED |
+
+files 71, embedded families 4612, built 738 (16.0%)
+
+by year:
+  2015 files 1 embedded 52 built 32
+  2018 files 1 embedded 35 built 7
+  2019 files 20 embedded 1281 built 0
+  2020 files 1 embedded 0 built 0
+  2021 files 3 embedded 0 built 0
+  2022 files 18 embedded 1442 built 0
+  2024 files 15 embedded 958 built 699
+  2025 files 12 embedded 844 built 0
+
+family failure causes:
+  2383  NotImplementedError: no Revit-written Contents stream known for format N
+   655  AssertionError: family has no embedded document
+   380  error: 'I' format requires N <= number <= N
+   272  KeyError: N
+    61  AssertionError: record not fully decoded (DataStorage)
+    56  AssertionError: record not fully decoded (Family)
+    33  AssertionError: record not fully decoded (RebarBarType)
+    19  AssertionError: record not fully decoded (VarSketch)
+     5  AssertionError: record not fully decoded (RevolutionElem)
+     4  AssertionError: record not fully decoded (DBViewPlan)
+     4  AssertionError: record not fully decoded (RefPlane)
+     1  AssertionError: record not fully decoded (FamilyInstance)
+     1  Desync: pointer tag N at N (ADocument.ADocument.m_elemTable) @@ ADocument.m_elemTable T=NxNe at
+
+extractor kinds (files run, crashed, empty):
+ fill_patterns        [45, 0, 0]
+ line_patterns        [45, 0, 0]
+ shared_parameters    [45, 0, 0]
+ project_parameters   [45, 0, 13]
+ filters              [45, 0, 0]
+ phases               [45, 0, 0]
+ levels_grids         [45, 0, 0]
+ views                [45, 0, 0]
+ images               [45, 0, 11]
+ project_info         [45, 0, 0]
+ links                [45, 0, 0]
+ materials            [42, 0, 0]
