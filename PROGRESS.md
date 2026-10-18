@@ -4,3 +4,4 @@
 - Smoke run (corp-2017-00) waits for the remote-host 11 GB gate. Rule: no scripts on remote-host beyond editing/git/reading.
 - studyx sample extended with 21 files from the other project archives (user lifted the folder restriction; ids continue studyx-051..071, local only).
 - corpus batch running on remote-host (started). State dirs landed in literal dir ~/src/rvt-extract-test/\$HOME/scratch-famtest/state_{corpus,studyx} on remote-host (quoting quirk, harmless); .rfa outputs in out_* beside. studyx batch chained after corpus (waiter on remote-host is a sleeping ssh loop).
+- merged main (c3-fam: multi-partition docs, W=4, Contents samples) into test; corpus rerun 'corpus2' to measure.
