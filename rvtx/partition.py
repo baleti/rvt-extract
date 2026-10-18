@@ -124,22 +124,21 @@ PAGE_STORED, PAGE_PAYLOAD = 65249, 64896
 
 
 def last_page_size(C):
-    """size N of the last ECC page for C payload bytes. Revit only writes (u,d,L) combinations of two regimes: dense (u=65 or the tiny set, every L) and,
-    from ~16.5 KB on, L=2047 with an odd number of codewords u. Other N have valid-looking ECC parameters but Revit rejects them (verified in the oracle)."""
-    import ecc, rvtw
-    if C <= 16160:
-        N = 122
-        while True:
-            p = ecc.params(N)
-            if p and ecc.data_capacity(N) >= C: return N
-            N += 1
+    """size N of the last ECC page for C payload bytes: the smallest N that Revit is known to write (nladder.OBSERVED) or, from ~16.5 KB on, the
+    L=2047 ladder with an odd number of codewords u, whose capacity holds C. Other N have plausible ECC parameters but Revit rejects them (oracle test)."""
+    import ecc
+    from .nladder import OBSERVED
+    cands = [N for N in OBSERVED if ecc.data_capacity(N) >= C]
+    best = min(cands) if cands else None
     u = 67
     while u < 256:
-        N = -(-u * 2047 // 8)
-        p = ecc.params(N)
-        if p and p == (11, u, 2047) and ecc.data_capacity(N) >= C: return N
+        N = -(-u * 2047 // 8); p = ecc.params(N)
+        if p and p == (11, u, 2047) and ecc.data_capacity(N) >= C:
+            if best is None or N < best: best = N
+            break
         u += 2
-    raise ValueError('payload remainder too large')
+    if best is None: raise ValueError('payload remainder too large')
+    return best
 
 
 def page_stream(payload):

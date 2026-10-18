@@ -1,6 +1,6 @@
 import sys,pickle,struct; sys.path.insert(0,'~/src/rvt-extract/tools'); sys.path.insert(0,'~/src/rvt-extract')
 from lat_lib import *
-from adiff import walk_diff
+from tdiff import walk_diff
 from rvtx import latest
 rfa=sys.argv[1]; dump=sys.argv[2]; fid=int(sys.argv[3]); idsf=sys.argv[4]
 ra,sch,W,tag,d=latest_tree(rfa)
