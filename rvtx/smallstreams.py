@@ -10,9 +10,17 @@ def g2b(g):
     return uuid.UUID(g).bytes_le if isinstance(g, str) else g
 
 
+TAGS = {}        # per Revit year class tags of the stream objects (first u16), read from the project's own streams
+
+
+def _tag(b, key):
+    t = TAGS.get(key)
+    return b if t is None else t + b[2:]
+
+
 def history(doc_guid, save_guid):
     d, s = g2b(doc_guid), g2b(save_guid)
-    return (bytes.fromhex('ff040100000000000000000000000100000000000000') + d + d + d + b'\0' * 16 + d + b'\0\0\0\0' + b'\x01\0\0\0' + s + b'\x28\0\0\0\0')
+    return _tag(bytes.fromhex('ff040100000000000000000000000100000000000000') + d + d + d + b'\0' * 16 + d + b'\0\0\0\0' + b'\x01\0\0\0' + s + b'\x28\0\0\0\0', 'History')
 
 
 _DIT = bytes.fromhex('03050100000001000000ffffffffa906000004000000550073006500720000000000000000000100000000000000e24ad46a01000000a90600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010100000001000000ffffffffa906000004000000550073006500720000000000000000000100000000000000e24ad46a01000000a90600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000ffffffff010000000000000000')
@@ -21,15 +29,15 @@ _DIT = bytes.fromhex('03050100000001000000ffffffffa90600000400000055007300650072
 def document_increment_table(n_elements, when=None):
     """layout: the element count (u32) appears 4 times and the save time (unix seconds) twice; sample values 1705 / 0x6ad44ae2 are replaced"""
     t = struct.pack('<I', int(when or time.time()))
-    return _DIT.replace(struct.pack('<I', 1705), struct.pack('<I', n_elements)).replace(bytes.fromhex('e24ad46a'), t)
+    return _tag(_DIT.replace(struct.pack('<I', 1705), struct.pack('<I', n_elements)).replace(bytes.fromhex('e24ad46a'), t), 'DIT')
 
 
 def partition_table(part_guid):
-    return bytes.fromhex('ec0b0100000001000000') + g2b(part_guid) + bytes.fromhex('00000000ffffffffffffffffffffffff01000000000800000057006f0072006b0073006500740031000100000001000000000000000100000000000000')
+    return _tag(bytes.fromhex('ec0b0100000001000000'), 'PT') + g2b(part_guid) + bytes.fromhex('00000000ffffffffffffffffffffffff01000000000800000057006f0072006b0073006500740031000100000001000000000000000100000000000000')
 
 
 def content_documents_empty():
-    return bytes.fromhex('7b0300000000ffffffff00000000')
+    return _tag(bytes.fromhex('7b0300000000ffffffff00000000'), 'CD')
 
 
 _CONTENTS_HEAD = bytes.fromhex('621922051b000000010000000100000043020000000800000001000100010001000200020004000400040004000400040008000800080008000a00000000000000020000000900d82100000010000000000000') + bytes.fromhex('6219220500000000')
@@ -58,13 +66,13 @@ def transmission_data(kn, ac):
     return struct.pack('<I', len(xml)) + xml.encode('utf-16le')
 
 
-def part_atom(title, category, filename, when=None):
+def part_atom(title, category, filename, when=None, fmt=FORMAT):
     w = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(when or time.time()))
     return ('<?xml version="1.0" encoding="UTF-8"?>\r\n<entry xmlns="http://www.w3.org/2005/Atom" xmlns:A="urn:schemas-autodesk-com:partatom"><title>%s</title><id></id><updated>%s</updated>'
             '<A:taxonomy><term>adsk:revit</term><label>Autodesk Revit</label></A:taxonomy><A:taxonomy><term>adsk:revit:grouping</term><label>Autodesk Revit Grouping</label></A:taxonomy>'
             '<category><term>%s</term><scheme>adsk:revit:grouping</scheme></category><link rel="design-2d" type="application/rfa" href="."><A:design-file><A:title>%s</A:title><A:product>Revit</A:product>'
-            '<A:product-version>2024</A:product-version><A:updated>%s</A:updated></A:design-file></link><A:family type="user"><A:variationCount>1</A:variationCount><A:part type="user"><title>%s</title></A:part></A:family></entry>'
-            % (title, w, category, filename, w, title)).encode('utf-8')
+            '<A:product-version>%s</A:product-version><A:updated>%s</A:updated></A:design-file></link><A:family type="user"><A:variationCount>1</A:variationCount><A:part type="user"><title>%s</title></A:part></A:family></entry>'
+            % (title, w, category, filename, fmt, w, title)).encode('utf-8')
 
 
 def png_blank(w=128, h=128, rgb=(236, 236, 236)):
@@ -99,3 +107,8 @@ def basic_file_info(path, save_guid, build=BUILD, fmt=FORMAT):
 # partition GUID (PartitionTable must carry the same GUID).
 CONTENTS_GUID = '7e546952-3e9a-4f2c-b39b-bca768a3e094'
 CONTENTS_STREAM = bytes.fromhex('621922051b000000010000000100000043020000000800000001000100010001000200020004000400040004000400040008000800080008000a00000000000000020000000900d8210000001000000000000062192205000000001f8b080000000000000b62656540026c40eccee0c3e0cfe0c4e008a489018c401c94195237cb4ec77ff3ec3dcb33163f98f2ef3f584a08888d180c80d898c1104c5b32c40359a660acc150c160c660c2a0c9c00e358a1988ff030133d45822c17f280866059191acf8d402000000ffff020c004227e0e6f00000000000000c28bed72ed8b0db31a569e3c9548558776796ee816ebb2964f804bc477b3cb0d1feff4555b10dc0b1a718')
+
+CONTENTS_BY_FORMAT = {
+    '2024': (CONTENTS_GUID, CONTENTS_STREAM),
+    '2026': ('68031d2d-ac5f-45b8-a9e0-952b42ffb6c9', bytes.fromhex('621922051c000000010000000000000062192205000000001f8b080000000000000bb2636540026c40eccee0c3e0cfe0c4e008a489018c40ac2bcb9c11bf6687ebca0753b59dfe6f3bf9ef3f584a08888d180c80d814489a3218325832c403495330d660a86030633061d06460871ac50cc4ff8180196a2c91e03f14f4b082c849acf8d402000000ffff020c00015ec321f00000000000000000c2a971b4cf65e056cc4ffc91504ad4eacc84652a82dbd939099cbdaa05e086e7a73e1456eb0679a9eb')),
+}

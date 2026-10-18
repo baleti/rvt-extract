@@ -2,6 +2,8 @@
 import struct
 
 HDR = b'\x83\x05'
+TRAILER_CONST = b'\x01\x09'       # u16 at trailer+8, from the project's ElemTable (year specific)
+TAG = None
 NEG8 = b'\xff' * 8
 
 
@@ -22,12 +24,12 @@ def cd_rows(seg, W=8):
 def build(all_ids, own, owners, family_id, special_neg=()):
     """all_ids: every element id of the document; own: ids that belong to the family itself; owners: {id: 8 owner bytes} from the content doc;
     special_neg: ids of shared rows with owner -1 (KeynoteTable, AssemblyCodeTable)"""
-    out = bytearray(HDR + struct.pack('<I', len(all_ids)))
+    out = bytearray((TAG or HDR) + struct.pack('<I', len(all_ids)))
     fam = family_id.to_bytes(8, 'little')
     for i in sorted(all_ids):
         idb = i.to_bytes(8, 'little')
         if i in special_neg: out += idb + b'\0' * 12 + idb + NEG8 + b'\0\0\0\0'
         elif i in own: out += idb + b'\0' * 8 + b'\xff\xff\xff\xff' + idb + owners.get(i, NEG8) + b'\0\0\0\0'
         else: out += idb + b'\0' * 12 + idb + fam + b'\0\0\0\0'
-    out += b'\0\0\0\0\xff\xff\xff\xff\x01\x09\0\0' + max(all_ids).to_bytes(8, 'little') + b'\0\0\0\0'
+    out += b'\0\0\0\0\xff\xff\xff\xff' + TRAILER_CONST + b'\0\0' + max(all_ids).to_bytes(8, 'little') + b'\0\0\0\0'
     return bytes(out)

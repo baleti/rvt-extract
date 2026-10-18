@@ -51,7 +51,13 @@ def build_tree(sch, proj, blob, ids, remap=None):
                 E[k] = [x for x in pv if _int(x['m_gstyleId']) in ids and _int(x['m_gstyleId']) not in have] + list(v)
             elif name == 'ESSchemaStorage' and k in ('m_storedForgeSchemas', 'm_storedParameterSchemas'):
                 E[k] = copy.deepcopy(pv)
+            elif name == 'PropagationFilterData' and k == 'm_data':
+                E[k] = copy.deepcopy(pv)
             elif name == 'ElemsSetWithCellsTracking' and k == 'm_elemIdSetMap':
+                for ps in pv:
+                    if not any(_int(x['first']) == _int(ps['first']) for x in v):
+                        keep = [i for i in ps['second']['m_idSet'] if rm(i) in ids]
+                        if keep: v.append(copy.deepcopy(ps))
                 for x in v:
                     ps = next((y for y in pv if _int(y['first']) == _int(x['first'])), None)
                     if ps is not None:

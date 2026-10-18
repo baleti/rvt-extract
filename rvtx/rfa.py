@@ -48,7 +48,19 @@ class ProjectDocs:
         self.kn_proj = next((i for i, r in self.byid.items() if r['class'] == 'KeynoteTable'), None)
         self.ac_proj = next((i for i, r in self.byid.items() if r['class'] == 'AssemblyCodeTable'), None)
         self.guid_pos = {}
+        self._project_constants()
         self.standard = self._standard_shared()
+
+    def _project_constants(self):
+        o = self.o; g = lambda n: rvtfmt.inflate_stream(o.openstream(n).read())[1]
+        SS.TAGS.update({'History': g('Global/History')[:2], 'DIT': g('Global/DocumentIncrementTable')[:2], 'PT': g('Global/PartitionTable')[:2]})
+        cd = g('Global/ContentDocuments')
+        SS.TAGS['CD'] = cd[:2] if len(cd) < 20 else cd[-14:-12]        # the empty marker of a family document is the last 14 bytes of the project's (a project ends with an empty marker too)
+        et = g('Global/ElemTable'); ET.TAG = et[:2]; ET.TRAILER_CONST = et[-24 + 8:-24 + 10]
+        t = o.openstream('BasicFileInfo').read().decode('utf-16le', 'ignore') + o.openstream('BasicFileInfo').read()[1:].decode('utf-16le', 'ignore')
+        m = re.search(r'Format: (\d+)', t); self.fmt = m.group(1) if m else '2024'
+        m = re.search(r'Build: (\S+\(x64\))', t); self.build = m.group(1) if m else SS.BUILD
+        self.contents_guid, self.contents_stream = SS.CONTENTS_BY_FORMAT.get(self.fmt, (None, None))
 
     # ---- shared (standard) elements: builtin-category graphics styles + referenced materials/patterns/assets + the special materials
     def _standard_shared(self):
@@ -217,7 +229,8 @@ class Builder:
 
     def streams(self, family_name, category, path, when=None):
         pd = self.pd; when = when or time.time()
-        save_guid = str(uuid.uuid4()); doc_guid = str(uuid.uuid4()); part_guid = SS.CONTENTS_GUID
+        save_guid = str(uuid.uuid4()); doc_guid = str(uuid.uuid4()); part_guid = pd.contents_guid
+        if part_guid is None: raise NotImplementedError('no Revit-written Contents stream known for format %s' % pd.fmt)
         n = len(self.all_ids)
         g, blob = pd.segment(self.fam_rec['fields']['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid'])
         tag = pd.tag_adoc
@@ -235,10 +248,10 @@ class Builder:
         st['Global/PartitionTable'] = self.global_stream('Global/PartitionTable', SS.partition_table(part_guid))
         st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents_empty())
         st['Partitions/0'] = self.partition_stream()
-        st['BasicFileInfo'] = SS.basic_file_info(path, save_guid)
-        st['Contents'] = SS.CONTENTS_STREAM
+        st['BasicFileInfo'] = SS.basic_file_info(path, save_guid, pd.build, pd.fmt)
+        st['Contents'] = pd.contents_stream
         st['TransmissionData'] = SS.transmission_data(self.kn, self.ac)
-        st['PartAtom'] = SS.part_atom(family_name, category, os.path.basename(path), when)
+        st['PartAtom'] = SS.part_atom(family_name, category, os.path.basename(path), when, pd.fmt)
         st['RevitPreview4.0'] = SS.preview()
         self.last_trees = (lt, bt)
         return st
