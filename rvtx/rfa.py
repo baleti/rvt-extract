@@ -146,16 +146,29 @@ class Builder:
                 t['m_familyId'] = EID(fid)
                 t['m_parents']['obj']['m_deletion'].append(EID(fid))
                 t['m_abFlags4Bytes'] = t['m_abFlags4Bytes'] & ~0x10
+                t['m_regenHistory']['m_historyMap'] = []
             return self.edit(b, fn)
         def fix_r(b):
             return self.edit(b, lambda t: t.__setitem__('m_famId', EID(fid)))
         for i in shared:
             H[i] = fix_h(pd.doc0['H'][i]); R[i] = (fix_r(pd.doc0['R'][i][0]), None); Z[i] = pd.doc0['Z'].get(i)
         for new, old in ((kn, pd.kn_proj), (ac, pd.ac_proj)):
-            def hh(t, new=new):
-                t['m_familyId'] = EID(NEG); 
-            H[new] = pd.doc0['H'][old]
-            R[new] = (self.edit(pd.doc0['R'][old][0], lambda t, new=new: t.__setitem__('m_id', EID(new))), None)
+            def hh(t, new=new, old=old):
+                dl = t['m_parents']['obj']['m_deletion']
+                t['m_parents']['obj']['m_deletion'] = [EID(new) if int(x) == old else x for x in dl]
+            H[new] = fix_h(self.edit(pd.doc0['H'][old], hh))
+            def rr(t, new=new):
+                t['m_id'] = EID(new); t['m_famId'] = EID(fid); t['m_lastReadSucceeded'] = 0
+                t['m_oKeyBasedTreeEntries'] = {'null': 0}
+                for cell in t['m_cellList']['obj']['m_cells']:
+                    o = cell.get('obj') or {}
+                    if 'm_externalResourceReferences' in o:
+                        o['m_externalResourceReferences'] = []
+                        for e in o['m_externalResourceReferencesExpanded']:
+                            for r in e['second']['m_refs']:
+                                x = r['second']; x['m_displayPath'] = ''; x['m_version'] = ''
+                                x['m_referenceInformation'] = [{'first': 'ModelIdentity', 'second': '00000000-0000-0000-0000-000000000000'}, {'first': 'Path', 'second': ''}, {'first': 'PathType', 'second': 'Absolute'}]
+            R[new] = (self.edit(pd.doc0['R'][old][0], rr), None)
             Z[new] = pd.doc0['Z'].get(old)
         all_ids = sorted(H)
         # ---- Family record + header
@@ -172,7 +185,7 @@ class Builder:
             for e in all_ids:
                 if e == fid: continue
                 if e in idx: x = copy.deepcopy(tmpl); x['m_elementId'] = EID(e); x['m_index'] = idx[e]; data.append(x)
-                else: data.append(ent[e])
+                elif e in ent: data.append(ent[e])
             t['m_familyIds']['obj']['m_data'] = data
             pr = t['m_pFamilyTypes']['obj']['m_pairs']
             if len(pr) == 1 and pr[0]['name'] == f.get('m_name'): pr[0]['name'] = ' '
