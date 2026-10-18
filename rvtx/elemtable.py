@@ -33,3 +33,32 @@ def build(all_ids, own, owners, family_id, special_neg=()):
         else: out += idb + b'\0' * 12 + idb + fam + b'\0\0\0\0'
     out += b'\0\0\0\0\xff\xff\xff\xff' + TRAILER_CONST + b'\0\0' + max(all_ids).to_bytes(8, 'little') + b'\0\0\0\0'
     return bytes(out)
+
+
+# ---- 4-byte element ids (Revit <= 2023): 28-byte rows [id][id][a][b][c][x][owner]; layout from the Revit-written sample families; own/shared variants are inferred (a,b,c zero; own c = ffffffff)
+TRAILER4 = b'\xff\x10\x08\x00'     # u32 before the max id in the trailer, from the project's ElemTable
+
+
+def cd_rows4(seg):
+    rows = {}
+    n = len(seg) - 28
+    k = 0
+    while k <= n:
+        if seg[k + 4:k + 8] == seg[k + 8:k + 12] and seg[k + 24:k + 28] == b'\0\0\0\0' and seg[k + 20:k + 24] == b'\xff\xff\xff\xff':
+            i = int.from_bytes(seg[k + 4:k + 8], 'little')
+            if 0 < i < 1 << 31 and i not in rows: rows[i] = seg[k:k + 4]
+            k += 28
+        else: k += 1
+    return rows
+
+
+def build4(all_ids, own, owners, family_id, special_neg=()):
+    out = bytearray((TAG or HDR) + struct.pack('<I', len(all_ids)))
+    fam = family_id.to_bytes(4, 'little'); NEG4 = b'\xff\xff\xff\xff'
+    for i in sorted(all_ids):
+        idb = i.to_bytes(4, 'little')
+        if i in special_neg: out += idb + idb + b'\0' * 12 + NEG4
+        elif i in own: out += idb + idb + b'\0\0\0\0\0\0\0\0' + NEG4 + b'\0\0\0\0' + owners.get(i, NEG4)
+        else: out += idb + idb + b'\0' * 12 + fam
+    out += TRAILER4 + max(all_ids).to_bytes(4, 'little') + b'\0\0\0\0'
+    return bytes(out)
