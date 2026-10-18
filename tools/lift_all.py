@@ -3,7 +3,7 @@ import sys, os, json, re, time, traceback
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.realpath(__file__)), '..'))
 import rvtx
 from rvtx import core, rfa, manifest
-path, out = sys.argv[1], sys.argv[2]; only = set(sys.argv[3:])
+path, out = sys.argv[1], sys.argv[2]; only = set(x for a in sys.argv[3:] for x in a.split(',') if x); os.makedirs(out, exist_ok=True)
 def safe(s): return re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', s or 'Unnamed').strip(' .') or 'Unnamed'
 t0 = time.time(); prj = core.Project(path); pd = rfa.ProjectDocs(prj); print('loaded %.1fs' % (time.time() - t0), flush=True)
 B = rfa.Builder(pd); status = {}
