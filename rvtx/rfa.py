@@ -156,7 +156,7 @@ class Builder:
             def hh(t, new=new, old=old):
                 dl = t['m_parents']['obj']['m_deletion']
                 t['m_parents']['obj']['m_deletion'] = [EID(new) if int(x) == old else x for x in dl]
-            H[new] = fix_h(self.edit(pd.doc0['H'][old], hh))
+            H[new] = self.edit(fix_h(self.edit(pd.doc0['H'][old], hh)), lambda t: t['m_parents']['obj']['m_deletion'].reverse())
             def rr(t, new=new):
                 t['m_id'] = EID(new); t['m_famId'] = EID(fid); t['m_lastReadSucceeded'] = 0
                 t['m_oKeyBasedTreeEntries'] = {'null': 0}
@@ -217,7 +217,7 @@ class Builder:
 
     def streams(self, family_name, category, path, when=None):
         pd = self.pd; when = when or time.time()
-        save_guid = str(uuid.uuid4()); doc_guid = str(uuid.uuid4()); part_guid = str(uuid.uuid4())
+        save_guid = str(uuid.uuid4()); doc_guid = str(uuid.uuid4()); part_guid = SS.CONTENTS_GUID
         n = len(self.all_ids)
         g, blob = pd.segment(self.fam_rec['fields']['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid'])
         tag = pd.tag_adoc
@@ -236,8 +236,7 @@ class Builder:
         st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents_empty())
         st['Partitions/0'] = self.partition_stream()
         st['BasicFileInfo'] = SS.basic_file_info(path, save_guid)
-        raw = SS.contents(part_guid)
-        st['Contents'] = SS._CONTENTS_HEAD + PT.GZH + self._deflate(raw) + struct.pack('<II', zlib.crc32(raw) & 0xFFFFFFFF, len(raw)) + b'\0' * 46
+        st['Contents'] = SS.CONTENTS_STREAM
         st['TransmissionData'] = SS.transmission_data(self.kn, self.ac)
         st['PartAtom'] = SS.part_atom(family_name, category, os.path.basename(path), when)
         st['RevitPreview4.0'] = SS.preview()

@@ -92,3 +92,10 @@ def basic_file_info(path, save_guid, build=BUILD, fmt=FORMAT):
             'IsSingleUserCloudModel: False\r\nAuthor: Autodesk Revit\r\nClientAppName: RevitApplication\r\n') % (fmt, build, path, nul, save_guid, save_guid, nul)
     t16 = text.encode('utf-16le').replace('False\r\n'.encode('utf-16le'), b'False\0' + '\r\n'.encode('utf-16le'))
     return head + b'\r\n' + t16[:-4] + b'\r\n'
+
+
+# The Contents stream ends with 46 bytes after the gzip trailer that Revit validates and that depend on the exact compressed bytes (zero or recomputed
+# deflate bytes are rejected; algorithm not recovered). The stream describes the GLOBAL partition only, so one Revit-written instance is reused together with its
+# partition GUID (PartitionTable must carry the same GUID).
+CONTENTS_GUID = '7e546952-3e9a-4f2c-b39b-bca768a3e094'
+CONTENTS_STREAM = bytes.fromhex('621922051b000000010000000100000043020000000800000001000100010001000200020004000400040004000400040008000800080008000a00000000000000020000000900d8210000001000000000000062192205000000001f8b080000000000000b62656540026c40eccee0c3e0cfe0c4e008a489018c401c94195237cb4ec77ff3ec3dcb33163f98f2ef3f584a08888d180c80d898c1104c5b32c40359a660acc150c160c660c2a0c9c00e358a1988ff030133d45822c17f280866059191acf8d402000000ffff020c004227e0e6f00000000000000c28bed72ed8b0db31a569e3c9548558776796ee816ebb2964f804bc477b3cb0d1feff4555b10dc0b1a718')
