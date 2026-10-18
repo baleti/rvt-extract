@@ -80,3 +80,13 @@ Plan: pick 30-60 files (years/sizes/disciplines) + Autodesk samples; run `rvt-ex
 facts diff vs EditFamily+SaveAs for a sample per file; failure classification and fixes; RESULTS.md (anonymised) + README limits.
 Known state: 2024 Snowdon: 177 families lift OK; Revit opens ~all except Profiles/Rebar Shape/Level Head families (being diagnosed: Rebar Shape lacks ParamElemExternal shared parameter closure; others VarSketch R diffs);
 2026: Latest/ET/PartitionTable/ContentDocuments byte-identical to Revit's for Callout Head. Oracle jobs must stay < 280 s per job (10-file slices).
+
+## STATE 2026-10-18 evening (weekly budget nearly spent: finish with documentation)
+DONE: .rfa lifting works and is Revit-validated for Revit 2024 (177 families of Snowdon 2024: most open; facts identical to EditFamily+SaveAs), 2026 streams byte-identical for Callout Head.
+Known failing classes (2024): Profiles/Rebar Shape/Level Head families refuse to open (diagnosis tools/lift_cmp.py: VarSketch R and some H differ; Rebar Shape lacks ParamElemExternal (shared parameter)
+elements that Revit adds -> add ParamElemExternal to rfa.TARGET closure); nested families (second doc partition + ContentDocuments + LoadedFamilyInfo not written).
+Older formats (4-byte ids, 2019-2023): code path written (elemtable.build4, W-aware partition) but lifted 2020 rfa do NOT open in Revit 2024 yet (CorruptModelException) -> format-specific row/stream layouts unverified.
+2025: no Contents instance (CONTENTS_SAMPLES from sample families added, unverified).
+Batch: tools/run_batch.sh over private/map.tsv (53 files: 40 studyx-NNN + 13 ofc-NNN; officeA/officeB now allowed locally, shown only as ofc-NNN) -> out/studyx/<id>/summary.json; table: python3 tools/sumtab.py.
+Oracle: oracle/rfacheck.py (keep jobs < 280 s: RFA_SLICE=a:b, RFA_FLAT=1), oracle/famsave.py. gt_fam/2024_43 and 2026_55 are the ground truth sets.
+Next if budget allows: ParamElemExternal closure; VarSketch diffs; per-file Revit open sampling for studyx 2024 files; RESULTS.md.
