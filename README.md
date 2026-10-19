@@ -20,4 +20,4 @@ A project embeds the full document of each loaded family: Family.m_oFamDoc, a pe
 See HANDOFF.md for the evidence and status of the .rfa assembly.
 
 ## Limits
-.rfa output is Revit-validated only for Revit 2024 (see RESULTS.md); other years and nested families are JSON/manifest only. Experimental: RVTX_PEE=1 adds shared-parameter closure.
+.rfa output is Revit-validated only for Revit 2024 (see RESULTS.md); other years and nested families are JSON/manifest only. Shared-parameter closure (needed by Rebar Shape families) is on by default; RVTX_PEE=0 disables it.
