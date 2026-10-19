@@ -35,7 +35,7 @@ prj = core.Project(path); meta['load_s'] = round(time.time() - t0, 1); meta['rss
 fams = sorted([fr for fr in prj.families() if fr['fields'].get('m_name')], key=lambda r: r['fields'].get('m_name') or '')
 meta['families_total'] = len(fams)
 json.dump(meta, open(J('.meta.json'), 'w'))
-todo = [i for i in range(len(fams)) if i not in done]
+todo = [i for i in range(len(fams)) if i not in done] if not os.environ.get('KINDS_ONLY') else []
 fl = open(J('.fam.jsonl'), 'a')
 if todo:
     t1 = time.time(); docs, st = core.scan_family_docs(prj); meta['scan_s'] = round(time.time() - t1, 1); meta['rss_scan_mb'] = rss()
