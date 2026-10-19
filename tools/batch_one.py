@@ -67,7 +67,7 @@ for k in list(items.KINDS) + list(files.KINDS):
     try:
         fn = items.KINDS.get(k)
         data, fls = fn(prj) if fn else files.KINDS[k](path)
-        r.update(ok=True, count=len(data) if hasattr(data, '__len__') else 1, files=len(fls), file_bytes=sum(len(b) for _, b in fls))
+        r.update(ok=True, count=(sum(len(x) if hasattr(x, '__len__') else 1 for x in data.values()) if isinstance(data, dict) else len(data) if hasattr(data, '__len__') else 1), top=(sorted((k, len(x) if hasattr(x, '__len__') else 1) for k, x in data.items()) if isinstance(data, dict) else None), files=len(fls), file_bytes=sum(len(b) for _, b in fls))
         r['json_bytes'] = len(json.dumps(data, default=str))
     except Exception as ex:
         r.update(ok=False, error='%s: %s' % (type(ex).__name__, str(ex)[:300]), trace=traceback.format_exc()[-400:])
