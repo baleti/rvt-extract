@@ -25,3 +25,6 @@ Layer (a) JSON/manifest extraction works for all years. Batch table (tools/sumta
     ofc-003  2024      11    79    71     0     68      3  1852 [] 
     ofc-006  2025       5    42    34     0      0     34   496 [] 
     ofc-007  2025      20    39    23     9      0     23  2231 [] 
+
+## Offline record comparison, Snowdon 2024, RVTX_PEE=1 build vs Revit's own EditFamily+SaveAs rfa (tools/rfa_setcmp.py, 2026-10-20)
+177 families lifted. Record id set identical to Revit's: 133; differ: 44 (typically 2-8 ids: regenerated dimension strings / derived records; larger for fabric symbols and framing families). Records byte-identical for all ids: 41; 1-3 byte-differing records: 85; more than 3: 51 (cosmetic: flags, parents lists, regeneration caches). Revit open results for this set: pending (oracle remote-host unreachable, jobs parked).
