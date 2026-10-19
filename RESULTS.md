@@ -3,7 +3,7 @@
 Status of .rfa lifting by Revit version (validated = opens in Revit with facts equal to EditFamily+SaveAs):
 | Source | Status |
 |---|---|
-| Revit 2024 (Snowdon Structural, 177 families) | lifts; most open in Revit 2024, facts identical to Revit's own rfa; Profiles / Rebar Shape / Level Head families do not open yet |
+| Revit 2024 (Snowdon Structural, 177 families) | lifts; 77 of 177 open in Revit 2024 with facts identical to Revit's own rfa; the other 100 fail with CorruptModelException (68 Rebar Shape, 28 Profiles, 4 Level Heads); counts from out/rfa_chk/lift43_*, Oct 18 run |
 | Revit 2026 | streams byte-identical for Callout Head; broader validation pending |
 | Revit 2017-2023 (4-byte ids) | rfa written but rejected by Revit 2024 (CorruptModelException); layouts unverified |
 | Revit 2025 | no Contents stream sample; unverified |
