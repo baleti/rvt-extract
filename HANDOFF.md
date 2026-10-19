@@ -90,3 +90,8 @@ Older formats (4-byte ids, 2019-2023): code path written (elemtable.build4, W-aw
 Batch: tools/run_batch.sh over private/map.tsv (53 files: 40 studyx-NNN + 13 ofc-NNN; officeA/officeB now allowed locally, shown only as ofc-NNN) -> out/studyx/<id>/summary.json; table: python3 tools/sumtab.py.
 Oracle: oracle/rfacheck.py (keep jobs < 280 s: RFA_SLICE=a:b, RFA_FLAT=1), oracle/famsave.py. gt_fam/2024_43 and 2026_55 are the ground truth sets.
 Next if budget allows: ParamElemExternal closure; VarSketch diffs; per-file Revit open sampling for studyx 2024 files; RESULTS.md.
+
+## c7-fam takeover 2026-10-19 (claude7)
+Read all state. Blockers today: remote-host MemAvailable ~3 GB (monero VM + gpu-host; gate 11 GB closed), remote-host Revit VMs down, remote-host ~3 GB free (guard kills niced jobs <3.5 GB). No heavy runs or oracle validation possible; nothing was run or changed in code.
+Priority list when unblocked: (1) ParamElemExternal closure in rfa.TARGET (Rebar Shape), (2) VarSketch R diffs for Profiles/Level Head, (3) nested families (2nd doc partition, ContentDocuments, LoadedFamilyInfo), (4) 4-byte-id years 2017-2023 (CorruptModelException on 2024 open: verify on a 2023 Revit-saved rfa, needs oracle for older year), (5) 2025 Contents sample, (6) RESULTS.md table per sample project, README limits section.
+Layer (a) JSON/manifest extraction is already in rvtx/cli.py + manifest.py.
