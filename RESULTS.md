@@ -8,7 +8,7 @@ Pipeline per file: rvt-extract equivalent (manifest + .rfa lift per embedded fam
 - Corpus, 78 files 2017-2026: .rfa built for 2024: 1196/1345 (89%), 2026: 1027/1345 (76%); every other year 0%.
 - The gap in 2024/2026 is three whole files (2024 Site, 2026 Electrical, 2026 Facades) failing with "family has no embedded document"; every other 2024/2026 file builds 100%.
 - Years other than 2024/2026 stop at "no Revit-written Contents stream known for format N" (needs per-year template), 2018-2020 additionally at a KeyError (fix on branch test), 2017/2018 at VarSketch decode.
-- Real-world, 71 files: 41 ran, 30 exceeded the 7 GB per-file memory cap (remote-host slice is 9 GB; files up to 300 MB). Of the 41 only 2024 files build .rfa.
+- Real-world, 71 files: 41 ran, 30 exceeded the 7 GB per-file memory cap (remote-host slice is 9 GB; files up to 300 MB). Run 1: only 2024 files built .rfa; run 2 (merged code): 94.3% of embedded families built on the 41.
 - Other extractors (patterns, parameters, filters, phases, levels/grids, views, images, project_info, links, materials): no crash on any file that loaded.
 
 ## Corpus, run 2 (after c3-fam multi-partition/W=4/Contents work merged; .rfa BUILT, Revit-open status below/pending)
@@ -245,7 +245,89 @@ extractor kinds (files run, crashed, empty):
  materials            [78, 0, 0]
 
 
-## Real-world (anonymised)
+## Real-world, run 2 (merged code; the 41 of 71 files that fit the 7 GB per-file cap; 30 larger ones need more memory than remote-host offers)
+Headline: 3568 of 3785 families with an embedded doc built into .rfa (94.3%). Remaining failures are decoder gaps (DataStorage 99, Family 71, VarSketch 19, element-table desync 13, a few others). Revit-open check pending (remote-host unreachable).
+| file | year | MB | families | embedded | .rfa built | kinds failed | s | peak MB | note |
+|---|---|---|---|---|---|---|---|---|---|
+| studyx-001 | 2019 | 15 | 956 | 165 | 165 | 0 | 129.9 | 1993 |  |
+| studyx-002 | 2019 | 36 | 99 | 92 | 92 | 0 | 136.5 | 3859 |  |
+| studyx-003 | 2019 | 57 | 137 | 129 | 129 | 0 | 225.4 | 6215 |  |
+| studyx-006 | 2019 | 9 | 103 | 95 | 95 | 0 | 76.2 | 1151 |  |
+| studyx-007 | 2019 | 18 | 103 | 95 | 95 | 0 | 80.6 | 2847 |  |
+| studyx-008 | 2019 | 62 | 189 | 74 | 74 | 0 | 113.3 | 4044 |  |
+| studyx-012 | 2019 | 5 | 103 | 95 | 95 | 0 | 73.5 | 839 |  |
+| studyx-013 | 2019 | 11 | 103 | 95 | 95 | 0 | 77.7 | 2035 |  |
+| studyx-014 | 2019 | 18 | 103 | 95 | 95 | 0 | 81.2 | 2877 |  |
+| studyx-015 | 2022 | 50 | 62 | 42 | 40 | 0 | 67.6 | 4267 |  |
+| studyx-019 | 2022 | 34 | 79 | 71 | 68 | 0 | 98.9 | 4451 |  |
+| studyx-020 | 2022 | 40 | 149 | 141 | 139 | 0 | 161.7 | 3030 |  |
+| studyx-021 | 2022 | 45 | 233 | 226 | 226 | 0 | 275.6 | 3273 |  |
+| studyx-022 | 2022 | 51 | 115 | 107 | 103 | 0 | 176.2 | 5272 |  |
+| studyx-023 | 2022 | 70 | 0 | 0 | 0 | 0 | None | None | FAILED |
+| studyx-028 | 2024 | 29 | 84 | 47 | 47 | 0 | 50.0 | 3747 |  |
+| studyx-029 | 2019 | 42 | 103 | 95 | 95 | 0 | 90.5 | 5729 |  |
+| studyx-030 | 2022 | 56 | 140 | 132 | 128 | 0 | 216.9 | 6166 |  |
+| studyx-031 | 2022 | 75 | 147 | 132 | 131 | 0 | 183.4 | 5584 |  |
+| studyx-038 | 2022 | 29 | 52 | 44 | 44 | 0 | 59.1 | 4799 |  |
+| studyx-040 | 2022 | 78 | 226 | 219 | 218 | 0 | 346.8 | 5038 |  |
+| studyx-041 | 2024 | 129 | 291 | 238 | 237 | 0 | 6.1 | 6230 |  |
+| studyx-045 | 2018 | 3 | 43 | 35 | 29 | 0 | 22.3 | 401 |  |
+| studyx-046 | 2024 | 7 | 108 | 100 | 100 | 0 | 90.0 | 728 |  |
+| studyx-047 | 2024 | 24 | 78 | 70 | 69 | 0 | 75.1 | 2946 |  |
+| studyx-051 | 2015 | 3 | 60 | 52 | 33 | 0 | 21.9 | 303 |  |
+| studyx-052 | 2025 | 5 | 42 | 34 | 34 | 0 | 36.1 | 579 |  |
+| studyx-053 | 2024 | 11 | 79 | 71 | 68 | 0 | 170.2 | 1717 |  |
+| studyx-054 | 2025 | 18 | 44 | 26 | 26 | 0 | 33.0 | 1939 |  |
+| studyx-055 | 2025 | 19 | 44 | 24 | 24 | 0 | 34.0 | 2157 |  |
+| studyx-056 | 2025 | 19 | 42 | 24 | 24 | 0 | 32.3 | 2099 |  |
+| studyx-057 | 2025 | 19 | 42 | 24 | 24 | 0 | 31.6 | 2128 |  |
+| studyx-058 | 2025 | 20 | 39 | 23 | 23 | 0 | 34.1 | 2339 |  |
+| studyx-059 | 2025 | 20 | 44 | 26 | 26 | 0 | 33.1 | 2142 |  |
+| studyx-060 | 2024 | 51 | 126 | 116 | 113 | 0 | 297.9 | 3741 |  |
+| studyx-061 | 2025 | 60 | 97 | 66 | 66 | 0 | 4.1 | 4168 |  |
+| studyx-062 | 2024 | 80 | 232 | 221 | 158 | 0 | 4.9 | 4565 |  |
+| studyx-063 | 2025 | 112 | 151 | 141 | 95 | 0 | 213.1 | 4246 |  |
+| studyx-064 | 2025 | 123 | 206 | 193 | 139 | 0 | 302.9 | 5430 |  |
+| studyx-065 | 2025 | 125 | 120 | 110 | 106 | 0 | 140.9 | 3872 |  |
+| studyx-066 | 2025 | 129 | 0 | 0 | 0 | 0 | None | None |  |
+
+files 41, embedded families 3785, built 3568 (94.3%)
+
+by year:
+  2015 files 1 embedded 52 built 33
+  2018 files 1 embedded 35 built 29
+  2019 files 10 embedded 1030 built 1030
+  2022 files 10 embedded 1114 built 1097
+  2024 files 7 embedded 863 built 792
+  2025 files 12 embedded 691 built 587
+
+family failure causes:
+    99  AssertionError: record not fully decoded (DataStorage)
+    71  AssertionError: record not fully decoded (Family)
+    19  AssertionError: record not fully decoded (VarSketch)
+    13  Desync: pointer tag N at N (ADocument.ADocument.m_elemTable) @@ ADocument.m_elemTable T=NxNe at
+     4  AssertionError: record not fully decoded (RevolutionElem)
+     4  AssertionError: record not fully decoded (ExtrusionElem)
+     3  AssertionError: record not fully decoded (DBViewPlan)
+     3  AssertionError: record not fully decoded (RefPlane)
+     1  AssertionError: record not fully decoded (FamilyInstance)
+
+extractor kinds (files run, crashed, empty):
+ fill_patterns        [39, 0, 0]
+ line_patterns        [39, 0, 0]
+ shared_parameters    [39, 0, 0]
+ project_parameters   [39, 0, 11]
+ filters              [39, 0, 0]
+ phases               [39, 0, 0]
+ levels_grids         [39, 0, 0]
+ views                [39, 0, 0]
+ images               [39, 0, 11]
+ project_info         [39, 0, 0]
+ links                [39, 0, 0]
+ materials            [39, 0, 0]
+
+
+## Real-world, run 1 (before the merge)
 | file | year | MB | families | embedded | .rfa built | kinds failed | s | peak MB | note |
 |---|---|---|---|---|---|---|---|---|---|
 | studyx-001 | 2019 | 15 | 956 | 165 | 0 | 0 | 119.0 | 2259 |  |
