@@ -1,0 +1,5 @@
+# HANDOFF c6-famtest (2026-10-19)
+State: all work committed on branch test. Read RESULTS.md, NEEDS-FROM-TEST.md, TESTING.md, PROGRESS.md.
+Done: corpus run1 and run2 (78 files; run2 built 9508/10191 .rfa, 2017 VarSketch decode and 12 DataStorage remain); real-world run 1 (41 of 71 files fit the 7 GB cap); partial Revit 2024 open/facts check of the 2024 Structural sample; failure classes handed to c3-fam in NEEDS-FROM-TEST.md.
+Queued on remote-host (waiting for the 11 GB gate; retry loops on remote-host in private/keep_studyx.log and private/pee.launch): studyx (rerun of 41 real-world files with merged code, state/out in the literal remote-host dir ~/src/rvt-extract-test/$HOME/scratch-famtest/state_studyx), pee (ParamElemExternal probe). Kill the loops with pgrep -f "[h]1_keep.sh studyx" and "[h]1_job.sh pee" if not wanted.
+Oracle queue (remote-host VMs were down): see PROGRESS.md (2024 Structural remaining slices, per-year upgrade-open samples, 2026 Structural, recheck after c3-fam fixes).
