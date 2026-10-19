@@ -14,3 +14,16 @@ fi = f.get('m_familyIds'); print('familyIds type', type(fi).__name__, str(fi)[:3
 pd = rfa.ProjectDocs(prj); k = pd.family_doc_index(fr); print('doc', k, 'n h', len(pd.docs[k]['H']))
 ids = {i for i, b in pd.docs[k]['H']}
 print('pee ids inside this family doc:', len(ids & set(pee)), 'family doc ids near 187616..:', len([i for i in ids if 187616 <= i < 187640]))
+# step 2: which project PEE elements match the family's shared parameters
+want = set(range(187616, 187628)); have = want & set(pee); print('gt ids present in project PEE:', sorted(have))
+def guid(r):
+    k = r['fields'].get('m_externalParamKey'); return (k or {}).get('m_guidValue', {}).get('m_guid') if k else None
+print('guids of those:', [(i, guid(pee[i]), (pee[i]['fields']['m_pParamDef']['obj'] or {}).get('m_caption')) for i in sorted(have)][:12])
+fam_g = {}
+for i, b in pd.docs[k]['H']:
+    r = pd.byid.get(i) if hasattr(pd, 'byid') else None
+import rvt_decode as D
+recs = {r['id']: r for (i, c), r in prj.recs.items() if c == 'ParamElemFamily'}
+mine = [r for r in recs.values() if r['id'] in ids or r.get('A') in ids]
+print('ParamElemFamily records in this family doc:', len(mine))
+print('shared-flagged:', [(r['id'], (r['fields']['m_pParamDef']['obj'] or {}).get('m_caption'), str(r['fields'].get('m_externalParamKey'))[:80]) for r in mine][:6])
