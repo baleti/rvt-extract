@@ -8,6 +8,7 @@ import rvt_scan as S, rvt_decode as D, rvt2text as T, rvtfmt, fmt_parser as fp
 
 EID = D.EID
 TARGET = {'MaterialElem', 'FillPatternElem', 'LinePatternElem', 'AppearanceAssetElem', 'PropertySetElement'}
+if os.environ.get('RVTX_PEE') == '1': TARGET = TARGET | {'ParamElemExternal'}  # experimental: shared-parameter closure (Rebar Shape), unvalidated
 SPECIAL_MATERIALS = {'Default', 'Poche', 'Phase-Demo', 'Phase-Exist', 'Phase-Temp'}
 KEY = re.compile(r'(Id|Ids|ElemId|Pattern|Material)$')
 
