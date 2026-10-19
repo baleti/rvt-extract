@@ -14,3 +14,6 @@ ca = collections.Counter(tag(x) for x in a.values()); cb = collections.Counter(t
 print(len(a), len(b), 'ids only A', len(set(a) - set(b)), 'only B', len(set(b) - set(a)))
 for t in sorted(set(ca) | set(cb)):
     if ca[t] != cb[t]: print('tag', t, ca[t], cb[t])
+import difflib
+dif = collections.Counter(tag(a[i]) for i in set(a) & set(b) if a[i] != b[i])
+print('byte-differing R records by tag', dict(dif), 'only A tags', collections.Counter(tag(a[i]) for i in set(a)-set(b)), 'only B tags', collections.Counter(tag(b[i]) for i in set(b)-set(a)))
