@@ -8,11 +8,18 @@ o = olefile.OleFileIO(sys.argv[2]); gcd = rvtfmt.inflate_stream(o.openstream('Gl
 fr = next(r for r in prj.families() if r['fields'].get('m_name') == sys.argv[3]); k = pd.family_doc_index(fr)
 doc = pd.docs[k]; fid = fr['id']
 print('gt CD len', len(gcd), 'head', gcd[:40].hex())
+NEG = (1 << 64) - 1
+out = set(); rfa._eids({k_: v for k_, v in fr['fields'].items() if k_ != 'm_oFamDoc'}, out)
+cnt = collections.Counter(); first = {}
+for e in out:
+    k2 = pd.id_doc.get(e)
+    if e != NEG and k2 and k2 != k: cnt[k2] += 1; first.setdefault(k2, e)
+print('project Family record refs into other docs', dict(cnt), first)
 cnt = collections.Counter(); first = {}
 for i, b, s in doc['R']:
-    if i == (1 << 64) - 1: continue
+    if i == NEG: continue
     out = set(); rfa._eids(B.dec(b)[1], out)
     for e in out:
         k2 = pd.id_doc.get(e)
-        if k2 and k2 != k: cnt[k2] += 1; first.setdefault(k2, (i, B.class_of(b), e))
-print('docs referenced from own records', dict(cnt)); print('first refs', first)
+        if e != NEG and k2 and k2 != k: cnt[k2] += 1; first.setdefault(k2, (i, B.class_of(b), e))
+print('own records refs into other docs', dict(cnt)); print('first refs', first)
