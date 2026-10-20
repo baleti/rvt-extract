@@ -4,9 +4,11 @@ var app = UIApp.Application; var dir = @"__DIR__"; var outd = @"C:\wl\out\__TAG_
 var sb = new StringBuilder(); Func<double, string> N = (x) => x.ToString("R", CultureInfo.InvariantCulture);
 Func<object, string, object> Prop = (o, n) => { try { var pi = o.GetType().GetProperty(n); return pi == null ? null : pi.GetValue(o, null); } catch { return null; } };
 Document proj = null;
+var dlgs = new List<string>(); string curName = "";
+UIApp.DialogBoxShowing += (sender, e) => { var t = e as Autodesk.Revit.UI.Events.TaskDialogShowingEventArgs; if (t != null) { dlgs.Add("DIALOG\t" + curName + "\t" + t.DialogId + "\t" + (t.Message ?? "").Replace("\n", " ")); try { t.OverrideResult(1001); } catch { } } else { try { e.OverrideResult(1); } catch { } } };
 try { proj = app.NewProjectDocument(UnitSystem.Imperial); } catch (Exception ex) { sb.AppendLine("NOPROJECT\t" + ex.Message.Split((char)10)[0]); }
 foreach (var path in Directory.GetFiles(dir, "*.rfa").OrderBy(x => x)) {
-  var name = Path.GetFileName(path); Document d = null;
+  var name = Path.GetFileName(path); Document d = null; curName = name; int nd0 = dlgs.Count;
   try { d = app.OpenDocumentFile(ModelPathUtils.ConvertUserVisiblePathToModelPath(path), new OpenOptions()); }
   catch (Exception ex) { sb.AppendLine("OPENFAIL\t" + name + "\t" + ex.GetType().Name + ": " + ex.Message.Split((char)10)[0]); continue; }
   try {
@@ -34,4 +36,4 @@ foreach (var path in Directory.GetFiles(dir, "*.rfa").OrderBy(x => x)) {
   } catch (Exception ex) { sb.AppendLine("CHECKFAIL\t" + name + "\t" + ex.Message.Split((char)10)[0]); }
   finally { try { d.Close(false); } catch { } }
 }
-File.WriteAllText(Path.Combine(outd, "rfacheck.tsv"), sb.ToString(), new UTF8Encoding(false)); Console.WriteLine("DONE");
+foreach (var dl in dlgs) sb.AppendLine(dl); File.WriteAllText(Path.Combine(outd, "rfacheck.tsv"), sb.ToString(), new UTF8Encoding(false)); Console.WriteLine("DONE");
