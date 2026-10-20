@@ -445,3 +445,7 @@ extractor kinds (files run, crashed, empty):
 
 ## Other extractors, corrected item counts (corpus, 78 files, all years; KINDS_ONLY rerun)
 No crash on any of the 12 extractors in any file. Empty outputs: filters 18/78, project_parameters 12/78, shared_parameters 6/78 (sample files without them; views, levels_grids, phases, materials, images, fill/line patterns, project_info, links never empty). Item counts per year range plausibly (e.g. views 27-166, levels+grids 2-38, phases+filters+design options 9-13, materials 56-213, images 3-29) and are stable for the same sample across 2017-2019, so there is no sign of a year-specific extraction failure. Not yet compared against Revit exports (remote-host unreachable): counts are unvalidated.
+
+### Extractor counts vs Revit API exports (existing gt_mat / gt_views, 2020 corpus samples; remote-host not needed)
+- materials: ours = Revit on all 3 files with a gt_mat export (rst_basic 91/91, Commercial 118/118, Residential 139/139).
+- line patterns 150/150, fill patterns 118/118, views+sheets 84 vs Revit's 85 view elements on rst_basic 2020 (Revit's extra one is its system "Project Browser" view, so equal on user-visible views). Other years/files: no Revit export available yet.
