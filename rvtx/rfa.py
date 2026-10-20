@@ -182,12 +182,12 @@ class Builder:
                 if q is not None and q['class'] in TARGET and e not in pd.standard and e not in own: deps.add(e)
         extra = set()
         if os.environ.get('RVTX_EXTRA', '1') != '0':
-            srcs = [self.dec(b)[1] for i, (b, s) in oR.items()] + [{k: v for k, v in f.items() if k != 'm_oFamDoc'}]
-            for fl in srcs:
+            IMG = {'ImageSymbol', 'ImageHolder'}
+            for k, fl in enumerate([self.dec(b)[1] for i, (b, s) in oR.items()] + [{k_: v for k_, v in f.items() if k_ != 'm_oFamDoc'}]):
                 out = set(); _eids(fl, out)
                 for e in out:
                     q = pd.byid.get(e)
-                    if q is not None and q['class'] in EXTRA and e not in pd.standard and e not in own: extra.add(e)
+                    if q is not None and q['class'] in EXTRA and e not in pd.standard and e not in own and (k < len(oR) or q['class'] in IMG): extra.add(e)
         shared = set(pd.standard) | pd.close(deps | extra, TARGET | EXTRA if extra else None)
         kn, ac = pd.max_id + 1, pd.max_id + 2
         fam_guid = f['m_famDocGUID']['m_guid']
