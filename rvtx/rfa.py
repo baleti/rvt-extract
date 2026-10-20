@@ -36,7 +36,7 @@ class ProjectDocs:
         self.o, self.cls, self.ids = S.load(path); self.W = S.id_size(self.cls); self.sch = D.Schema(self.cls)
         self.byid = {i: r for (i, c), r in prj.recs.items()}
         # items of the main document that may be copied into family documents (graphics styles, materials, patterns, assets, property sets, keynote/assembly tables)
-        keep = {i for i, r in self.byid.items() if r['class'] in TARGET or r['class'] in ('GStyleElem', 'KeynoteTable', 'AssemblyCodeTable')}
+        keep = {i for i, r in self.byid.items() if r['class'] in TARGET or r['class'] in EXTRA or r['class'] in ('KeynoteTable', 'AssemblyCodeTable')}
         self.docs = [None]; self.doc0 = {'H': {}, 'R': {}, 'Z': {}}
         pns = sorted((y for y in ['/'.join(e) for e in self.o.listdir(streams=True)] if y.startswith('Partitions/')), key=lambda s_: int(s_.split('/')[1]))
         for pn in pns:
