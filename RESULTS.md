@@ -512,3 +512,5 @@ Layer (a) JSON/manifest extraction works for all years. Batch table (tools/sumta
 
 ### 2024 Structural byte-level comparison after merging c3-fam's shared-parameter closure (lcallm)
 Records missing from ours: 685 -> 183 (of 319,461); id sets equal in 133 of 177 families (was 90); extra 74 unchanged. Byte-identical share of the shared records: H 99.27%, R 99.80% (641 differ), Z 99.93%: unchanged within noise. Remaining missing 183 records are in 44 families (derived dimension strings and similar, c3-fam's setcmp). 2026 to be re-measured with the merged code.
+
+### 2026 Structural after the merge (lcall26h): missing records 685 -> 183, id sets equal 133 of 177; byte-identical shares H 98.30% (5,490 differ), R 99.79%, Z 99.93%. The 2026-only excess of differing H records (about 3,200 over 2024) is unchanged and still unexplained (my deletion-order experiments were measured and rejected, see NEEDS-FROM-TEST.md).
