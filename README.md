@@ -18,3 +18,6 @@ DIR/manifest.json lists counts and errors per type.
 A project embeds the full document of each loaded family: Family.m_oFamDoc, a per-family segment in Global/ContentDocuments
 (ADocument-like data plus table rows) and the family-internal element records in the partitions (header: family-local id, project id).
 See HANDOFF.md for the evidence and status of the .rfa assembly.
+
+## Limits
+.rfa output is Revit-validated only for Revit 2024 (see RESULTS.md); other years and nested families are JSON/manifest only. Shared-parameter closure (needed by Rebar Shape families) is on by default; RVTX_PEE=0 disables it.
