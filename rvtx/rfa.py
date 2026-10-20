@@ -188,7 +188,9 @@ class Builder:
         def fix_h(b):
             def fn(t):
                 t['m_familyId'] = EID(fid)
-                t['m_parents']['obj']['m_deletion'].append(EID(fid))
+                dl = t['m_parents']['obj']['m_deletion']; ids = [int(x) for x in dl]
+                if pd.fmt == '2026' and ids == sorted(ids): dl.insert(sum(1 for x in ids if x < fid), EID(fid))   # Revit 2026 keeps an ascending deletion list ascending (styles created after the family id sort behind it); 2024 appends (measured: 2026 H 98.30% -> 99.18%, applying it to 2024 lowered 99.27% -> 99.17%)
+                else: dl.append(EID(fid))
                 t['m_abFlags4Bytes'] = t['m_abFlags4Bytes'] & ~0x10
                 t['m_regenHistory']['m_historyMap'] = []
             return self.edit(b, fn)
