@@ -462,3 +462,6 @@ Differences are all "ours has MORE": levels (ours 6 vs Revit 5 in four Technical
 
 ### levels_grids fix verified (lvlc run, 16 corpus files: the 13 that differed plus 3 matching)
 After excluding family-internal levels/grids and counting design-option ones separately, levels and grids equal Revit's element export on 14 of 16 files (previously 3 of 16 for levels). Remaining 2: the two HVAC samples (corp-2025-48, corp-2026-54), where Revit's export lists 2 levels and 0 grids against 11 main-model levels and 15 grids in the file; that Revit export is probably incomplete (HVAC project with levels/grids from a link or a different export state); needs a fresh Revit export to settle.
+
+### filters / shared_parameters fix verified (fltc, 5 files)
+Skipping family-internal elements removes the surplus filter in corp-2022-31 (now 0 = Revit) and keeps the controls exact (corp-2020-22 21/21 and 8/8, corp-2024-43 36/36 and 52/52). The two HVAC samples (corp-2025-48, corp-2026-54) still differ from Revit's export (filters 13 vs 10/12, shared parameters 1 vs 0), the same two files whose Revit export also lacks their levels and grids, so that Revit export is the likelier source of the difference. Net: all compared counts equal Revit's on 40 of 42 files except those two HVAC files.
