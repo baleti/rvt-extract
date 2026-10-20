@@ -28,3 +28,6 @@ Layer (a) JSON/manifest extraction works for all years. Batch table (tools/sumta
 
 ## Offline record comparison, Snowdon 2024, RVTX_PEE=1 build vs Revit's own EditFamily+SaveAs rfa (tools/rfa_setcmp.py, 2026-10-20)
 177 families lifted. Record id set identical to Revit's: 133; differ: 44 (typically 2-8 ids: regenerated dimension strings / derived records; larger for fabric symbols and framing families). Records byte-identical for all ids: 41; 1-3 byte-differing records: 85; more than 3: 51 (cosmetic: flags, parents lists, regeneration caches). Revit open results for this set: pending (oracle remote-host unreachable, jobs parked).
+
+### Update 2026-10-20 (custom category / style / image closure)
+After adding the closure of CategoryElem/GStyleElem referenced by the family's own records and ImageSymbol/ImageHolder referenced by the project-side Family record (rvtx/rfa.py EXTRA), 161 of 177 Snowdon 2024 families have exactly Revit's record id set (was 133). Remaining id differences: LinearDimString ids (Revit renumbers dimension strings: 65 on each side) and 9 extra FillPatternElem records in our output. Revit open checks of this set (out/lift43q) are parked until the Revit host is reachable.
