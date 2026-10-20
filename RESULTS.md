@@ -509,3 +509,6 @@ Layer (a) JSON/manifest extraction works for all years. Batch table (tools/sumta
 
 ## Offline record comparison, Snowdon 2024, RVTX_PEE=1 build vs Revit's own EditFamily+SaveAs rfa (tools/rfa_setcmp.py, 2026-10-20)
 177 families lifted. Record id set identical to Revit's: 133; differ: 44 (typically 2-8 ids: regenerated dimension strings / derived records; larger for fabric symbols and framing families). Records byte-identical for all ids: 41; 1-3 byte-differing records: 85; more than 3: 51 (cosmetic: flags, parents lists, regeneration caches). Revit open results for this set: pending (oracle remote-host unreachable, jobs parked).
+
+### 2024 Structural byte-level comparison after merging c3-fam's shared-parameter closure (lcallm)
+Records missing from ours: 685 -> 183 (of 319,461); id sets equal in 133 of 177 families (was 90); extra 74 unchanged. Byte-identical share of the shared records: H 99.27%, R 99.80% (641 differ), Z 99.93%: unchanged within noise. Remaining missing 183 records are in 44 families (derived dimension strings and similar, c3-fam's setcmp). 2026 to be re-measured with the merged code.
