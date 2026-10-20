@@ -126,11 +126,13 @@ def views(prj):
         for r in lst:
             f = r['fields']; n = f.get('m_viewName')
             if n is None: continue
+            fam, dopt = _scope(f)
+            if fam: continue                                 # view of a loaded family's own document
             if c == 'DBViewDrafting' and f.get('m_sheetNumber'):
                 sheets.append({'id': r['id'], 'number': f.get('m_sheetNumber'), 'name': n, 'issue_date': f.get('m_issueDate'), 'drawn_by': f.get('m_drawnBy'),
                                'checked_by': f.get('m_checkedBy'), 'designed_by': f.get('m_designedBy'), 'approved_by': f.get('m_approvedBy'),
                                'viewport_ids': [eid(v) for v in (f.get('m_sheetViewportElemIds') or [])]})
-            else: vs.append({'id': r['id'], 'name': n, 'class': c, 'is_template': bool(f.get('m_isTemplate')), 'scale': f.get('m_scale')})
+            else: vs.append({'id': r['id'], 'name': n, 'class': c, 'is_template': bool(f.get('m_isTemplate')), 'scale': f.get('m_scale'), 'design_option': dopt})
     vp = {r['id']: eid(r['fields'].get('m_dbViewId', -1)) for r in prj.by_class.get('Viewport', [])}
     for sh in sheets: sh['views'] = [names.get(vp[v], '') for v in sh.pop('viewport_ids') if v in vp]
     return {'views': sorted(vs, key=lambda v: (v['class'], v['name'])), 'sheets': sorted(sheets, key=lambda x: str(x['number']))}, []
