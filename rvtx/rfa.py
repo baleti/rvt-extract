@@ -9,6 +9,7 @@ import rvt_scan as S, rvt_decode as D, rvt2text as T, rvtfmt, fmt_parser as fp
 EID = D.EID
 TARGET = {'MaterialElem', 'FillPatternElem', 'LinePatternElem', 'AppearanceAssetElem', 'PropertySetElement'}
 if os.environ.get('RVTX_PEE', '1') != '0': TARGET = TARGET | {'ParamElemExternal'}  # shared-parameter closure (Rebar Shape: record set == Revit's); RVTX_PEE=0 disables
+EXTRA = {'ImageSymbol', 'ImageHolder', 'CategoryElem', 'GStyleElem'}  # custom categories / subcategory styles / raster images referenced by the family (own records or the project-side Family record)
 SPECIAL_MATERIALS = {'Default', 'Poche', 'Phase-Demo', 'Phase-Exist', 'Phase-Temp'}
 KEY = re.compile(r'(Id|Ids|ElemId|Pattern|Material)$')
 
@@ -107,7 +108,8 @@ class ProjectDocs:
                 if m.get('m_name') in SPECIAL_MATERIALS: seed.add(i)
         return self.close(seed)
 
-    def close(self, seed):
+    def close(self, seed, allowed=None):
+        allowed = allowed or TARGET
         shared = set(seed); frontier = set(seed)
         while frontier:
             nxt = set()
@@ -117,7 +119,7 @@ class ProjectDocs:
                 out = set(); _eids(r['fields'], out)
                 for e in out:
                     q = self.byid.get(e)
-                    if q is not None and q['class'] in TARGET and e not in shared: nxt.add(e)
+                    if q is not None and q['class'] in allowed and e not in shared: nxt.add(e)
             shared |= nxt; frontier = nxt
         return shared
 
@@ -178,7 +180,15 @@ class Builder:
             for e in out:
                 q = pd.byid.get(e)
                 if q is not None and q['class'] in TARGET and e not in pd.standard and e not in own: deps.add(e)
-        shared = set(pd.standard) | pd.close(deps)
+        extra = set()
+        if os.environ.get('RVTX_EXTRA', '1') != '0':
+            srcs = [self.dec(b)[1] for i, (b, s) in oR.items()] + [{k: v for k, v in f.items() if k != 'm_oFamDoc'}]
+            for fl in srcs:
+                out = set(); _eids(fl, out)
+                for e in out:
+                    q = pd.byid.get(e)
+                    if q is not None and q['class'] in EXTRA and e not in pd.standard and e not in own: extra.add(e)
+        shared = set(pd.standard) | pd.close(deps | extra, TARGET | EXTRA if extra else None)
         kn, ac = pd.max_id + 1, pd.max_id + 2
         fam_guid = f['m_famDocGUID']['m_guid']
         g, blob = pd.segment(f['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid'])
