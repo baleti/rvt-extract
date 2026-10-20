@@ -459,3 +459,6 @@ design_options     exact 42 of 42 files
 filters            exact 39 of 42 files
 shared_parameters  exact 40 of 42 files
 Differences are all "ours has MORE": levels (ours 6 vs Revit 5 in four Technical-school/Residential-era files, 13 vs 11 in Snowdon HVAC/Facades-type files, 6 vs 3 in the Site files), and the two HVAC files (corp-2025-48, corp-2026-54) where Revit's export shows levels 2/grids 0 against ours 13/15 (the Revit export of those HVAC projects probably lacks the linked/shared levels and grids, to be checked with a fresh export). Filters: 1 extra in corp-2022-31, 3 and 1 extra in the two HVAC files.
+
+### levels_grids fix verified (lvlc run, 16 corpus files: the 13 that differed plus 3 matching)
+After excluding family-internal levels/grids and counting design-option ones separately, levels and grids equal Revit's element export on 14 of 16 files (previously 3 of 16 for levels). Remaining 2: the two HVAC samples (corp-2025-48, corp-2026-54), where Revit's export lists 2 levels and 0 grids against 11 main-model levels and 15 grids in the file; that Revit export is probably incomplete (HVAC project with levels/grids from a link or a different export state); needs a fresh Revit export to settle.
