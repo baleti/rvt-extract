@@ -442,3 +442,6 @@ extractor kinds (files run, crashed, empty):
  project_info         [45, 0, 0]
  links                [45, 0, 0]
  materials            [42, 0, 0]
+
+## Other extractors, corrected item counts (corpus, 78 files, all years; KINDS_ONLY rerun)
+No crash on any of the 12 extractors in any file. Empty outputs: filters 18/78, project_parameters 12/78, shared_parameters 6/78 (sample files without them; views, levels_grids, phases, materials, images, fill/line patterns, project_info, links never empty). Item counts per year range plausibly (e.g. views 27-166, levels+grids 2-38, phases+filters+design options 9-13, materials 56-213, images 3-29) and are stable for the same sample across 2017-2019, so there is no sign of a year-specific extraction failure. Not yet compared against Revit exports (remote-host unreachable): counts are unvalidated.
