@@ -185,11 +185,9 @@ class Builder:
         H, R, Z = {}, {}, {}
         for i in own: H[i] = oH[i]; R[i] = oR[i]; Z[i] = oZ.get(i)
         def fix_h(b):
-            gstyle = self.class_of(b) == 'GStyleElem'
             def fn(t):
                 t['m_familyId'] = EID(fid)
-                dl = t['m_parents']['obj']['m_deletion']
-                dl.insert(0, EID(fid)) if (pd.fmt == '2026' and gstyle) else dl.append(EID(fid))   # Revit 2026 writes the family id first (lift_cmp vs gt_fam/2026)
+                t['m_parents']['obj']['m_deletion'].append(EID(fid))
                 t['m_abFlags4Bytes'] = t['m_abFlags4Bytes'] & ~0x10
                 t['m_regenHistory']['m_historyMap'] = []
             return self.edit(b, fn)
