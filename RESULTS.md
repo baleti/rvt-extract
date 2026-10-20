@@ -478,6 +478,7 @@ Revit's saved family documents hold 319,461 element records in total. Ours has 3
 Revit's saved documents hold 322,600 records; 685 missing from ours (0.21%, same set as 2024), 74 extra; id sets equal in 90 of 177. Byte-identical share of the shared records: H 98.29% (5,490 differ; 2024: 99.27%), R 99.78% (707 differ), Z 99.93% (224 differ). The H part differs more in 2026 (about 3,200 more records), the likely field of the 2026-specific H-record cosmetics (flags/parents); worth a look by c3-fam with tools/lift_cmp.py on one 2026 family.
 
 ## c3-fam's own results file (merged from main, 2026-10-20)
+Note: studyx-NNN / ofc-NNN ids in this section come from c3-fam's own private map and are NOT the same files as my studyx-NNN rows above.
 ### rvt-extract results (anonymised ids; local only)
 
 Status of .rfa lifting by Revit version (validated = opens in Revit with facts equal to EditFamily+SaveAs):
