@@ -449,3 +449,13 @@ No crash on any of the 12 extractors in any file. Empty outputs: filters 18/78, 
 ### Extractor counts vs Revit API exports (existing gt_mat / gt_views, 2020 corpus samples; remote-host not needed)
 - materials: ours = Revit on all 3 files with a gt_mat export (rst_basic 91/91, Commercial 118/118, Residential 139/139).
 - line patterns 150/150, fill patterns 118/118, views+sheets 84 vs Revit's 85 view elements on rst_basic 2020 (Revit's extra one is its system "Project Browser" view, so equal on user-visible views). Other years/files: no Revit export available yet.
+
+### Extractors vs Revit element exports (gt4, 42 corpus files, 2020-2026 samples, counts of Level/Grid/Phase/PhaseFilter/DesignOption/ParameterFilterElement/SharedParameterElement)
+levels             exact 29 of 42 files
+grids              exact 40 of 42 files
+phases             exact 42 of 42 files
+phase_filters      exact 42 of 42 files
+design_options     exact 42 of 42 files
+filters            exact 39 of 42 files
+shared_parameters  exact 40 of 42 files
+Differences are all "ours has MORE": levels (ours 6 vs Revit 5 in four Technical-school/Residential-era files, 13 vs 11 in Snowdon HVAC/Facades-type files, 6 vs 3 in the Site files), and the two HVAC files (corp-2025-48, corp-2026-54) where Revit's export shows levels 2/grids 0 against ours 13/15 (the Revit export of those HVAC projects probably lacks the linked/shared levels and grids, to be checked with a fresh export). Filters: 1 extra in corp-2022-31, 3 and 1 extra in the two HVAC files.
