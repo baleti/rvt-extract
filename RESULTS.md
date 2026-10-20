@@ -514,3 +514,6 @@ Layer (a) JSON/manifest extraction works for all years. Batch table (tools/sumta
 Records missing from ours: 685 -> 183 (of 319,461); id sets equal in 133 of 177 families (was 90); extra 74 unchanged. Byte-identical share of the shared records: H 99.27%, R 99.80% (641 differ), Z 99.93%: unchanged within noise. Remaining missing 183 records are in 44 families (derived dimension strings and similar, c3-fam's setcmp). 2026 to be re-measured with the merged code.
 
 ### 2026 Structural after the merge (lcall26h): missing records 685 -> 183, id sets equal 133 of 177; byte-identical shares H 98.30% (5,490 differ), R 99.79%, Z 99.93%. The 2026-only excess of differing H records (about 3,200 over 2024) is unchanged and still unexplained (my deletion-order experiments were measured and rejected, see NEEDS-FROM-TEST.md).
+
+### 2026 deletion-list rule (measured with tools/lift_cmp.py, 177 families each)
+Insert the family id at its sorted position when a shared element's m_deletion list is ascending (Revit 2026): 2026 H differing records 5,490 -> 2,646 (H identity 98.30% -> 99.18%), R 99.79%, Z 99.93% unchanged. The same rule applied to 2024 lowers its H identity 99.27% -> 99.17%, so it is applied for format 2026 only (2024 keeps appending). Committed on branch test (rvtx/rfa.py).
