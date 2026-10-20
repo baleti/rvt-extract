@@ -1,5 +1,5 @@
 import argparse, json, os, re, sys, time
-from . import core, manifest, items, files
+from . import core, manifest, items, files, safepath
 
 KINDS = ['families'] + list(items.KINDS) + list(files.KINDS)
 HELP = {'families': 'every family: manifest entry (category, types, parameters, embedded-record census); .rfa when validation passes',
@@ -48,13 +48,13 @@ def main(argv=None):
             for e in ents: print('%-28s %-50s types=%-3d params=%-3d records=%d' % (e['category'], e['name'], len(e['types']), len(e['parameters']), e['embedded_records']))
     if 'families' in only and a.out and not a.no_rfa and not a.list:
         from . import rfa as RFA
-        pd = RFA.ProjectDocs(prj); B = RFA.Builder(pd); byid = {e['family_id']: e for e in res['families']}
+        pd = RFA.ProjectDocs(prj); B = RFA.Builder(pd); byid = {e['family_id']: e for e in res['families']}; namer = safepath.Namer()
         for fr in prj.families():
             e = byid.get(fr['id'])
             if e is None or not e['embedded_doc']: continue
             try:
                 B.build(fr)
-                d = os.path.join(a.out, 'families', safe(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, safe(e['name']) + '.rfa')
+                d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
                 B.write(fn, e['name'], e['category']); e['rfa'] = {'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': 'not validated in Revit'}
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
