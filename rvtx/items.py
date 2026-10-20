@@ -41,6 +41,7 @@ def shared_parameters(prj):
     """manifest + a Revit shared-parameter .txt (data type is the stored unit code: Revit's spec names are not recovered, TEXT where unknown)"""
     out = []
     for r in _cls(prj, 'ParamElemExternal'):
+        if _scope(r['fields'])[0]: continue                  # shared parameter element of a loaded family's own document
         d = ob(r['fields'].get('m_pParamDef')) or {}
         g = r['fields'].get('m_externalParamKey', {}).get('m_guidValue', {}).get('m_guid')
         if not g: continue
@@ -73,6 +74,7 @@ def project_parameters(prj):
 def filters(prj):
     out = []
     for r in _cls(prj, 'ParameterFilterElement'):
+        if _scope(r['fields'])[0]: continue
         f = r['fields']; cr = ob(f.get('m_oCategoryRule')) or {}
         out.append({'id': r['id'], 'name': f.get('m_name'), 'categories': [manifest.category_name(c) for c in cr.get('m_categories', [])], 'rules': ob(f.get('m_oRuleCombination'))})
     return out, []
