@@ -1,5 +1,8 @@
-# HANDOFF c6-famtest (2026-10-19)
-State: all work committed on branch test. Read RESULTS.md, NEEDS-FROM-TEST.md, TESTING.md, PROGRESS.md.
-Done: corpus run1 and run2 (78 files; run2 built 9508/10191 .rfa, 2017 VarSketch decode and 12 DataStorage remain); real-world run 1 (41 of 71 files fit the 7 GB cap); partial Revit 2024 open/facts check of the 2024 Structural sample; failure classes handed to c3-fam in NEEDS-FROM-TEST.md.
-Queued on remote-host (waiting for the 11 GB gate; retry loops on remote-host in private/keep_studyx.log and private/pee.launch): studyx (rerun of 41 real-world files with merged code, state/out in the literal remote-host dir ~/src/rvt-extract-test/$HOME/scratch-famtest/state_studyx), pee (ParamElemExternal probe). Kill the loops with pgrep -f "[h]1_keep.sh studyx" and "[h]1_job.sh pee" if not wanted.
-Oracle queue (remote-host VMs were down): see PROGRESS.md (2024 Structural remaining slices, per-year upgrade-open samples, 2026 Structural, recheck after c3-fam fixes).
+# HANDOFF c6-famtest (2026-10-20)
+State: everything committed on branch test (merged with main incl. c3-fam PEE closure). Read RESULTS.md, NEEDS-FROM-TEST.md, TESTING.md.
+Headline: corpus run2 built 9508/10191 .rfa (93.3%); real-world (41 files that fit 7 GB) 94.3%; 30 of 71 real-world files exceed remote-host's 9 GB slice.
+Revit-free accuracy vs EditFamily+SaveAs (tools/lift_cmp.py, 177 families): 2024 missing records 685->183, H/R/Z identity 99.27/99.80/99.93%; 2026 with my committed m_deletion rule H 99.18%.
+Extractor counts equal Revit exports on 40 of 42 files (levels/filters/shared fixed in rvtx/items.py); views: panel schedules missing, +9 sections unexplained.
+Running on remote-host: corpus3 (full 78-file rerun, h1_keep loop on remote-host: private/keep_corpus3.log; state in remote-host ~/src/rvt-extract-test/$HOME/scratch-famtest/state_corpus3). When done: python3 tools/report.py <state copy> and update RESULTS.md. Kill loop: pgrep -f "[h]1_keep.sh corpus3".
+Rejected experiments (measured): flag-bit rule, 2026 family-first deletion for all shared (see NEEDS-FROM-TEST.md).
+Blocked: remote-host VMs unreachable, so no Revit-open checks; oracle queue is in PROGRESS.md.
