@@ -195,7 +195,7 @@ class Builder:
         # ---- items
         H, R, Z = {}, {}, {}
         for i in own: H[i] = oH[i]; R[i] = oR[i]; Z[i] = oZ.get(i)
-        if pd.fmt in ('2024', '2026'):
+        if os.environ.get('RVTX_ZSTUB') == '1' and pd.fmt in ('2024', '2026'):   # opt-in: net effect on Revit opens is about zero (see RESULTS.md)
             for i in own:   # Revit empties the cached-geometry Z record of these view-bound elements (measured predictor, see NEEDS-FROM-TEST.md)
                 z = oZ.get(i)
                 if z and self.stub_wanted(oH[i], oR[i][0], z[0]): Z[i] = (self.z_stub(i), z[1])

@@ -537,3 +537,6 @@ Category 94/94 equal, parameters 94/94, reference planes 94/94, forms 94/94, typ
 
 ### Single-file retest of the 44 batch refusals (each file in a fresh Revit 2024, 2026-10-21)
 8 of the 44 open when alone (batch order poisoning: a refused file makes later opens in the same session fail); 36 are refused alone too. Corrected Revit 2024 acceptance for the 138 non-Rebar Snowdon 2024 families: 102 open (74%), 36 refuse (26%). Batch open checks should therefore always be re-run one file per session for the refusals.
+
+### Z-stub experiment (RVTX_ZSTUB=1, opt-in), 2024 Structural, single-file Revit opens, 2026-10-21
+Z records of 138 families now equal Revit's in 132 (was ~20). Of 18 refused families re-tested, 2 open (0031 and one more); of 20 previously opened families, 19 still open and 0062 now REFUSES although its only changed Z record is byte-identical to Revit's own (old build opens alone, new refuses, reproducible). Net effect about zero, so the rule is off by default. The refusals are not Z-chain driven; remaining suspects: re-keyed derived elements (class 2458/702/2157), H flags, Latest/ElemTable.
