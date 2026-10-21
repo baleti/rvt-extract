@@ -517,3 +517,6 @@ Records missing from ours: 685 -> 183 (of 319,461); id sets equal in 133 of 177 
 
 ### 2026 deletion-list rule (measured with tools/lift_cmp.py, 177 families each)
 Insert the family id at its sorted position when a shared element's m_deletion list is ascending (Revit 2026): 2026 H differing records 5,490 -> 2,646 (H identity 98.30% -> 99.18%), R 99.79%, Z 99.93% unchanged. The same rule applied to 2024 lowers its H identity 99.27% -> 99.17%, so it is applied for format 2026 only (2024 keeps appending). Committed on branch test (rvtx/rfa.py).
+
+## corpus3 (2026-10-21, merged main + PEE closure + level/filter fixes + 2026 deletion rule; tools/report.py)
+78 files, 10191 embedded families, built 9508 (93.3%), no process crash. Years 2018-2023, 2025, 2026: 100% built; 2024: 1333/1345 (12 DataStorage not fully decoded); 2017: 40/711 (671 VarSketch not fully decoded). Extractors: 12 kinds x 78 files, 0 crashes; empty outputs: shared_parameters 6, project_parameters 12, filters 19 (expected for files without such items, not checked per file).
