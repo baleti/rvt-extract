@@ -107,3 +107,9 @@ Layer (a) JSON/manifest extraction is already in rvtx/cli.py + manifest.py.
 Done/committed: corpus3 report (93.3% built), Revit 2024 open-check corp-2024-43 (94/138 non-Rebar open, facts 93/94 equal incl. types), older years 2018-2023 0/36 open in Rev 2024, 2026 sample 4/6, 2025->2026 hangs, RESULTS.md + NEEDS-FROM-TEST.md (PEE Rebar Shape rfa HANG Revit on open: regression; 2017 VarSketch).
 Key finding: file 0033 (refused in batch) opens ALONE and its R records equal Revit's, so some of the 44 batch refusals are session poisoning. A single-file retest of all 44 is RUNNING: private/oracle_run5.sh (log private/oracle_run5.log, results private/oracle_single.tsv; HANG lines = hang). Kill leftovers on remote-host: ssh remote-host 'pkill -f job_rc_'. When ALLDONE: compare with private/failed44.txt, update RESULTS.md (true open rate), notify c3-fam.
 Next: per-year single-file opens, real-world studyx files (30 exceed remote-host slice), Rebar Shape hang bisect.
+
+## c8-famtest handoff 2 (2026-10-21 late)
+All committed on branch test. Read NEEDS-FROM-TEST.md (bottom sections) and RESULTS.md: corpus3 93.3% built; Revit 2024 Snowdon: 102/138 non-Rebar open (single-file), Rebar Shape (PEE closure) hang Revit (regression, c3-fam), older years 0/36, 2025 hangs 2026.
+Refusal bisect: Partitions/0 stream swap fixes (tools/rfa_streamswap.py), record-only swap does not: causes = missing derived records, nested second document, plus an unknown third (0039). RVTX_ZSTUB=1 is opt-in (net zero).
+Tools: oracle/rfacheck.py (single-file sessions; after a hang run ssh remote-host 'pkill -f job_rc_'), tools/rfa_variants.py (id lists), rfa_ndocs.py, rfa_zdiff.py, rfa_zrule*.py. Check for leftover oracle loops (pgrep -f oracle_run) before starting new ones; private/ has all scripts/results.
+Next: real-world studyx oracle checks, per-year single-file opens after c3-fam fixes, rerun corpus after fixes.
