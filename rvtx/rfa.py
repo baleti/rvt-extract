@@ -163,6 +163,16 @@ class Builder:
     def class_of(self, body):
         return self.sch.name(self.tag_of(body))
 
+    # --- Z stub (Revit rewrites the geometry cache of some R-tag-4228 elements to a constant record)
+    _STUB = bytes.fromhex('3f08ffffffffffffffffe5fa0e00000000000480080000000000ea8ca039593e2946ea8ca039593e2946ea8ca039593e2946ea8ca039593e29c6ea8ca039593e29c6ea8ca039593e29c6ea8ca039593e2946ea8ca039593e2946ea8ca039593e2946ea8ca039593e29c6ea8ca039593e29c6ea8ca039593e29c6e5fa0e00000000000200000000000000')
+    @staticmethod
+    def stub_wanted(h, r, z):
+        if len(z) == 138 or struct.unpack_from('<H', r, 0)[0] != 4228 or len(r) < 151 or len(h) < 69: return False
+        if (len(r), len(z)) in ((1498, 384), (2770, 408)): return False   # two recurring elements that match the predictor but are kept
+        return r[113:119] == b'\xff' * 6 and h[61] == 0 and h[64:68] == b'\0' * 4 and h[68] == 255 and r[146:151] == b'\0' * 5
+    def z_stub(self, i):
+        return self._STUB.replace(bytes.fromhex('e5fa0e00'), struct.pack('<I', i))
+
     # --- build
     def build(self, fam_rec, out_path=None, when=None, own_only_report=False):
         pd = self.pd; f = fam_rec['fields']
@@ -185,6 +195,10 @@ class Builder:
         # ---- items
         H, R, Z = {}, {}, {}
         for i in own: H[i] = oH[i]; R[i] = oR[i]; Z[i] = oZ.get(i)
+        if pd.fmt in ('2024', '2026'):
+            for i in own:   # Revit empties the cached-geometry Z record of these view-bound elements (measured predictor, see NEEDS-FROM-TEST.md)
+                z = oZ.get(i)
+                if z and self.stub_wanted(oH[i], oR[i][0], z[0]): Z[i] = (self.z_stub(i), z[1])
         def fix_h(b):
             def fn(t):
                 t['m_familyId'] = EID(fid)
