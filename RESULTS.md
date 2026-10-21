@@ -534,3 +534,6 @@ Per-year (2017-2023, 2025) opens and the 2026 oracle run are still pending.
 
 ### Facts diff of the 94 Revit-opened 2024 Structural families vs Revit's own EditFamily+SaveAs (gt_fam/2024_43 index; category, types, parameters, reference planes, forms)
 Category 94/94 equal, parameters 94/94, reference planes 94/94, forms 94/94, types 93/94 (one Structural Connections family: 5 types in our rfa, 4 in Revit's; maybe the file-to-family mapping by sorted name is off for that one, or a leftover type). So where Revit accepts a lifted family the content is right; the gap is acceptance (68% non-Rebar, Rebar Shape hangs, other years 0%).
+
+### Single-file retest of the 44 batch refusals (each file in a fresh Revit 2024, 2026-10-21)
+8 of the 44 open when alone (batch order poisoning: a refused file makes later opens in the same session fail); 36 are refused alone too. Corrected Revit 2024 acceptance for the 138 non-Rebar Snowdon 2024 families: 102 open (74%), 36 refuse (26%). Batch open checks should therefore always be re-run one file per session for the refusals.
