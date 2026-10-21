@@ -129,7 +129,9 @@ def last_page_size(C):
     """size N of the last ECC page for C payload bytes: the smallest N that Revit is known to write (nladder.OBSERVED) or, from ~16.5 KB on, the
     L=2047 ladder with an odd number of codewords u, whose capacity holds C. Other N have plausible ECC parameters but Revit rejects them (oracle test)."""
     import ecc
-    from .nladder import OBSERVED
+    from .nladder import OBSERVED, VERIFIED
+    vc = [N for N in VERIFIED if ecc.data_capacity(N) >= C]
+    if vc: return min(vc)
     cands = [N for N in OBSERVED if ecc.data_capacity(N) >= C and (N < 16500 or (ecc.params(N) or (0, 0, 0))[2] == 2047)]   # large N off the 2047 ladder (19227, 23331, 52813) crash Revit 2024 (oracle, 2026-10-20)
     best = min(cands) if cands else None
     u = 67
