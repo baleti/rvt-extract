@@ -531,3 +531,6 @@ Per-year (2017-2023, 2025) opens and the 2026 oracle run are still pending.
 
 ## Revit 2026 oracle (2026-10-21)
 2026 Structural corp-2026-55, families 40-45 (corpus3 build): 4 of 6 open, 2 refused (CorruptModelException "needs to be recovered"); 40:42 alone opens 2/2. The first 6 (0:6, contains Rebar Shape families) hang Revit 2026 like in 2024. A 2025 file (corp-2025-48, an HVAC project with 87 families) opened in Revit 2026 (upgrade): the single-file slice 40:41 hangs OpenDocumentFile (>200 s, no exception), so the 2025 lifted .rfa are not accepted either; no 2025 family opened.
+
+### Facts diff of the 94 Revit-opened 2024 Structural families vs Revit's own EditFamily+SaveAs (gt_fam/2024_43 index; category, types, parameters, reference planes, forms)
+Category 94/94 equal, parameters 94/94, reference planes 94/94, forms 94/94, types 93/94 (one Structural Connections family: 5 types in our rfa, 4 in Revit's; maybe the file-to-family mapping by sorted name is off for that one, or a leftover type). So where Revit accepts a lifted family the content is right; the gap is acceptance (68% non-Rebar, Rebar Shape hangs, other years 0%).
