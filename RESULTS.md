@@ -520,3 +520,8 @@ Insert the family id at its sorted position when a shared element's m_deletion l
 
 ## corpus3 (2026-10-21, merged main + PEE closure + level/filter fixes + 2026 deletion rule; tools/report.py)
 78 files, 10191 embedded families, built 9508 (93.3%), no process crash. Years 2018-2023, 2025, 2026: 100% built; 2024: 1333/1345 (12 DataStorage not fully decoded); 2017: 40/711 (671 VarSketch not fully decoded). Extractors: 12 kinds x 78 files, 0 crashes; empty outputs: shared_parameters 6, project_parameters 12, filters 19 (expected for files without such items, not checked per file).
+
+## Revit 2024 open-check, 2024 Structural (corp-2024-43), corpus3 build, 2026-10-21 (oracle/rfacheck.py, 12-file slices, 270 s cap, bisected to 3-file slices)
+138 non-Rebar-Shape families: 94 open (68%), 44 refuse: 29 CorruptModelException (23 "needs to be recovered", CArchiveException 105; 6 data corruption 118) and 15 InternalException. Four 12-file slices hung as a whole but every 3-file sub-slice completed, so those hangs are session effects (a refused/InternalException file leaving Revit unusable), not single bad files.
+39 Rebar Shape families (the PEE-closure ones): not counted; the sampled ones (0000, 0012) hang Revit on open in the corpus3 build, while the corpus2 build of 0012 (no PEE) opens. Regression of the PEE merge, see NEEDS-FROM-TEST.md.
+Per-year (2017-2023, 2025) opens and the 2026 oracle run are still pending.
