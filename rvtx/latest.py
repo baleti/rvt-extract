@@ -63,6 +63,9 @@ def build_tree(sch, proj, blob, ids, remap=None):
                     if ps is not None:
                         cls = type(ps['second']['m_idSet'][0]) if ps['second']['m_idSet'] else int
                         x['second']['m_idSet'] = [cls(i) if cls is not int else i for i in sorted({rm(i) for i in ps['second']['m_idSet'] if rm(i) in ids})]
+            elif name == 'CategoryTracking' and k == 'm_categoryData':
+                have = {_int(x['m_categoryId']) for x in v}
+                E[k] = [copy.deepcopy(x) for x in pv if rm(x['m_categoryId']) in ids and _int(x['m_categoryId']) not in have] + list(v)
             elif name == 'ExternalParamTracking' and k == 'm_keyDataMap':
                 have = {x['first']['m_guidValue']['m_guid'] for x in v}
                 v.extend(copy.deepcopy(x) for x in pv if x['first']['m_guidValue']['m_guid'] not in have and rm(x['second']['m_paramId']) in ids)
