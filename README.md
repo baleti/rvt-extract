@@ -21,3 +21,5 @@ See HANDOFF.md for the evidence and status of the .rfa assembly.
 
 ## Limits
 .rfa output is Revit-validated only for Revit 2024 (see RESULTS.md); other years and nested families are JSON/manifest only. Shared-parameter closure (needed by Rebar Shape families) is on by default; RVTX_PEE=0 disables it.
+
+Measured (RESULTS.md, 2026-10-21): the .rfa builder succeeds for 93.3% of the 10,191 embedded families of the 78-file Autodesk corpus (all of 2018-2026 except 12 in 2024; 2017 fails on the VarSketch decode). Revit acceptance of the built files: 2024 Snowdon Structural 102 of 138 non-Rebar-Shape families open (74%), their parameters, reference planes, forms and category equal Revit's own EditFamily+SaveAs; the Rebar Shape families built with the shared-parameter closure hang Revit 2024 on open (use RVTX_PEE=0 for those); lifted files of 2018-2023 and 2025 are not accepted by Revit 2024/2026 (0 of 36 sampled in 2024; 2025 hangs 2026). Treat .rfa output from any year but 2024 as experimental; the JSON/manifest outputs work for all years.
