@@ -540,3 +540,5 @@ Category 94/94 equal, parameters 94/94, reference planes 94/94, forms 94/94, typ
 
 ### Z-stub experiment (RVTX_ZSTUB=1, opt-in), 2024 Structural, single-file Revit opens, 2026-10-21
 Z records of 138 families now equal Revit's in 132 (was ~20). Of 18 refused families re-tested, 2 open (0031 and one more); of 20 previously opened families, 19 still open and 0062 now REFUSES although its only changed Z record is byte-identical to Revit's own (old build opens alone, new refuses, reproducible). Net effect about zero, so the rule is off by default. The refusals are not Z-chain driven; remaining suspects: re-keyed derived elements (class 2458/702/2157), H flags, Latest/ElemTable.
+
+### H-chain swap on 14 refused 2024 families (single-file opens): replacing all H records with Revit's makes 2 of 14 open (0062 earlier included separately). So H differences explain only a minority of refusals; HRZ (all three record chains) swap is the ceiling test, running.
