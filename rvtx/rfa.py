@@ -204,7 +204,7 @@ class Builder:
         for i in own: H[i] = oH[i]; R[i] = oR[i]; Z[i] = oZ.get(i)
         if os.environ.get('RVTX_EMPTYZ', '1') != '0':     # Revit's saved family carries an empty guess cache (138-byte Z) for VarSketch elements whose project Z holds data
             for i in own:
-                if Z[i] is not None and len(Z[i][0]) > 138 and len(oR[i][0]) > 2 and self.sch.name(struct.unpack_from('<H', oR[i][0], 0)[0]) == 'VarSketch':
+                if Z[i] is not None and len(Z[i][0]) > 138 and len(oR[i][0]) > 2 and self.sch.name(struct.unpack_from('<H', oR[i][0], 0)[0]) == 'VarSketch' and self.sketch_cache_emptied(oH[i], oR[i][0]):
                     zb = empty_varsketch_z(i); Z[i] = (zb, zlib.adler32(zb) & 0xFFFFFFFF)
         def fix_h(b):
             def fn(t):
@@ -279,6 +279,11 @@ class Builder:
         co = zlib.compressobj(6, zlib.DEFLATED, -15); z = co.compress(raw) + co.flush()
         gz = PT.GZH + z + struct.pack('<II', zlib.crc32(raw) & 0xFFFFFFFF, len(raw))
         return PT.page_stream(struct.pack('<Q', SS.PREFIX[name]) + gz)
+
+    def sketch_cache_emptied(self, hb, rb):
+        """Revit empties the VarSketch Z cache when element flag bit 24 is clear and m_allowResetLineEndConstr is set (0 errors on 459 sketches of Snowdon 2024 vs Revit's own rfa)"""
+        dec = lambda x: enc.decode_tree(self.sch, self.W, x, 2, struct.unpack_from('<H', x, 0)[0], defined=(1, 2))[0]
+        return not (int(dec(hb)['m_abFlags4Bytes']) >> 24) & 1 and int(dec(rb)['m_allowResetLineEndConstr']) == 1
 
     def streams(self, family_name, category, path, when=None):
         pd = self.pd; when = when or time.time()
