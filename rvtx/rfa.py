@@ -29,6 +29,13 @@ def _eids(o, out, key=''):
         for v in o: _eids(v, out, key)
 
 
+_EMPTY_Z = bytes.fromhex('3f08ffffffffffffffffa69f0e00000000000480080000000000' + 'ea8ca039593e2946' * 3 + 'ea8ca039593e29c6' * 3 + 'ea8ca039593e2946' * 3 + 'ea8ca039593e29c6' * 3 + 'a69f0e00000000000200000000000000')
+
+
+def empty_varsketch_z(i):
+    return _EMPTY_Z.replace(struct.pack('<Q', 0xE9FA6), struct.pack('<Q', i))
+
+
 class ProjectDocs:
     """everything about a project needed to lift families out (heavy: whole partition parsed)"""
     def __init__(self, prj):
@@ -195,6 +202,10 @@ class Builder:
         # ---- items
         H, R, Z = {}, {}, {}
         for i in own: H[i] = oH[i]; R[i] = oR[i]; Z[i] = oZ.get(i)
+        if os.environ.get('RVTX_EMPTYZ', '1') != '0':     # Revit's saved family carries an empty guess cache (138-byte Z) for VarSketch elements whose project Z holds data
+            for i in own:
+                if Z[i] is not None and len(Z[i][0]) > 138 and len(oR[i][0]) > 2 and self.sch.name(struct.unpack_from('<H', oR[i][0], 0)[0]) == 'VarSketch':
+                    zb = empty_varsketch_z(i); Z[i] = (zb, zlib.adler32(zb) & 0xFFFFFFFF)
         def fix_h(b):
             def fn(t):
                 t['m_familyId'] = EID(fid)
