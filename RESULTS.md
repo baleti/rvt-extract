@@ -47,3 +47,6 @@ Offline check of 4-byte-id years: partition serialisation (H/R/Z chains) round-t
 
 ### 2026-10-22 Revit 2026, Snowdon Structural (build lift55x)
 177 of 177 lifted families open in Revit 2026 with no errors or dialogs (oracle/rfacheck.py, out/rfa_chk/n55_*). Facts diff against Revit's own EditFamily+SaveAs (gt_fam/2026_55) not yet run (needs an rfacheck pass over gt_fam/2026_55).
+
+### 2026-10-22 studyx-033 facts diff vs Revit EditFamily+SaveAs (famsave 2024, gt in out/gt_b33)
+Found by the diff: the family document's own Family record can carry no types in office projects (94 of 100 lifted families listed no types in Revit although they opened). Fix: copy m_pFamilyTypes from the project-side Family record (rfa.py). After the fix: 100 of 100 open, type count equals Revit's for 96 of 100; type names equal for 23 of 100 (Revit's EditFamily shows the family's original names such as "Standard", the project record carries the project-side renamed names; both are valid); remaining differences: material and appearance asset counts (ours fewer by 2-5 per family, Revit adds default materials on save), a few pattern records, 6 FORM entries, 4 families with a different type count (Toposolid tags 0 vs 1).
