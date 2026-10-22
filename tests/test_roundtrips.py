@@ -180,3 +180,13 @@ class ElementTable4Tests(unittest.TestCase):
         self.assertEqual(rows[1], struct.pack("<II", 9, 9) + b"\xcf\x03\x00\x00\xef\x03\x00\x00" + b"\xff" * 4 + b"\0" * 4 + b"\x01\x02\x03\x04")
         self.assertEqual(rows[0][-4:], struct.pack("<I", 77))
         self.assertEqual(rows[3][-4:], b"\xff" * 4)
+
+
+class NullExprTests(unittest.TestCase):
+    def test_absent_expression_uses_pointer_form(self):
+        from rvtx import rfa
+        t = {'obj': {'m_pairs': [{'name': 'a', 'params': {'m_params': [{'m_oExpression': None, 'm_value': 1.0}, {'m_oExpression': {'obj': 1}}]}}]}}
+        rfa._null_exprs(t)
+        ps = t['obj']['m_pairs'][0]['params']['m_params']
+        self.assertEqual(ps[0]['m_oExpression'], {'null': 0})
+        self.assertEqual(ps[1]['m_oExpression'], {'obj': 1})
