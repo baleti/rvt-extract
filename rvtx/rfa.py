@@ -197,6 +197,12 @@ class Builder:
     def encode(self, tag, tree):
         return struct.pack('<H', tag) + self.E.body(tag, tree)
 
+    def dec_loose(self, body):
+        """decode for reference scanning: a record with an undecodable Extensible Storage tail (DataStorage) yields the decoded part"""
+        try: return self.dec(body)
+        except AssertionError:
+            tag = self.tag_of(body); return tag, enc.decode_tree(self.sch, self.W, body, 2, tag, defined=(1, 2))[0]
+
     def edit(self, body, fn):
         tag, t = self.dec(body); fn(t); return self.encode(tag, t)
 
@@ -217,14 +223,14 @@ class Builder:
         # shared set: standard + dependencies of the family's own records
         deps = set()
         for i, (b, s) in oR.items():
-            out = set(); _eids(self.dec(b)[1], out)
+            out = set(); _eids(self.dec_loose(b)[1], out)
             for e in out:
                 q = pd.byid.get(e)
                 if q is not None and q['class'] in TARGET and e not in pd.standard and e not in own: deps.add(e)
         extra = set()
         if os.environ.get('RVTX_EXTRA', '1') != '0':
             IMG = {'ImageSymbol', 'ImageHolder'}
-            for k, fl in enumerate([self.dec(b)[1] for i, (b, s) in oR.items()] + [{k_: v for k_, v in f.items() if k_ != 'm_oFamDoc'}]):
+            for k, fl in enumerate([self.dec_loose(b)[1] for i, (b, s) in oR.items()] + [{k_: v for k_, v in f.items() if k_ != 'm_oFamDoc'}]):
                 out = set(); _eids(fl, out)
                 for e in out:
                     q = pd.byid.get(e)
@@ -248,7 +254,12 @@ class Builder:
                 t['m_regenHistory']['m_historyMap'] = []
             return self.edit(b, fn)
         def fix_r(b):
-            return self.edit(b, lambda t: t.__setitem__('m_famId', EID(fid)))
+            try: return self.edit(b, lambda t: t.__setitem__('m_famId', EID(fid)))
+            except AssertionError:      # records with an Extensible Storage tail (DataStorage) are not fully decodable: patch m_famId in place
+                tag = self.tag_of(b); v, p, c = enc.decode_tree(self.sch, self.W, b, 2, tag, defined=(1, 2))
+                old = (int(v['m_famId']) & ((1 << (8 * self.W)) - 1)).to_bytes(self.W, 'little'); k = b.find(old, 2, 200)
+                if k < 0 or b.find(old, k + 1, 200) >= 0: raise
+                return b[:k] + int(fid).to_bytes(self.W, 'little') + b[k + self.W:]
         for i in shared:
             H[i] = fix_h(pd.doc0['H'][i]); R[i] = (fix_r(pd.doc0['R'][i][0]), None); Z[i] = pd.doc0['Z'].get(i)
         for new, old in ((kn, pd.kn_proj), (ac, pd.ac_proj)):
