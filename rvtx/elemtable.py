@@ -21,7 +21,7 @@ def cd_rows(seg, W=8):
     return rows
 
 
-def build(all_ids, own, owners, family_id, special_neg=()):
+def build(all_ids, own, owners, family_id, special_neg=(), shared_owner=None):
     """all_ids: every element id of the document; own: ids that belong to the family itself; owners: {id: 8 owner bytes} from the content doc;
     special_neg: ids of shared rows with owner -1 (KeynoteTable, AssemblyCodeTable)"""
     out = bytearray((TAG or HDR) + struct.pack('<I', len(all_ids)))
@@ -30,7 +30,7 @@ def build(all_ids, own, owners, family_id, special_neg=()):
         idb = i.to_bytes(8, 'little')
         if i in special_neg: out += idb + b'\0' * 12 + idb + NEG8 + b'\0\0\0\0'
         elif i in own: out += idb + b'\0' * 8 + b'\xff\xff\xff\xff' + idb + owners.get(i, NEG8) + b'\0\0\0\0'
-        else: out += idb + b'\0' * 12 + idb + fam + b'\0\0\0\0'
+        else: out += idb + b'\0' * 12 + idb + (shared_owner[i].to_bytes(8, 'little') if shared_owner and i in shared_owner else fam) + b'\0\0\0\0'
     out += b'\0\0\0\0\xff\xff\xff\xff' + TRAILER_CONST + b'\0\0' + max(all_ids).to_bytes(8, 'little') + b'\0\0\0\0'
     return bytes(out)
 

@@ -10,7 +10,7 @@ EID = D.EID
 TARGET = {'MaterialElem', 'FillPatternElem', 'LinePatternElem', 'AppearanceAssetElem', 'PropertySetElement'}
 if os.environ.get('RVTX_PEE', '1') != '0': TARGET = TARGET | {'ParamElemExternal'}  # shared-parameter closure (Rebar Shape: record set == Revit's); RVTX_PEE=0 disables
 EXTRA = {'ImageSymbol', 'ImageHolder', 'CategoryElem', 'GStyleElem'}  # custom categories / subcategory styles / raster images referenced by the family (own records or the project-side Family record)
-SPECIAL_MATERIALS = {'Default', 'Poche', 'Phase-Demo', 'Phase-Exist', 'Phase-Temp'}
+SPECIAL_MATERIALS = {'Default', 'Poche', 'Phase-Demo', 'Phase-Exist', 'Phase-Temp'} | set(x for x in os.environ.get('RVTX_MATS', '').split(',') if x)
 KEY = re.compile(r'(Id|Ids|ElemId|Pattern|Material)$')
 
 
@@ -116,6 +116,8 @@ class ProjectDocs:
         cd = g('Global/ContentDocuments')
         SS.TAGS['CD'] = cd[:2] if len(cd) < 20 else cd[-14:-12]        # the empty marker of a family document is the last 14 bytes of the project's (a project ends with an empty marker too)
         et = g('Global/ElemTable'); ET.TAG = et[:2]
+        alloc = struct.unpack_from('<Q', et, len(et) - 12)[0] if self.W == 8 else struct.unpack_from('<I', et, len(et) - 8)[0]
+        if alloc < (1 << 40): self.max_id = max(self.max_id, alloc)      # the id allocator state in the ElemTable trailer: Revit creates the new KeynoteTable/AssemblyCodeTable above it
         if self.W == 8: ET.TRAILER_CONST = et[-24 + 8:-24 + 10]
         else: ET.TRAILER4 = et[-12:-8]
         self._partition_markers()
@@ -215,7 +217,7 @@ class Builder:
     # --- build
     def build(self, fam_rec, out_path=None, when=None, own_only_report=False):
         pd = self.pd; f = fam_rec['fields']
-        k = pd.family_doc_index(fam_rec); assert k, 'family has no embedded document'
+        k = pd.family_doc_index(fam_rec); assert k, 'family has no embedded document'; kdoc = k
         doc = pd.docs[k]
         oH = {i: b for i, b in doc['H'][:-1]}; oR = {i: (b, s) for i, b, s in doc['R'][:-1]}; oZ = {i: (b, s) for i, b, s in doc['Z'][:-1]}
         own = set(oH)
@@ -236,7 +238,9 @@ class Builder:
                     q = pd.byid.get(e)
                     if q is not None and q['class'] in EXTRA and e not in pd.standard and e not in own and (k < len(oR) or q['class'] in IMG): extra.add(e)
         shared = set(pd.standard) | pd.close(deps | extra, TARGET | EXTRA if extra else None)
-        kn, ac = pd.max_id + 1, pd.max_id + 2
+        nest_ids = [i for kn_, _ in self.nested_docs(kdoc) for i, _b in pd.docs[kn_]['H'] if i != NEG]
+        mx = max([pd.max_id] + nest_ids)      # Revit allocates the new KeynoteTable/AssemblyCodeTable ids above the nested documents' ids too
+        kn, ac = mx + 1, mx + 2
         fam_guid = f['m_famDocGUID']['m_guid']
         g, blob = pd.segment(f['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid'])
         # ---- items
@@ -250,11 +254,15 @@ class Builder:
             def fn(t):
                 t['m_familyId'] = EID(fid)
                 t['m_parents']['obj']['m_deletion'].append(EID(fid))
+                t['m_parents']['obj']['m_deletion'].sort(key=lambda x: int(x) - (1 << 64) if int(x) >= 1 << 63 else int(x))     # Revit keeps every deletion list sorted (signed)
                 t['m_abFlags4Bytes'] = t['m_abFlags4Bytes'] & ~0x10
                 t['m_regenHistory']['m_historyMap'] = []
             return self.edit(b, fn)
         def fix_r(b):
-            try: return self.edit(b, lambda t: t.__setitem__('m_famId', EID(fid)))
+            def fn(t):
+                t['m_famId'] = EID(fid)
+                if 'm_bindingIds' in t and t['m_bindingIds']: t['m_bindingIds'] = []     # shared-parameter records: the project-side parameter bindings do not exist in the family (Revit's EditFamily empties them)
+            try: return self.edit(b, fn)
             except AssertionError:      # records with an Extensible Storage tail (DataStorage) are not fully decodable: patch m_famId in place
                 tag = self.tag_of(b); v, p, c = enc.decode_tree(self.sch, self.W, b, 2, tag, defined=(1, 2))
                 old = (int(v['m_famId']) & ((1 << (8 * self.W)) - 1)).to_bytes(self.W, 'little'); k = b.find(old, 2, 200)
@@ -311,7 +319,7 @@ class Builder:
             d = t['m_parents']['obj']['m_deletion']
             t['m_parents']['obj']['m_deletion'] = [EID(e) for e in sorted({int(x) for x in d} | set(shared_sorted), key=lambda v: v - (1 << 64) if v >> 63 else v)]   # signed order: negative ids first (Revit)
         H[fid] = self.edit(H[fid], fam_h)
-        self.fam_rec = fam_rec; self.fid = fid; self.kn = kn; self.ac = ac; self.shared = shared; self.own = own; self.all_ids = all_ids; self.H, self.R, self.Z = H, R, Z; self.blob = blob; self.k = k
+        self.fam_rec = fam_rec; self.fid = fid; self.kn = kn; self.ac = ac; self.shared = shared; self.own = own; self.all_ids = all_ids; self.H, self.R, self.Z = H, R, Z; self.blob = blob; self.k = kdoc
         return self
 
     # ---- assemble streams
@@ -324,7 +332,7 @@ class Builder:
         return {'H': Hl, 'R': Rl, 'Z': Zl}
 
     def partition_stream(self):
-        payload = PT.build_payload([self.doc_items()], self.W)
+        payload = PT.build_payload([self.doc_items()] + [self.pd.docs[kn] for kn, _ in self.nested_docs(self.k)], self.W)
         return PT.page_stream(payload)
 
     def global_stream(self, name, raw):
@@ -337,6 +345,68 @@ class Builder:
         dec = lambda x: enc.decode_tree(self.sch, self.W, x, 2, struct.unpack_from('<H', x, 0)[0], defined=(1, 2))[0]
         return not (int(dec(hb)['m_abFlags4Bytes']) >> 24) & 1 and int(dec(rb)['m_allowResetLineEndConstr']) == 1
 
+    def nested_docs(self, k, seen=None):
+        """[(project doc index, content GUID hex)] of the families nested in document k (depth first): Family records inside the document that carry their own m_oFamDoc"""
+        pd = self.pd; seen = seen if seen is not None else {k}; out = []
+        for i, b, *_ in pd.docs[k]['R'][:-1]:
+            if self.class_of(b) != 'Family': continue
+            fd = self.dec_loose(b)[1].get('m_oFamDoc')
+            if not (isinstance(fd, dict) and 'obj' in fd): continue
+            cnt = collections.Counter(pd.id_doc.get(int(x['second'].get('m_id') or x['second'].get('m_id64'))) for x in fd['obj']['m_big2SmallMap2'])
+            cnt.pop(None, None); cnt.pop(k, None)
+            if not cnt: continue
+            kn = cnt.most_common(1)[0][0]
+            if kn in seen: continue
+            seen.add(kn); out.append((kn, fd['obj']['m_contentDocGUID']['m_guid'])); out += self.nested_docs(kn, seen)
+        return out
+
+    def shared_owners(self):
+        """ElemTable owner of shared rows that Revit does not attribute to the family: a GStyleElem belongs to its CategoryElem and an ImageHolder to its ImageSymbol when those are in the document"""
+        ids = set(self.all_ids); out = {}
+        for i in self.shared:
+            r = self.pd.byid.get(i)
+            if r is None: continue
+            f = r['fields']
+            if r['class'] == 'GStyleElem' and int(f.get('m_categoryId', -1)) in ids: out[i] = int(f['m_categoryId'])
+            elif r['class'] == 'ImageHolder' and int(f.get('m_idImageSymbol', -1)) in ids: out[i] = int(f['m_idImageSymbol'])
+        return out
+
+    def nested_blob(self, guid, max_id):
+        """content document segment of a nested family as Revit writes it into a family file: the project's segment with the history and content table dropped, the element history ids zeroed and the allocation marker raised"""
+        pd = self.pd; g, blob = pd.segment(guid); tag = pd.tag_adoc
+        t = enc.decode_tree(self.sch, self.W, blob, 2, tag)[0]
+        t['m_pHistory'] = {'null': 0}; t['m_oContentTable'] = {'null': 0}
+        for e in t['m_elemTable']['obj']['m_elemArr']:
+            h = e.get('m_history')
+            if isinstance(h, dict):
+                for k_, v in h.items():
+                    if isinstance(v, dict) and 'm_id' in v: v['m_id'] = 0xFFFFFFFF if k_ == 'm_lastUserModificationDate' else 0
+        src = t['m_elemTable']['obj'].get('m_pSource')
+        if isinstance(src, dict) and src.get('obj') and 'm_last' in src['obj']: src['obj']['m_last']['m_id64'] = max_id
+        return struct.pack('<H', tag) + enc.Enc(self.sch, self.W).body(tag, t)
+
+    def add_nested_to_latest(self, lt, nested):
+        """content records (taken from the project's Latest) and the family document GUID list of the nested families"""
+        guids = [g_ for _, g_ in nested]; want = set(guids)
+        recs = [copy.deepcopy(e) for e in self.pd.latest_tree['m_oContentTable']['obj']['m_ContentRecSet'] if e['m_ContentKey']['m_guidKey']['m_guid'] in want]
+        recs.sort(key=lambda e: guids.index(e['m_ContentKey']['m_guidKey']['m_guid']))
+        for e in recs:      # Revit zeroes the project history ids in the content records it writes into a family
+            h = e.get('m_history')
+            if isinstance(h, dict):
+                for k_, v in h.items():
+                    if isinstance(v, dict) and 'm_id' in v: v['m_id'] = 0xFFFFFFFF if k_ == 'm_lastUserModificationDate' else 0
+            for ep in e.get('m_EpisodeCounts') or []:
+                if isinstance(ep.get('first'), dict) and 'm_id' in ep['first']: ep['first']['m_id'] = 0
+        lt['m_oContentTable']['obj']['m_ContentRecSet'] = recs
+        sur = set()      # surrogates of the nested Family records of the document: their LoadedFamilyInfo lists the nested document GUIDs
+        for i, b, *_ in self.pd.docs[self.k]['R'][:-1]:
+            if self.class_of(b) == 'Family':
+                t = self.dec_loose(b)[1]; fd = t.get('m_oFamDoc')
+                if isinstance(fd, dict) and 'obj' in fd: sur.add(int(t['m_surrogateId']))
+        for s_ in lt['m_pAppInfoManager']['obj']['m_appInfoArr']:
+            for li in ((s_.get('obj') or {}).get('m_arrLoadedFamilyInfo') or []):
+                if int(li['m_surrogateId']) in sur: li['m_familyDocGUIDs'] = [{'m_guid': g_} for g_ in reversed(guids)]
+
     def streams(self, family_name, category, path, when=None):
         pd = self.pd; when = when or time.time()
         save_guid = str(uuid.uuid4()); doc_guid = str(uuid.uuid4()); part_guid = pd.contents_guid
@@ -345,10 +415,13 @@ class Builder:
         g, blob = pd.segment(self.fam_rec['fields']['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid'])
         tag = pd.tag_adoc
         bt, _, _ = enc.decode_tree(self.sch, self.W, blob, 2, tag)
-        lt, notes = LAT.build_tree(self.sch, pd.latest_tree, bt, set(self.all_ids), remap={pd.kn_proj: self.kn, pd.ac_proj: self.ac})
+        lt, notes = LAT.build_tree(self.sch, pd.latest_tree, bt, set(self.all_ids), remap={pd.kn_proj: self.kn, pd.ac_proj: self.ac}, cls_of=lambda i: self.class_of(self.R[i][0]) if i in self.R else (pd.byid[i]['class'] if i in pd.byid else None))
+        nested = self.nested_docs(self.k)
+        mx_ids = self.kn - 1
+        if nested: self.add_nested_to_latest(lt, nested)
         latest = LAT.encode(self.sch, self.W, tag, lt)
         if self.W == 8:
-            rows = ET.cd_rows(pd.cd[g:g + 400000]); et = ET.build(self.all_ids, self.own, rows, self.fid, special_neg=(self.fid, self.kn, self.ac))
+            rows = ET.cd_rows(pd.cd[g:g + 400000]); et = ET.build(self.all_ids, self.own, rows, self.fid, special_neg=(self.fid, self.kn, self.ac), shared_owner=self.shared_owners())
         else:
             rows = ET.cd_rows4(pd.cd[g:g + 400000]); et = ET.build4(self.all_ids, self.own, rows, self.fid, special_neg=(self.fid, self.kn, self.ac))
         st = {}
@@ -358,7 +431,7 @@ class Builder:
         st['Global/History'] = self.global_stream('Global/History', SS.history(doc_guid, save_guid))
         st['Global/DocumentIncrementTable'] = self.global_stream('Global/DocumentIncrementTable', SS.document_increment_table(n, when))
         st['Global/PartitionTable'] = self.global_stream('Global/PartitionTable', SS.PT_SAMPLES[pd.fmt] if (pd.fmt not in ('2024', '2026') and pd.fmt in SS.PT_SAMPLES) else SS.partition_table(part_guid))
-        st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents_empty())
+        st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents([(g_, self.nested_blob(g_, mx_ids)) for _, g_ in nested]) if nested else SS.content_documents_empty())
         st['Partitions/0'] = self.partition_stream()
         st['BasicFileInfo'] = SS.basic_file_info(path, save_guid, pd.build, pd.fmt)
         st['Contents'] = pd.contents_stream

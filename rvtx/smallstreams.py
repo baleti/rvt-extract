@@ -36,6 +36,13 @@ def partition_table(part_guid):
     return _tag(bytes.fromhex('ec0b0100000001000000'), 'PT') + g2b(part_guid) + bytes.fromhex('00000000ffffffffffffffffffffffff01000000000800000057006f0072006b0073006500740031000100000001000000000000000100000000000000')
 
 
+def content_documents(segments):
+    """segments: [(guid hex, blob)] of nested family documents: [tag ffffffff tag-1 ffffffff][guid][len][blob][len] each, then the empty marker"""
+    t = TAGS['CD']; t1 = struct.pack('<H', struct.unpack('<H', t)[0] - 1); out = b''
+    for g, blob in segments: out += t + b'\xff' * 4 + t1 + b'\xff' * 4 + bytes.fromhex(g) + struct.pack('<I', len(blob)) + blob + struct.pack('<I', len(blob))
+    return out + content_documents_empty()
+
+
 def content_documents_empty():
     return _tag(bytes.fromhex('7b0300000000ffffffff00000000'), 'CD')
 

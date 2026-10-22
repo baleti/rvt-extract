@@ -7,5 +7,8 @@ os.makedirs(od, exist_ok=True)
 a, b = olefile.OleFileIO(src), olefile.OleFileIO(ours); st = {}
 pn = '/'.join(next(e for e in a.listdir(streams=True) if e[0] == 'Partitions'))
 for e in a.listdir(streams=True):
-    n = '/'.join(e); st[n] = (b if n in names else a).openstream(n).read()
+    n = '/'.join(e)
+    if n.startswith('Partitions/') and 'Partitions' in names:
+        on = '/'.join(next(x for x in b.listdir(streams=True) if x[0] == 'Partitions')); st[n] = b.openstream(on).read()
+    else: st[n] = (b if n in names else a).openstream(n).read()
 open(os.path.join(od, 'h.rfa'), 'wb').write(cfbw.write_rfa(st, pn))

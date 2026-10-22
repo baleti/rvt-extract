@@ -63,8 +63,10 @@ def serialize(docs, W=8):
     return bytes(out), items
 
 
-def cut_points(items, total, limit=LIMIT):
-    """member start offsets: region starts are forced, otherwise greedy to the largest id-start within limit"""
+def cut_points(items, total, limit=LIMIT, joined=None):
+    """member start offsets: region starts are forced, otherwise greedy to the largest id-start within limit.
+    A single item larger than the limit is cut like Revit does (oracle, LandingPage with an embedded image): its member starts at the item's id, the first chunk
+    ends after the item header + 131072 body bytes, further chunks are 131072 bytes, the last chunk continues with the next item's A field."""
     cuts = [0]; idpos = [it[2] for it in items]
     reg_of = [(it[0], it[1]) for it in items]
     starts = {}
@@ -73,6 +75,13 @@ def cut_points(items, total, limit=LIMIT):
     for k, p in enumerate(idpos):
         if k in first_idx and p != cuts[-1]: cuts.append(p); continue
         nxt = idpos[k + 1] if k + 1 < len(idpos) else total
+        if joined is not None and nxt - p > limit:
+            if p > cuts[-1]: cuts.append(p)
+            hdr = 12 if items[k][0] == 'H' else 16      # id + (stamp) + length
+            end = p + hdr + struct.unpack_from('<I', joined, p + hdr - 4)[0]; b = p + hdr + 131072
+            while b < end: cuts.append(b); b += 131072
+            if nxt < total and nxt > cuts[-1]: cuts.append(nxt)      # the tail chunk is its own member; the next item starts a new one
+            continue
         if nxt - cuts[-1] > limit and p > cuts[-1]: cuts.append(p)
     return cuts
 
@@ -80,7 +89,7 @@ def cut_points(items, total, limit=LIMIT):
 def build_payload(docs, W=8, element_count=None, blob=None, text_len_pad=0, gz_override=None, tail_override=None):
     """-> payload bytes (before ECC paging) for the Partitions/N stream"""
     joined, items = serialize(docs, W)
-    cuts = cut_points(items, len(joined)); cuts.append(len(joined))
+    cuts = cut_points(items, len(joined), joined=joined); cuts.append(len(joined))
     apos = [it[3] for it in items if it[3] is not None] + [len(joined) - 4]     # the trailing A after the last terminator
     # region code per member
     reg_at = {}
@@ -148,6 +157,7 @@ def last_page_size(C):
 def page_stream(payload):
     """ECC-page a payload (Revit stream paging): full pages of 64896 data bytes + a last page sized by last_page_size (zero padded to its capacity)"""
     import ecc, rvtw
+    if payload and len(payload) % PAGE_PAYLOAD == 0: payload = payload + b'\0' * 8      # Revit always ends a stream with a partial page; zero padding after the data is ignored
     full = len(payload) // PAGE_PAYLOAD; out = []
     for i in range(full): out.append(ecc.parity(payload[i * PAGE_PAYLOAD:(i + 1) * PAGE_PAYLOAD], PAGE_STORED))
     tail = payload[full * PAGE_PAYLOAD:]
