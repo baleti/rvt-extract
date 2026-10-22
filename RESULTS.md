@@ -40,3 +40,7 @@ Same comparison for Revit 2026 (Snowdon 55, out/lift55q vs gt_fam/2026_55): 177 
 
 ### 2026-10-22 facts diff, Snowdon 2024 (tools/facts_diff.py gt43 vs n43_*)
 Oracle facts (category, types, parameters with formulas/storage/shared flag, element-class counts, reference planes, forms) of our 177 lifted families vs Revit's own EditFamily+SaveAs: 170 of 179 gt entries identical; the 9 differences: 6 FillPatternElement count +1..+4 in ours (over-inclusive closure), 1 extra blank type name (SCN_HAS), 2 gt duplicates ("Callout Head.0001", "SFD_Rectangle.0001": gt-side name collision, not families).
+
+### 2026-10-22 real office project, Revit 2024 format (studyx-033, 7 MB, anonymised)
+108 families, 100 with embedded documents lifted (8 without: in-place/system), 100 of 100 open in Revit 2024 with no errors or dialogs (oracle/rfacheck.py, slices out/rfa_chk/b33_*). Facts diff vs Revit EditFamily+SaveAs not yet run for this file.
+Offline check of 4-byte-id years: partition serialisation (H/R/Z chains) round-trips byte-exactly on the real Revit samples 2016-2026, and the member framing matches for 2019-2026 (deflate bytes differ, as for 2024); so the 2020 failure is not in partition layout.
