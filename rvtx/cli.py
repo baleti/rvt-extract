@@ -10,6 +10,10 @@ HELP = {'families': 'every family: manifest entry (category, types, parameters, 
         'links': 'external file references (links, keynote tables) from TransmissionData', 'materials': 'materials with appearance assets and textures (paths)'}
 
 
+VALIDATION = {'2024': 'validated: opens in Revit 2024, facts equal to EditFamily+SaveAs (Snowdon 177/177, office project 100/100)',
+              '2026': 'streams byte-identical to Revit 2026 output for tested families; open check pending'}
+
+
 def safe(s):
     return re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', s or 'Unnamed').strip(' .') or 'Unnamed'
 
@@ -55,7 +59,7 @@ def main(argv=None):
             try:
                 B.build(fr)
                 d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
-                B.write(fn, e['name'], e['category']); e['rfa'] = {'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': 'not validated in Revit'}
+                B.write(fn, e['name'], e['category']); e['rfa'] = {'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': VALIDATION.get(str(pd.fmt), 'experimental: this Revit format is not validated yet (see RESULTS.md)')}
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
     for k in only:
