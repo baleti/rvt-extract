@@ -40,6 +40,10 @@ def empty_varsketch_z(i):
 PARTITION_NUMBER = {2017: 60, 2018: 61, 2019: 62, 2020: 63, 2021: 64, 2022: 65, 2023: 66}
 
 
+def _norm_type(n):
+    return re.sub(r'[\s_]+', '', n or '').lower()
+
+
 def _null_exprs(o):
     """decoded project records show an absent expression as None; the encoder wants the pointer form {'null': 0}"""
     if isinstance(o, dict):
@@ -90,6 +94,21 @@ class ProjectDocs:
         self.guid_pos = {}
         self._project_constants()
         self.standard = self._standard_shared()
+
+    def symbol_names(self, family_id):
+        """{normalised name: name} of the project-side FamilySymbols of a family (unique normalised names only)"""
+        if not hasattr(self, '_symnames'):
+            self._symnames = {}
+            for i, r in self.byid.items():
+                if r['class'] != 'FamilySymbol': continue
+                si = r['fields'].get('m_symbolInfo'); nm = si.get('obj', {}).get('m_name') if isinstance(si, dict) else None
+                if nm: self._symnames.setdefault(int(r['fields'].get('m_familyId', -1)), []).append(nm)
+        names = self._symnames.get(int(family_id), []); out = {}; bad = set()
+        for n in names:
+            k = _norm_type(n)
+            if k in out and out[k] != n: bad.add(k)
+            out[k] = n
+        return {k: v for k, v in out.items() if k not in bad}
 
     def _project_constants(self):
         o = self.o; g = lambda n: rvtfmt.inflate_stream(o.openstream(n).read())[1]
@@ -271,6 +290,9 @@ class Builder:
                 # the family document's own Family record carries no types (office projects): Revit's EditFamily fills them from the project-side Family record
                 t['m_pFamilyTypes'] = _null_exprs(copy.deepcopy(f['m_pFamilyTypes']))
             pr = t['m_pFamilyTypes']['obj']['m_pairs']
+            for pair in pr:      # Revit's EditFamily lists the project-side symbol names ("450x450mm"), the Family record keeps the names at load time ("450 x 450mm")
+                nm = pd.symbol_names(fam_rec['id']).get(_norm_type(pair['name']))
+                if nm: pair['name'] = nm
             if len(pr) == 1 and pr[0]['name'] == f.get('m_name'): pr[0]['name'] = ' '
             elif len(pr) > 1 and pr[0]['name'] == ' ': del pr[0]; ft = t['m_pFamilyTypes']['obj']; ft['m_idx'] = max(0, int(ft['m_idx']) - 1)       # leading unnamed scratch type (SCN_HAS): Revit's EditFamily drops it
         R[fid] = (self.edit(R[fid][0], fam_r), None)
