@@ -254,6 +254,7 @@ class Builder:
             t['m_familyIds']['obj']['m_data'] = data
             pr = t['m_pFamilyTypes']['obj']['m_pairs']
             if len(pr) == 1 and pr[0]['name'] == f.get('m_name'): pr[0]['name'] = ' '
+            elif len(pr) > 1 and pr[0]['name'] == ' ': del pr[0]       # leading unnamed scratch type (SCN_HAS): Revit's EditFamily drops it
         R[fid] = (self.edit(R[fid][0], fam_r), None)
         def fam_h(t):
             d = t['m_parents']['obj']['m_deletion']
