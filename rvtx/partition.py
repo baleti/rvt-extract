@@ -102,7 +102,7 @@ def build_payload(docs, W=8, element_count=None, blob=None, text_len_pad=0, gz_o
         x1 = sum(1 for a in apos if lo <= a < hi)
         reg = items[bisect.bisect_right([it[2] for it in items], lo) - 1][0] if True else 'H'
         # region of the member = region of the first item that starts at lo
-        first = next(it for it in items if it[2] == lo)
+        first = next((it for it in items if it[2] == lo), None) or items[bisect.bisect_right([it[2] for it in items], lo) - 1]      # a chunk of an oversized item starts inside it
         hs = (8 + W) if first[0] == 'H' else (12 + W)
         x2 = len(raw) - hs * x1
         co = zlib.compressobj(6, zlib.DEFLATED, -15)
