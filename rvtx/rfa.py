@@ -36,6 +36,10 @@ def empty_varsketch_z(i):
     return _EMPTY_Z.replace(struct.pack('<Q', 0xE9FA6), struct.pack('<Q', i))
 
 
+# partition stream numbers Revit wrote in its sample families (a 2024 lift with Partitions/0 opens; older formats need the year's number)
+PARTITION_NUMBER = {2017: 60, 2018: 61, 2019: 62, 2020: 63, 2021: 64, 2022: 65, 2023: 66}
+
+
 class ProjectDocs:
     """everything about a project needed to lift families out (heavy: whole partition parsed)"""
     def __init__(self, prj):
@@ -323,4 +327,6 @@ class Builder:
 
     def write(self, out_path, family_name, category):
         st = self.streams(family_name, category, out_path)
-        open(out_path, 'wb').write(cfbw.write_rfa(st)); return st
+        fmt = int(self.pd.fmt) if str(self.pd.fmt).isdigit() else 2024
+        part = 'Partitions/%d' % PARTITION_NUMBER[fmt] if fmt in PARTITION_NUMBER else 'Partitions/0'   # Revit 2024 rejects a 2020 file whose partition stream is not named like Revit's (oracle bisect 2026-10-22)
+        open(out_path, 'wb').write(cfbw.write_rfa(st, part)); return st

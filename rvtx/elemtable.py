@@ -57,8 +57,8 @@ def build4(all_ids, own, owners, family_id, special_neg=()):
     fam = family_id.to_bytes(4, 'little'); NEG4 = b'\xff\xff\xff\xff'
     for i in sorted(all_ids):
         idb = i.to_bytes(4, 'little')
-        if i in special_neg: out += idb + idb + b'\0' * 12 + NEG4
+        if i in special_neg: out += idb + idb + b'\0' * 16 + NEG4
         elif i in own: out += idb + idb + b'\0\0\0\0\0\0\0\0' + NEG4 + b'\0\0\0\0' + owners.get(i, NEG4)
-        else: out += idb + idb + b'\0' * 12 + fam
+        else: out += idb + idb + b'\0' * 16 + fam
     out += TRAILER4 + max(all_ids).to_bytes(4, 'little') + b'\0\0\0\0'
     return bytes(out)
