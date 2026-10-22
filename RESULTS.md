@@ -37,3 +37,6 @@ Same comparison for Revit 2026 (Snowdon 55, out/lift55q vs gt_fam/2026_55): 177 
 - Never judge a family from a 10-file slice: one failure poisons later opens in the same Revit session; re-run each failure alone.
 - ECC last-page sizes: sizes seen only by stream length (2197, 52813, 19227, 23331) are not safe; use sizes whose parity was reproduced on real Revit pages (rvtx.nladder.VERIFIED, tools/ecc_verify.py).
 - Revit empties the VarSketch Z cache (138-byte record) exactly when element flag bit 24 is clear and m_allowResetLineEndConstr is 1 (459 of 459 sketches).
+
+### 2026-10-22 facts diff, Snowdon 2024 (tools/facts_diff.py gt43 vs n43_*)
+Oracle facts (category, types, parameters with formulas/storage/shared flag, element-class counts, reference planes, forms) of our 177 lifted families vs Revit's own EditFamily+SaveAs: 170 of 179 gt entries identical; the 9 differences: 6 FillPatternElement count +1..+4 in ours (over-inclusive closure), 1 extra blank type name (SCN_HAS), 2 gt duplicates ("Callout Head.0001", "SFD_Rectangle.0001": gt-side name collision, not families).
