@@ -9,7 +9,7 @@ UIApp.DialogBoxShowing += (sender, e) => { var t = e as Autodesk.Revit.UI.Events
 try { proj = app.NewProjectDocument(UnitSystem.Imperial); } catch (Exception ex) { sb.AppendLine("NOPROJECT\t" + ex.Message.Split((char)10)[0]); }
 foreach (var path in Directory.GetFiles(dir, "*.rfa").OrderBy(x => x)) {
   var name = Path.GetFileName(path); Document d = null; curName = name; int nd0 = dlgs.Count;
-  try { d = app.OpenDocumentFile(ModelPathUtils.ConvertUserVisiblePathToModelPath(path), new OpenOptions()); }
+  try { d = app.OpenDocumentFile(ModelPathUtils.ConvertUserVisiblePathToModelPath(path), new OpenOptions { Audit = __AUDIT__ }); }
   catch (Exception ex) { sb.AppendLine("OPENFAIL\t" + name + "\t" + ex.GetType().Name + ": " + ex.Message.Split((char)10)[0]); continue; }
   try {
     var f = d.OwnerFamily; sb.AppendLine("OPEN\t" + name + "\tisFam=" + d.IsFamilyDocument + "\tfam=" + (f != null ? f.Name : "null") + "\tcat=" + (d.OwnerFamily != null && d.OwnerFamily.FamilyCategory != null ? d.OwnerFamily.FamilyCategory.Name : "none"));
