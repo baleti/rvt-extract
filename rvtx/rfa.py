@@ -40,6 +40,17 @@ def empty_varsketch_z(i):
 PARTITION_NUMBER = {2017: 60, 2018: 61, 2019: 62, 2020: 63, 2021: 64, 2022: 65, 2023: 66}
 
 
+def _null_exprs(o):
+    """decoded project records show an absent expression as None; the encoder wants the pointer form {'null': 0}"""
+    if isinstance(o, dict):
+        for k, v in o.items():
+            if k == 'm_oExpression' and v is None: o[k] = {'null': 0}
+            else: _null_exprs(v)
+    elif isinstance(o, list):
+        for v in o: _null_exprs(v)
+    return o
+
+
 class ProjectDocs:
     """everything about a project needed to lift families out (heavy: whole partition parsed)"""
     def __init__(self, prj):
@@ -256,6 +267,9 @@ class Builder:
                 if e in idx: x = copy.deepcopy(tmpl); x['m_elementId'] = EID(e); x['m_index'] = idx[e]; data.append(x)
                 elif e in ent: data.append(ent[e])
             t['m_familyIds']['obj']['m_data'] = data
+            if not t['m_pFamilyTypes']['obj']['m_pairs'] and f.get('m_pFamilyTypes') and f['m_pFamilyTypes'].get('obj', {}).get('m_pairs'):
+                # the family document's own Family record carries no types (office projects): Revit's EditFamily fills them from the project-side Family record
+                t['m_pFamilyTypes'] = _null_exprs(copy.deepcopy(f['m_pFamilyTypes']))
             pr = t['m_pFamilyTypes']['obj']['m_pairs']
             if len(pr) == 1 and pr[0]['name'] == f.get('m_name'): pr[0]['name'] = ' '
             elif len(pr) > 1 and pr[0]['name'] == ' ': del pr[0]; ft = t['m_pFamilyTypes']['obj']; ft['m_idx'] = max(0, int(ft['m_idx']) - 1)       # leading unnamed scratch type (SCN_HAS): Revit's EditFamily drops it
