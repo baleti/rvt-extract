@@ -22,7 +22,7 @@ See HANDOFF.md for the evidence and status of the .rfa assembly.
 ## Limits
 .rfa output status by Revit format (details and numbers in RESULTS.md):
 - 2024: validated. 177 of 177 Snowdon families and 100 of 100 families of a real office project open in Revit 2024; oracle facts (category, types, parameters, formulas, element counts) equal Revit's own EditFamily+SaveAs for 170 of 179 compared (residual: extra pattern records).
-- 2026: streams byte-identical for tested families; open check in progress.
+- 2026: 177 of 177 Snowdon families open in Revit 2026; facts diff pending.
 - 2017-2023 (4-byte element ids): .rfa is written but Revit rejects it so far; JSON/manifest extraction works for all years.
 - 2025: no reference Contents stream; unverified. Nested families (a family loaded inside another) are not written into the .rfa yet.
 Shared-parameter closure (needed by Rebar Shape families) is on by default; RVTX_PEE=0 disables it. The manifest field `rfa.validation` states the status per file.

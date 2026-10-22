@@ -44,3 +44,6 @@ Oracle facts (category, types, parameters with formulas/storage/shared flag, ele
 ### 2026-10-22 real office project, Revit 2024 format (studyx-033, 7 MB, anonymised)
 108 families, 100 with embedded documents lifted (8 without: in-place/system), 100 of 100 open in Revit 2024 with no errors or dialogs (oracle/rfacheck.py, slices out/rfa_chk/b33_*). Facts diff vs Revit EditFamily+SaveAs not yet run for this file.
 Offline check of 4-byte-id years: partition serialisation (H/R/Z chains) round-trips byte-exactly on the real Revit samples 2016-2026, and the member framing matches for 2019-2026 (deflate bytes differ, as for 2024); so the 2020 failure is not in partition layout.
+
+### 2026-10-22 Revit 2026, Snowdon Structural (build lift55x)
+177 of 177 lifted families open in Revit 2026 with no errors or dialogs (oracle/rfacheck.py, out/rfa_chk/n55_*). Facts diff against Revit's own EditFamily+SaveAs (gt_fam/2026_55) not yet run (needs an rfacheck pass over gt_fam/2026_55).
