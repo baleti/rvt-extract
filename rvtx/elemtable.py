@@ -46,7 +46,7 @@ def cd_rows4(seg):
     while k <= n:
         if seg[k + 4:k + 8] == seg[k + 8:k + 12] and seg[k + 24:k + 28] == b'\0\0\0\0' and seg[k + 20:k + 24] == b'\xff\xff\xff\xff':
             i = int.from_bytes(seg[k + 4:k + 8], 'little')
-            if 0 < i < 1 << 31 and i not in rows: rows[i] = seg[k:k + 4]
+            if 0 < i < 1 << 31 and i not in rows: rows[i] = seg[k:k + 4] + seg[k + 12:k + 20]     # owner + the two words a, b (not zero in 4-byte projects)
             k += 28
         else: k += 1
     return rows
@@ -58,7 +58,8 @@ def build4(all_ids, own, owners, family_id, special_neg=()):
     for i in sorted(all_ids):
         idb = i.to_bytes(4, 'little')
         if i in special_neg: out += idb + idb + b'\0' * 16 + NEG4
-        elif i in own: out += idb + idb + b'\0\0\0\0\0\0\0\0' + NEG4 + b'\0\0\0\0' + owners.get(i, NEG4)
+        elif i in own:
+            ow = owners.get(i, NEG4 + b'\0' * 8); out += idb + idb + ow[4:12] + NEG4 + b'\0\0\0\0' + ow[:4]
         else: out += idb + idb + b'\0' * 16 + fam
     out += TRAILER4 + max(all_ids).to_bytes(4, 'little') + b'\0\0\0\0'
     return bytes(out)
