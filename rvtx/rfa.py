@@ -404,8 +404,12 @@ class Builder:
             if isinstance(h, dict):
                 for k_, v in h.items():
                     if isinstance(v, dict) and 'm_id' in v: v['m_id'] = 0xFFFFFFFF if k_ == 'm_lastUserModificationDate' else 0
-            for ep in e.get('m_EpisodeCounts') or []:
-                if isinstance(ep.get('first'), dict) and 'm_id' in ep['first']: ep['first']['m_id'] = 0
+            eps = e.get('m_EpisodeCounts') or []
+            for n_, ep in enumerate(eps):      # RVTX_EPI (default keep): '0' zero every key (duplicates when several: Revit rejects the file, journal "can't fix the ordering of container m_EpisodeCounts"), 'keep' leave multi-entry keys, 'seq' keys 0,1,2.. in order
+                if isinstance(ep.get('first'), dict) and 'm_id' in ep['first']:
+                    mode = os.environ.get('RVTX_EPI', 'keep')
+                    if len(eps) == 1 or mode == '0': ep['first']['m_id'] = 0
+                    elif mode == 'seq': ep['first']['m_id'] = n_
         if 'obj' not in lt['m_oContentTable']:      # the family had no content records of its own (null pointer): instantiate the table from the project's
             tbl = copy.deepcopy(self.pd.latest_tree['m_oContentTable']); tbl['obj']['m_ContentRecSet'] = []; lt['m_oContentTable'] = tbl
         lt['m_oContentTable']['obj']['m_ContentRecSet'] = recs
@@ -440,7 +444,7 @@ class Builder:
         st['Global/Latest'] = self.global_stream('Global/Latest', latest)
         st['Global/ElemTable'] = self.global_stream('Global/ElemTable', et)
         st['Global/History'] = self.global_stream('Global/History', SS.history(doc_guid, save_guid))
-        st['Global/DocumentIncrementTable'] = self.global_stream('Global/DocumentIncrementTable', SS.document_increment_table(n, when))
+        st['Global/DocumentIncrementTable'] = self.global_stream('Global/DocumentIncrementTable', SS.document_increment_table(n + (sum(len(self.pd.docs[kn_]['H']) - 1 for kn_, _ in nested) if os.environ.get('RVTX_DITN', '1') != '0' else 0), when))
         st['Global/PartitionTable'] = self.global_stream('Global/PartitionTable', SS.PT_SAMPLES[pd.fmt] if (pd.fmt not in ('2024', '2026') and pd.fmt in SS.PT_SAMPLES) else SS.partition_table(part_guid))
         st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents([(g_, self.nested_blob(g_, mx_ids)) for _, g_ in sorted(nested, key=lambda n: bytes.fromhex(n[1]))]) if nested else SS.content_documents_empty())
         st['Partitions/0'] = self.partition_stream()
