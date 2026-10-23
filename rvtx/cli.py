@@ -84,6 +84,12 @@ def main(argv=None):
     if 'families' in res:
         man['families'] = res['families']
         write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])
+        import csv
+        with open(os.path.join(a.out, 'families', 'families.csv'), 'w', newline='') as fh:      # one row per family for auditing / standards checks
+            w = csv.writer(fh); w.writerow(['category', 'name', 'types', 'parameters', 'shared', 'in_place', 'embedded_records', 'nested', 'rfa_status', 'rfa_file', 'validation'])
+            for e in res['families']:
+                r = e.get('rfa') or {}
+                w.writerow([e['category'], e['name'], len(e['types']), len(e['parameters']), e.get('shared'), e.get('in_place'), e['embedded_records'], r.get('nested', ''), r.get('status', 'no-embedded-doc' if not e['embedded_doc'] else ''), r.get('file', ''), r.get('validation', '')])
     for k, v in res.items():
         if k == 'families': continue
         data, fl = v
