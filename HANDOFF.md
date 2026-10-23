@@ -139,3 +139,8 @@ REMAINING: the per-member frame field after the 0x0e7c marker (u32 that is 4 in 
 All re-sweeps with current code open in Revit: Snowdon 2024 177/177 (y43), Snowdon 2026 177/177 (z55), studyx-033 100/100 (b33y), ofc-002 70/70 (o2r). Fixes this session: oversized-record chunk frames, GUID-sorted content records/segments, null m_oContentTable for nested families.
 remote-host lift of 2026 project: chunks of 12 get OOM-killed at 3 GB, use 1-4. Local project copies in private/files (git-ignored).
 NEXT: 2025 Contents sample (unverified format), 4-byte years 2017-2023 (needs Revit 2020 in oracle, NEEDS-FROM-ORACLE.md), CLI end-to-end run on a project with README numbers, standard materials Revit adds (optional).
+
+## c8-fam (claude8) 2026-10-23 evening
+- CLI end to end verified: studyx-033 100/100 open in Revit 2024 (cli33_*). 2025 file ofc-006: 29/34 open in Revit 2026; the 5 failures all have nested family docs (solo reruns fail too; audit open fails; nested segment variants v1/v2 (tools: /tmp script, out/v25) no change). Manifest marks them known-bad (cli.py VALIDATION['2025']).
+- Next for 2025 nested: need a Revit 2025 ground truth (none in oracle: VMs 2024/2026) or bisect via hybrids of partition/ElemTable/PartitionTable (2025 uses SS.PT_SAMPLES, not partition_table()); suspect list: PartitionTable sample for 2025, ECC last-page size of multi-doc partition (>130 KB streams), Contents-stream tail.
+- Other open items: 4-byte years (Revit 2020 oracle), standard materials Revit adds.
