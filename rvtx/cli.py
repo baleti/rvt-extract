@@ -29,6 +29,7 @@ def main(argv=None):
     ap.add_argument('rvt', nargs='?'); ap.add_argument('--out', default=None, help='output folder')
     ap.add_argument('--only', default=None, help='comma list of output types (see --list-kinds): ' + ','.join(KINDS))
     ap.add_argument('--no-rfa', action='store_true', help='families: only the manifest, do not assemble .rfa files')
+    ap.add_argument('--match', default=None, help='families: only those whose name or category matches this regular expression (case-insensitive)')
     ap.add_argument('--list', action='store_true', help='print what the file contains and exit')
     ap.add_argument('--list-kinds', action='store_true', help='print the output types and exit')
     a = ap.parse_args(argv)
@@ -47,7 +48,7 @@ def main(argv=None):
         docs, st = core.scan_family_docs(prj)
         ents = []
         for fr in sorted(prj.families(), key=lambda r: r['fields'].get('m_name') or ''):
-            if fr['fields'].get('m_name'): ents.append(manifest.family_entry(prj, fr, docs.get(fr['id'])))
+            if fr['fields'].get('m_name') and (not a.match or re.search(a.match, fr['fields']['m_name'] + ' ' + (manifest.family_entry(prj, fr, docs.get(fr['id']))['category'] or ''), re.I)): ents.append(manifest.family_entry(prj, fr, docs.get(fr['id'])))
         res['families'] = ents
         if a.list or not a.out:
             for e in ents: print('%-28s %-50s types=%-3d params=%-3d records=%d' % (e['category'], e['name'], len(e['types']), len(e['parameters']), e['embedded_records']))
