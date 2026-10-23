@@ -1,4 +1,4 @@
-import argparse, json, os, re, sys, time
+import argparse, gc, json, os, re, sys, time
 from . import core, manifest, items, files, safepath
 
 KINDS = ['families'] + list(items.KINDS) + list(files.KINDS)
@@ -64,7 +64,7 @@ def main(argv=None):
             try:
                 B.build(fr)
                 d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
-                B.write(fn, e['name'], e['category']); nest = bool(B.nested_docs(B.k)); e['rfa'] = {'nested': nest, 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': ('known-bad: nested families in a 2025 file are rejected by Revit 2026' if nest and str(pd.fmt) == '2025' else VALIDATION.get(str(pd.fmt), 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
+                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nest = bool(B.nested_docs(B.k)); e['rfa'] = {'nested': nest, 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': ('known-bad: nested families in a 2025 file are rejected by Revit 2026' if nest and str(pd.fmt) == '2025' else VALIDATION.get(str(pd.fmt), 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
     for k in only:
