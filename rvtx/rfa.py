@@ -360,6 +360,15 @@ class Builder:
             seen.add(kn); out.append((kn, fd['obj']['m_contentDocGUID']['m_guid'])); out += self.nested_docs(kn, seen)
         return out
 
+    def nested_names(self, k):
+        """names of the Family records inside document k that carry their own embedded document (direct children)"""
+        out = []
+        for i, b, *_ in self.pd.docs[k]['R'][:-1]:
+            if self.class_of(b) != 'Family': continue
+            t = self.dec_loose(b)[1]; fd = t.get('m_oFamDoc')
+            if isinstance(fd, dict) and 'obj' in fd and t.get('m_name'): out.append(t['m_name'])
+        return out
+
     def shared_owners(self):
         """ElemTable owner of shared rows that Revit does not attribute to the family: a GStyleElem belongs to its CategoryElem and an ImageHolder to its ImageSymbol when those are in the document"""
         ids = set(self.all_ids); out = {}

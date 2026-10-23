@@ -64,7 +64,7 @@ def main(argv=None):
             try:
                 B.build(fr)
                 d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
-                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nest = bool(B.nested_docs(B.k)); e['rfa'] = {'nested': nest, 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': ('known-bad: nested families in a 2025 file are rejected by Revit 2026' if nest and str(pd.fmt) == '2025' else VALIDATION.get(str(pd.fmt), 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
+                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': ('known-bad: nested families in a 2025 file are rejected by Revit 2026' if nest and str(pd.fmt) == '2025' else VALIDATION.get(str(pd.fmt), 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
     for k in only:
@@ -99,10 +99,10 @@ def main(argv=None):
                 for t in e['types']: fh.write(','.join([t['name'].replace(',', ' ')] + [str(t['values'].get(c, {}).get('value', '')) for c in cols]) + '\n')
         import csv
         with open(os.path.join(a.out, 'families', 'families.csv'), 'w', newline='') as fh:      # one row per family for auditing / standards checks
-            w = csv.writer(fh); w.writerow(['category', 'name', 'types', 'parameters', 'shared', 'in_place', 'embedded_records', 'nested', 'rfa_status', 'rfa_file', 'validation'])
+            w = csv.writer(fh); w.writerow(['category', 'name', 'types', 'parameters', 'shared', 'in_place', 'embedded_records', 'nested', 'nested_families', 'rfa_status', 'rfa_file', 'validation'])
             for e in res['families']:
                 r = e.get('rfa') or {}
-                w.writerow([e['category'], e['name'], len(e['types']), len(e['parameters']), e.get('shared'), e.get('in_place'), e['embedded_records'], r.get('nested', ''), r.get('status', 'no-embedded-doc' if not e['embedded_doc'] else ''), r.get('file', ''), r.get('validation', '')])
+                w.writerow([e['category'], e['name'], len(e['types']), len(e['parameters']), e.get('shared'), e.get('in_place'), e['embedded_records'], r.get('nested', ''), '; '.join(r.get('nested_families') or []), r.get('status', 'no-embedded-doc' if not e['embedded_doc'] else ''), r.get('file', ''), r.get('validation', '')])
     for k, v in res.items():
         if k == 'families': continue
         data, fl = v
