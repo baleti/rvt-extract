@@ -5,3 +5,4 @@
 - 2026-10-23 claude8 takeover: oversized-record frames fixed, GUID-sorted content records; ofc-002 title blocks 3/3 open in Revit 2024 (out/rfa_chk/o2q); 4-family Snowdon regression 4/4 open (reg1).
 - 2026-10-23: ofc-002 70/70 lifted rfa open in Revit 2024.
 - 2026-10-23: Snowdon 2024 re-sweep 177/177 open (y43).
+- 2026-10-23: Snowdon 2026 re-sweep 177/177 open (z55); lift chunks of 12 get OOM-killed on 2026 project, use 4/1.
