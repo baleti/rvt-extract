@@ -130,5 +130,34 @@ def images(prj):
     return out, files
 
 
+def schedules(prj):
+    """schedule views: name, category, columns (heading, hidden, width) and sort field count; legends are listed by name"""
+    out = []
+    for r in _cls(prj, 'DBViewSchedule'):
+        f = r['fields']; sc = ob(f.get('m_pSchema') or {}) or {}
+        cols = [{'heading': ob(x).get('m_columnHeading'), 'hidden': bool(ob(x).get('m_hidden')), 'width_ft': ob(x).get('m_columnWidth')} for x in (sc.get('m_pFields') or [])]
+        out.append({'id': r['id'], 'name': f.get('m_viewName'), 'is_template': bool(f.get('m_isTemplate')), 'category_id': sg(sc.get('m_categoryId')), 'category': manifest.category_name(sc.get('m_categoryId')) if sc.get('m_categoryId') is not None else '',
+                    'columns': cols, 'sort_fields': len(sc.get('m_sortFieldArr') or []), 'filters': len(sc.get('m_filterArr') or []),
+                    'headers': [h.get('m_caption') for h in (sc.get('m_headerSet') or []) if isinstance(h, dict)]})
+    return {'schedules': out, 'legends': [{'id': r['id'], 'name': r['fields'].get('m_viewName'), 'components': None} for r in _cls(prj, 'DBViewLegend')]}, []
+
+
+def revisions(prj):
+    return [{'id': r['id'], 'sequence': r['fields'].get('m_sequenceNumber'), 'number': r['fields'].get('m_numberStr'), 'description': r['fields'].get('m_description'),
+             'date': r['fields'].get('m_date'), 'issued_by': r['fields'].get('m_issuedBy'), 'issued_to': r['fields'].get('m_issuedTo'), 'issued': bool(r['fields'].get('m_issued'))}
+            for r in sorted(_cls(prj, 'ProjectRevision'), key=lambda r: r['fields'].get('m_sequenceNumber') or 0)], []
+
+
+def imports(prj):
+    """imported / linked CAD files (MasterImportSymbol): name, link flag, unit, byte size, layer count"""
+    out = []
+    for r in _cls(prj, 'MasterImportSymbol'):
+        f = r['fields']; st = f.get('m_importSettings') or {}
+        out.append({'id': r['id'], 'name': ob(f.get('m_symbolInfo') or {}).get('m_name'), 'linked': bool(st.get('m_link')) if isinstance(st, dict) else None, 'view_specific': bool(st.get('m_viewSpecific')) if isinstance(st, dict) else None,
+                    'unit': (f.get('m_unitTypeId') or {}).get('m_typeId') if isinstance(f.get('m_unitTypeId'), dict) else None, 'bytes': f.get('m_size'), 'layers': len(f.get('m_layerCategoryIdSet') or []),
+                    'instances': len(f.get('m_parentIdSet') or [])})
+    return out, []
+
+
 KINDS = {'fill_patterns': fill_patterns, 'line_patterns': line_patterns, 'shared_parameters': shared_parameters, 'project_parameters': project_parameters,
-         'filters': filters, 'phases': phases, 'levels_grids': levels_grids, 'views': views, 'images': images}
+         'filters': filters, 'phases': phases, 'levels_grids': levels_grids, 'views': views, 'images': images, 'schedules': schedules, 'revisions': revisions, 'cad_imports': imports}
