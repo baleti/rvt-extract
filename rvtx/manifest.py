@@ -51,7 +51,7 @@ def family_entry(prj, fam_rec, doc):
             d = r['fields']['m_pParamDef']['obj']
             caps[pid] = caps[r['A']] = d['m_caption']
             params.append({'name': d['m_caption'], 'id': r['A'], 'project_id': pid, 'instance': bool(r['fields'].get('m_instanceParam')),
-                           'unit_type': d.get('m_unitType'), 'read_only': bool(d.get('m_readOnly')), 'description': r['fields'].get('m_description', '')})
+                           'unit_type': d.get('m_unitType'), 'spec': ((d.get('m_specTypeId') or {}).get('m_typeId') if isinstance(d.get('m_specTypeId'), dict) else None) or None, 'read_only': bool(d.get('m_readOnly')), 'description': r['fields'].get('m_description', '')})
     types = []
     pt = f.get('m_pFamilyTypes')
     for t in (pt['obj']['m_pairs'] if pt and pt.get('obj') else []):
