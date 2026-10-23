@@ -86,3 +86,6 @@ CLI output opened in Revit 2026 (upgrade): 12 open, 11 rejected (CorruptModelExc
 
 ### 2026-10-23 nested families as standalone .rfa (ofc-002, Revit 2024)
 The CLI now also lifts families that exist only as nested documents (recursively): 11 extra .rfa on ofc-002 (81 written in total), 11 of 11 open in Revit 2024 (out/rfa_chk/nn/rfacheck.tsv). Run time 208 s on remote-host under 3 GB.
+
+### 2026-10-23 2025 nested families as standalone files (ofc-006, 16 files, Revit 2026)
+11 of 11 standalone families without nested documents open; 4 of 4 with nested documents are rejected (380, ISSUANCE-REVISION TAB, Graphic Scale 1 - 20 x2). Same nested-only failure as the project families (out/rfa_chk/nn6/rfacheck.tsv). Smallest failing case for a future bisect: "Graphic Scale 1 - 20" (one nested leaf "Graphic Scale 1 - 100 5M", which opens alone).
