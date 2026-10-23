@@ -6,3 +6,4 @@
 - 2026-10-23: ofc-002 70/70 lifted rfa open in Revit 2024.
 - 2026-10-23: Snowdon 2024 re-sweep 177/177 open (y43).
 - 2026-10-23: Snowdon 2026 re-sweep 177/177 open (z55); lift chunks of 12 get OOM-killed on 2026 project, use 4/1.
+- 2026-10-23: studyx-033 100/100 open (b33y); null m_oContentTable fix for nested.

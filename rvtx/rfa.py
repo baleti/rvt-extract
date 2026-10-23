@@ -397,6 +397,8 @@ class Builder:
                     if isinstance(v, dict) and 'm_id' in v: v['m_id'] = 0xFFFFFFFF if k_ == 'm_lastUserModificationDate' else 0
             for ep in e.get('m_EpisodeCounts') or []:
                 if isinstance(ep.get('first'), dict) and 'm_id' in ep['first']: ep['first']['m_id'] = 0
+        if 'obj' not in lt['m_oContentTable']:      # the family had no content records of its own (null pointer): instantiate the table from the project's
+            tbl = copy.deepcopy(self.pd.latest_tree['m_oContentTable']); tbl['obj']['m_ContentRecSet'] = []; lt['m_oContentTable'] = tbl
         lt['m_oContentTable']['obj']['m_ContentRecSet'] = recs
         sur = set()      # surrogates of the nested Family records of the document: their LoadedFamilyInfo lists the nested document GUIDs
         for i, b, *_ in self.pd.docs[self.k]['R'][:-1]:
