@@ -29,6 +29,7 @@ def main(argv=None):
     ap.add_argument('rvt', nargs='?'); ap.add_argument('--out', default=None, help='output folder')
     ap.add_argument('--only', default=None, help='comma list of output types (see --list-kinds): ' + ','.join(KINDS))
     ap.add_argument('--no-rfa', action='store_true', help='families: only the manifest, do not assemble .rfa files')
+    ap.add_argument('--experimental', action='store_true', help='also write .rfa for Revit formats known to be rejected by Revit (2017-2023, 4-byte element ids)')
     ap.add_argument('--match', default=None, help='families: only those whose name or category matches this regular expression (case-insensitive)')
     ap.add_argument('--list', action='store_true', help='print what the file contains and exit')
     ap.add_argument('--list-kinds', action='store_true', help='print the output types and exit')
@@ -58,6 +59,8 @@ def main(argv=None):
         for fr in prj.families():
             e = byid.get(fr['id'])
             if e is None or not e['embedded_doc']: continue
+            if str(pd.fmt).isdigit() and int(pd.fmt) < 2024 and not a.experimental:
+                e['rfa'] = {'status': 'skipped', 'validation': 'Revit %s files: .rfa assembly is not validated (Revit rejects it); use --experimental to write anyway' % pd.fmt}; continue
             try:
                 B.build(fr)
                 d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
