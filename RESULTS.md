@@ -63,3 +63,13 @@ Re-check after the type-name change (build lift_b33e): 100 of 100 open in Revit 
 
 ### 2026-10-23 CLI end to end (bin/rvt-extract, all output types)
 studyx-033 (Revit 2024): CLI output 100 of 100 .rfa open in Revit 2024 (out/rfa_chk/cli33_*). ofc-006 (Revit 2025, 34 .rfa): 29 open in Revit 2026 by upgrade; 5 fail alone in fresh sessions (out/rfa_chk/solo06_*), all five contain nested family documents (Level Head, Dummy Wall Section head, Elevation Mark Body Circle-12mm, Door Schedule table Hollow Metal1, a title block); non-nested 2025 families open. Revit's own 2026 EditFamily save (out/gt_o6) is in 2026 record format so it cannot be diffed byte for byte. Variants of the nested ContentDocuments segment (raw, unzeroed history) and the audit open did not change the result: the cause is elsewhere (partition of nested docs or ElemTable in 2025 format), needs a Revit 2025 ground truth.
+
+## Summary table per project (measured 2026-10-23, re-sweeps with the current code; oracle = offline Revit via write-lab)
+| Project | Revit format | families in file | with embedded doc / .rfa written | opens in Revit | facts vs Revit's own EditFamily+SaveAs |
+|---|---|---|---|---|---|
+| Snowdon Structural sample | 2024 | 179 | 177 / 177 | 177 of 177 (Revit 2024) | 170 of 177 identical, 7 cosmetic (extra pattern record, extra blank type name) |
+| Snowdon Structural sample | 2026 | 177+ | 177 / 177 | 177 of 177 (Revit 2026) | 170 of 177 identical |
+| office project studyx-033 | 2024 | 108 | 100 / 100 | 100 of 100 (CLI output) | types equal 96 of 100; LoadFamily 24 of 24 sampled |
+| office host model ofc-002 | 2024 | 78 | 70 / 70 (incl. 3 nested title blocks) | 70 of 70 | not run |
+| office project ofc-006 | 2025 | 42 | 34 / 34 | 29 of 34 (Revit 2026, upgrade); 5 nested-family files rejected | not run |
+| 4-byte-id years 2017-2023 | 2017-2023 | - | skipped by default | Revit rejects (CorruptModelException) | - |
