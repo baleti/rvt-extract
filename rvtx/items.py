@@ -1,5 +1,5 @@
 """Project-level content extractors. Each takes a core.Project and returns (json_data, [(relative_path, bytes)])."""
-import json, re, io, zipfile, struct, collections
+import json, re, io, zipfile, struct, collections, sys
 from .core import eid
 from . import manifest
 
@@ -159,5 +159,20 @@ def imports(prj):
     return out, []
 
 
+def worksets(prj):
+    """worksets of a workshared file (PartitionTable entries): id, name, kind (0 user workset, others standard/family/view), default visibility in new views"""
+    sys.path.insert(0, manifest.RESEARCH)
+    import rvt_worksets
+    inv = set()
+    for r in _cls(prj, 'WorksetVisibilitySettingsElem'):
+        for g in r['fields'].get('m_invisibleWorksets') or []:
+            v = (g.get('m_guid') or {}).get('m_guid') if isinstance(g, dict) else None
+            if isinstance(v, (bytes, bytearray)): v = v.hex()
+            if v: inv.add(str(v).lower())
+    ws = rvt_worksets.worksets(prj.path, invisible=inv)
+    allw = sorted(({'id': v['id'], 'guid': g, 'name': v['name'], 'kind': v['kind'], 'default_visible': v['default_visible']} for g, v in ws.items()), key=lambda w: w['id'])
+    return {'user_worksets': [w for w in allw if w['kind'] == 0], 'other_entries': len(allw) - sum(1 for w in allw if w['kind'] == 0), 'note': 'kind 0 = user workset (verified against Revit WORKSET rows); other kinds are standard, family and view worksets, not listed'}, []
+
+
 KINDS = {'fill_patterns': fill_patterns, 'line_patterns': line_patterns, 'shared_parameters': shared_parameters, 'project_parameters': project_parameters,
-         'filters': filters, 'phases': phases, 'levels_grids': levels_grids, 'views': views, 'images': images, 'schedules': schedules, 'revisions': revisions, 'cad_imports': imports}
+         'filters': filters, 'phases': phases, 'levels_grids': levels_grids, 'views': views, 'images': images, 'schedules': schedules, 'revisions': revisions, 'cad_imports': imports, 'worksets': worksets}

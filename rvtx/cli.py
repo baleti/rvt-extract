@@ -7,7 +7,7 @@ HELP = {'families': 'every family: manifest entry (category, types, parameters, 
         'shared_parameters': 'shared parameters as manifest + shared_parameters.txt', 'project_parameters': 'project parameters with category bindings',
         'filters': 'view filters (categories, rules)', 'phases': 'phases, phase filters, design options', 'levels_grids': 'levels with elevations, grids, named reference planes',
         'views': 'views, view templates, sheets with placed views', 'images': 'embedded raster images (PNG/JPEG blobs)', 'project_info': 'file/build info, project information, preview.png',
-        'links': 'external file references (links, keynote tables) from TransmissionData', 'schedules': 'schedule views (columns, headers, category) and legend names', 'revisions': 'project revisions', 'cad_imports': 'imported/linked CAD files (name, units, size, layers)', 'materials': 'materials with appearance assets and textures (paths)'}
+        'links': 'external file references (links, keynote tables) from TransmissionData', 'schedules': 'schedule views (columns, headers, category) and legend names', 'revisions': 'project revisions', 'worksets': 'worksets (id, name, kind, default visibility)', 'cad_imports': 'imported/linked CAD files (name, units, size, layers)', 'materials': 'materials with appearance assets and textures (paths)'}
 
 
 VALIDATION = {'2024': 'validated: opens in Revit 2024, facts equal to EditFamily+SaveAs (Snowdon 177/177, office project 100/100)',
