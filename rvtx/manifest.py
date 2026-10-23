@@ -13,9 +13,13 @@ def sgn(v):
     return v - (1 << 32) if v >= (1 << 31) and v < (1 << 32) else v
 
 
+# categories missing from the research table, names as reported by Revit's own EditFamily rfa of the same family (oracle, 2026-10-23)
+_EXTRA = {'-2001094': 'Toposolid Tags', '-2001103': 'Toposolid Link Tags', '-2005002': 'Ceiling Tags', '-2005006': 'Furniture Tags', '-2005012': 'Curtain Panel Tags', '-2005014': 'Specialty Equipment Tags'}
+
+
 def category_name(cid):
     v = sgn(cid)
-    return _cat.get(str(v), 'Unknown(%d)' % v)
+    return _cat.get(str(v)) or _EXTRA.get(str(v)) or 'Unknown(%d)' % v
 
 
 def param_name(pid, caps):
