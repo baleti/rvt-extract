@@ -73,3 +73,10 @@ studyx-033 (Revit 2024): CLI output 100 of 100 .rfa open in Revit 2024 (out/rfa_
 | office host model ofc-002 | 2024 | 78 | 70 / 70 (incl. 3 nested title blocks) | 70 of 70 | not run |
 | office project ofc-006 | 2025 | 42 | 34 / 34 | 29 of 34 (Revit 2026, upgrade); 5 nested-family files rejected | not run |
 | 4-byte-id years 2017-2023 | 2017-2023 | - | skipped by default | Revit rejects (CorruptModelException) | - |
+
+### 2026-10-23 facts diff, office host model ofc-002 (Revit 2024, 70 families; Revit's own EditFamily+SaveAs in out/gt_o2full, facts via oracle/rfacheck.py, ours = out/rfa_chk/o2r_*)
+- Material count differs in 70 of 70 (Revit adds 3 standard materials at free low ids 1236889-91; no other class differs in 42 of 70 families after ignoring materials and pattern counts).
+- Types differ in 28 of 70 (20 by count, 8 by name): our .rfa carries the project-side Family record types (e.g. BL_Round: 1", 2", 3/4"), Revit's EditFamily lists the family's original types (25mm). Both are valid documents; ours reflects the types actually loaded in the project.
+- 1 family (AN_CenterLine) differs in parameters: Revit's own save has 2 extra instance parameters (Detail_No, Sheet_Name) with 6 new ids (1237400-05) that do not exist in the project, so Revit creates them on EditFamily; not reproduced.
+- 1 family (BL_Round) form bbox differs because the current type differs (see type note).
+- Naming caveat: 5 families whose categories our tool cannot name get the folder `Unknown(-2005002)` etc. (category id table gap, tag-type categories).
