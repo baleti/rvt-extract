@@ -104,25 +104,33 @@ def build_payload(docs, W=8, element_count=None, blob=None, text_len_pad=0, gz_o
         # region of the member = region of the first item that starts at lo
         first = next((it for it in items if it[2] == lo), None) or items[bisect.bisect_right([it[2] for it in items], lo) - 1]      # a chunk of an oversized item starts inside it
         hs = (8 + W) if first[0] == 'H' else (12 + W)
-        x2 = len(raw) - hs * x1
+        x2 = len(raw) - hs * x1; nf = 4
+        # chunks of an oversized item (oracle: Revit's LandingPage): first chunk N=6, x1=1, x2=raw-(item header); middle N=7, x1=0, x2=raw; tail (holds the next A) N=5, x1=0, x2=raw-4
+        ii = bisect.bisect_right([it[2] for it in items], lo) - 1
+        if ii >= 0 and items[ii][2] <= lo and ii + 1 < len(items):
+            p0, nx = items[ii][2], items[ii + 1][2]
+            if hi - lo > 0 and nx - p0 > LIMIT and not (lo == p0 and hi >= nx - 4):
+                if lo == p0: nf, x1, x2 = 6, 1, len(raw) - (12 if first[0] == 'H' else 16)
+                elif hi < nx - 4: nf, x1, x2 = 7, 0, len(raw)
+                else: nf, x1, x2 = 5, 0, len(raw) - 4
         co = zlib.compressobj(6, zlib.DEFLATED, -15)
         comp = co.compress(raw) + co.flush()
         gz = GZH + comp + struct.pack('<II', zlib.crc32(raw) & 0xFFFFFFFF, len(raw) & 0xFFFFFFFF)
         if gz_override is not None: gz = gz_override[k]
-        members.append(dict(gz=gz, x1=x1, x2=x2, code=REGION_CODE[first[0]] + 3 * 0, doc=first[1], region=first[0]))
+        members.append(dict(gz=gz, nf=nf, x1=x1, x2=x2, code=REGION_CODE[first[0]] + 3 * 0, doc=first[1], region=first[0]))
     n_elem = len([1 for it in items if it[0] == 'H' and it[1] == 0]) - 1 if element_count is None else element_count
     m0 = members[0]
-    hdr = struct.pack('<Q', K['version']) + K['hdrtag'] + b'\0\0\0\0' + struct.pack('<I', n_elem) + K['m1'] + struct.pack('<I', 4) + struct.pack('<III', m0['x1'], len(m0['gz']) - 10 + 2, m0['x2']) + bytes([m0['code']]) + b'\0' * 7
+    hdr = struct.pack('<Q', K['version']) + K['hdrtag'] + b'\0\0\0\0' + struct.pack('<I', n_elem) + K['m1'] + struct.pack('<I', m0['nf']) + struct.pack('<III', m0['x1'], len(m0['gz']) - 10 + 2, m0['x2']) + bytes([m0['code']]) + b'\0' * 7
     # NB: the stored comp length field is (deflate stream length + 8) = len(gz) - 10 - 8 + 8 ; recompute precisely below
     def comp_field(m): return len(m['gz']) + 8
-    hdr = struct.pack('<Q', K['version']) + K['hdrtag'] + b'\0\0\0\0' + struct.pack('<I', n_elem) + K['m1'] + struct.pack('<I', 4) + struct.pack('<III', m0['x1'], comp_field(m0), m0['x2']) + bytes([m0['code']]) + b'\0' * 7
+    hdr = struct.pack('<Q', K['version']) + K['hdrtag'] + b'\0\0\0\0' + struct.pack('<I', n_elem) + K['m1'] + struct.pack('<I', m0['nf']) + struct.pack('<III', m0['x1'], comp_field(m0), m0['x2']) + bytes([m0['code']]) + b'\0' * 7
     assert len(hdr) == 44, len(hdr)
     out = bytearray(hdr)
     for k, m in enumerate(members):
         out += m['gz']
         if k + 1 < len(members):
             n = members[k + 1]
-            out += K['m0'] + struct.pack('<I', comp_field(m)) + K['m1'] + struct.pack('<I', 4) + struct.pack('<III', n['x1'], comp_field(n), n['x2']) + bytes([n['code']]) + b'\0' * 7
+            out += K['m0'] + struct.pack('<I', comp_field(m)) + K['m1'] + struct.pack('<I', n['nf']) + struct.pack('<III', n['x1'], comp_field(n), n['x2']) + bytes([n['code']]) + b'\0' * 7
     if tail_override is not None: return bytes(out) + tail_override
     out += K['m0'] + struct.pack('<I', comp_field(members[-1])) + K['m1'] + b'\0' * 16
     out += K['blobm'] + struct.pack('<I', 64) + (blob or b'\0' * 64)
