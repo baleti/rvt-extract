@@ -19,9 +19,22 @@ def eid(v):
     return int(getattr(v, 'v', v))
 
 
+LOWMEM_KEEP = {'Family', 'FamilySymbol', 'KeynoteTable', 'AssemblyCodeTable', 'MaterialElem', 'FillPatternElem', 'LinePatternElem', 'AppearanceAssetElem',
+               'PropertySetElement', 'ImageSymbol', 'ImageHolder', 'CategoryElem', 'GStyleElem'}
+
+
+def lowmem_keep(cls):
+    """classes whose decoded records family lifting needs (rfa.py TARGET/EXTRA, Family, FamilySymbol, ParamElem*)"""
+    return cls in LOWMEM_KEEP or cls.startswith('ParamElem')
+
+
 class Project:
-    def __init__(self, path, x=None):
+    def __init__(self, path, x=None, lowmem=False):
+        """lowmem: other classes stay as empty stubs (class census only); big projects (100+ MB) then fit in ~1-2 GB. Only for families output."""
         self.path = path
+        if x is None and lowmem:
+            import rvt_entities as E
+            x = E.extract(path, want_all=True, slim=lowmem_keep); x.pop('sch', None)
         self.x = x if x is not None else X.get_x(path)
         self.recs = self.x['recs']                       # {(id, class): record}
         self.W = self.x['W']

@@ -49,6 +49,7 @@ def main(argv=None):
     ap.add_argument('--only', default=None, help='comma list of output types (see --list-kinds): ' + ','.join(KINDS))
     ap.add_argument('--no-rfa', action='store_true', help='families: only the manifest, do not assemble .rfa files')
     ap.add_argument('--experimental', action='store_true', help='also write .rfa for Revit formats known to be rejected by Revit (2017-2023, 4-byte element ids)')
+    ap.add_argument('--low-memory', action='store_true', help='families only: decode just the classes family lifting needs (100+ MB projects fit in a few GB)')
     ap.add_argument('--match', default=None, help='families: only those whose name or category matches this regular expression (case-insensitive)')
     ap.add_argument('--list', action='store_true', help='print what the file contains and exit')
     ap.add_argument('--list-kinds', action='store_true', help='print the output types and exit')
@@ -61,7 +62,7 @@ def main(argv=None):
     bad = [k for k in only if k not in KINDS]
     if bad: ap.error('unknown output type(s): %s' % ','.join(bad))
     t0 = time.time()
-    prj = core.Project(a.rvt)
+    prj = core.Project(a.rvt, lowmem=a.low_memory and only == ['families'])
     log = []
     res = {}
     if 'families' in only:
