@@ -67,6 +67,30 @@ def main(argv=None):
                 B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': ('known-bad: nested families in a 2025 file are rejected by Revit 2026' if nest and str(pd.fmt) == '2025' else VALIDATION.get(str(pd.fmt), 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
+        # families that exist only as nested documents inside other families (not loaded in the project itself): extract them standalone too
+        if not (str(pd.fmt).isdigit() and int(pd.fmt) < 2024 and not a.experimental):
+            have = {e['content_doc_guid'] for e in res['families'] if e.get('content_doc_guid')}; todo = [(fr['id'], B.pd.family_doc_index(fr), e['name']) for fr in prj.families() for e in [byid.get(fr['id'])] if e and e['embedded_doc'] and e.get('rfa', {}).get('status') == 'written']
+            seen = set()
+            while todo:
+                _, k, parent = todo.pop()
+                for i, b, *_ in pd.docs[k]['R'][:-1]:
+                    if B.class_of(b) != 'Family': continue
+                    t = B.dec_loose(b)[1]; fd = t.get('m_oFamDoc')
+                    if not (isinstance(fd, dict) and 'obj' in fd and t.get('m_name')): continue
+                    g_ = fd['obj']['m_contentDocGUID']['m_guid']
+                    if g_ in have or g_ in seen: continue
+                    seen.add(g_); kn_ = B.pd.family_doc_index({'fields': t})
+                    if kn_: todo.append((i, kn_, t['m_name']))
+                    if a.match and not re.search(a.match, t['m_name'], re.I): continue
+                    cat = manifest.category_name(t['m_categoryId']); ne = {'family_id': i, 'name': t['m_name'], 'category': cat, 'category_id': manifest.sgn(t['m_categoryId']), 'origin': 'nested in ' + parent, 'content_doc_guid': g_, 'embedded_doc': True, 'embedded_records': len(pd.docs[kn_]['H']) - 1 if kn_ else 0, 'types': [], 'parameters': []}
+                    try:
+                        B.build({'id': i, 'fields': t})
+                        d = os.path.join(a.out, 'families', safepath.safe_name(cat)); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, t['m_name'], '.rfa'))
+                        B.write(fn, t['m_name'], cat); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k)
+                        ne['rfa'] = {'nested': bool(nd), 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': 'standalone copy of a family nested inside "%s"; ' % parent + (VALIDATION.get(str(pd.fmt)) or 'experimental')}
+                    except Exception as ex:
+                        ne['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: nested rfa failed: %s' % (t['m_name'], ex))
+                    res['families'].append(ne)
     for k in only:
         if k == 'families': continue
         try:

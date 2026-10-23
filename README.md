@@ -17,6 +17,8 @@ levels_grids, views (incl. view templates, sheets), schedules (columns, headers,
 Next to every .rfa a type catalogue `<Family>.txt` (Revit catalog layout, values in Revit internal units, length, number, angle, area and volume parameters typed with their internal unit (feet, radians), others `##other##`, only named non-instance values) is written.
 DIR/manifest.json lists counts and errors per type.
 
+Families that exist only as nested documents inside other families (not loaded in the project) are extracted as standalone .rfa too (manifest `origin: nested in <parent>`; ofc-002: 11 of 11 open in Revit 2024).
+
 ## How families are found
 A project embeds the full document of each loaded family: Family.m_oFamDoc, a per-family segment in Global/ContentDocuments
 (ADocument-like data plus table rows) and the family-internal element records in the partitions (header: family-local id, project id).

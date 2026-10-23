@@ -83,3 +83,6 @@ studyx-033 (Revit 2024): CLI output 100 of 100 .rfa open in Revit 2024 (out/rfa_
 
 ### 2026-10-23 second 2025 project (ofc-007, Revit 2025 office model, 23 families with embedded documents)
 CLI output opened in Revit 2026 (upgrade): 12 open, 11 rejected (CorruptModelException); the 11 rejected are exactly the 11 families that contain nested family documents. With ofc-006: 41 of 57 2025 families open (all non-nested: 41 of 41), nested 0 of 16. The failure is specific to nested documents in 2025-format files (out/rfa_chk/cli07_*, solo06_*).
+
+### 2026-10-23 nested families as standalone .rfa (ofc-002, Revit 2024)
+The CLI now also lifts families that exist only as nested documents (recursively): 11 extra .rfa on ofc-002 (81 written in total), 11 of 11 open in Revit 2024 (out/rfa_chk/nn/rfacheck.tsv). Run time 208 s on remote-host under 3 GB.
