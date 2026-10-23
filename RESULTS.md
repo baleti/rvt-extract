@@ -60,3 +60,6 @@ Re-check after the type-name change (build lift_b33e): 100 of 100 open in Revit 
 
 ## ofc-002 (office host model, Revit 2024) after the chunk-frame and GUID-order fixes (2026-10-23)
 70 families with embedded documents lifted, 70/70 open in Revit 2024 (including the three nested-family title blocks that failed before).
+
+### 2026-10-23 CLI end to end (bin/rvt-extract, all output types)
+studyx-033 (Revit 2024): CLI output 100 of 100 .rfa open in Revit 2024 (out/rfa_chk/cli33_*). ofc-006 (Revit 2025, 34 .rfa): 29 open in Revit 2026 by upgrade; 5 fail alone in fresh sessions (out/rfa_chk/solo06_*), all five contain nested family documents (Level Head, Dummy Wall Section head, Elevation Mark Body Circle-12mm, Door Schedule table Hollow Metal1, a title block); non-nested 2025 families open. Revit's own 2026 EditFamily save (out/gt_o6) is in 2026 record format so it cannot be diffed byte for byte. Variants of the nested ContentDocuments segment (raw, unzeroed history) and the audit open did not change the result: the cause is elsewhere (partition of nested docs or ElemTable in 2025 format), needs a Revit 2025 ground truth.
