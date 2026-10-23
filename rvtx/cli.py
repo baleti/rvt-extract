@@ -24,6 +24,25 @@ def write_json(path, data):
     json.dump(data, open(path, 'w'), indent=1, default=str)
 
 
+def nested_params_types(B, kn, t):
+    """parameters and types of a nested family from its document's ParamElemFamily records and the nested Family record"""
+    from .core import eid
+    caps = {}; params = []
+    for i, b, *_ in B.pd.docs[kn]['R'][:-1]:
+        if B.class_of(b) != 'ParamElemFamily': continue
+        f = B.dec_loose(b)[1]; d = f['m_pParamDef']['obj']; caps[i] = d['m_caption']
+        params.append({'name': d['m_caption'], 'project_id': i, 'instance': bool(f.get('m_instanceParam')), 'spec': ((d.get('m_specTypeId') or {}).get('m_typeId') if isinstance(d.get('m_specTypeId'), dict) else None) or None, 'read_only': bool(d.get('m_readOnly'))})
+    types = []; pt = t.get('m_pFamilyTypes')
+    for ty in (pt['obj']['m_pairs'] if pt and pt.get('obj') else []):
+        vals = {}
+        for e in ty['params'].get('m_params', []):
+            nm = manifest.param_name(e['m_paramId'], caps)
+            v = e['m_str'] if e.get('m_str') else {'element_id': eid(e['m_elemId'])} if eid(e.get('m_elemId', 0xFFFFFFFF)) not in (0xFFFFFFFF, 0xFFFFFFFFFFFFFFFF) else e['m_value'] if e.get('m_value') else e.get('m_int', 0)
+            vals[nm] = {'value': v, 'instance': bool(e.get('m_instance'))}
+        types.append({'name': ty['name'], 'values': vals})
+    return sorted(params, key=lambda q: q['name']), types
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(prog='rvt-extract', description='Extract families and other content from a Revit project without Revit.')
     ap.add_argument('rvt', nargs='?'); ap.add_argument('--out', default=None, help='output folder')
@@ -83,6 +102,8 @@ def main(argv=None):
                     if kn_: todo.append((i, kn_, t['m_name']))
                     if a.match and not re.search(a.match, t['m_name'], re.I): continue
                     cat = manifest.category_name(t['m_categoryId']); ne = {'family_id': i, 'name': t['m_name'], 'category': cat, 'category_id': manifest.sgn(t['m_categoryId']), 'origin': 'nested in ' + parent, 'content_doc_guid': g_, 'embedded_doc': True, 'embedded_records': len(pd.docs[kn_]['H']) - 1 if kn_ else 0, 'types': [], 'parameters': []}
+                    try: ne['parameters'], ne['types'] = nested_params_types(B, kn_, t)
+                    except Exception as ex: log.append('%s: nested manifest failed: %s' % (t['m_name'], ex))
                     try:
                         B.build({'id': i, 'fields': t})
                         d = os.path.join(a.out, 'families', safepath.safe_name(cat)); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, t['m_name'], '.rfa'))
