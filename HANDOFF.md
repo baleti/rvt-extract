@@ -134,3 +134,8 @@ REMAINING: the per-member frame field after the 0x0e7c marker (u32 that is 4 in 
 - Tools: tools/docdiff.py (per-doc chain diff of two rfa), frames_dump.py, latpatch.py. Oracle caveat: out/rfa_chk/<dir>/rfacheck.tsv can be a STALE file from an earlier run until the queue job reaches done/.
 - ofc-002 can be lifted on remote-host for small name sets: private/files/ofc-002.rvt (local copy, git-ignored), 3 GB cap.
 - NEXT: full ofc-002 re-lift (70 families) + oracle open check when remote-host gate opens (H1-QUEUE); re-run Snowdon 2024/2026 + studyx-033 full sweeps for regressions; 4-byte years (needs Revit 2020 in oracle); 2025 Contents sample; studyx batch.
+
+## c8-fam stop note 2026-10-23
+All re-sweeps with current code open in Revit: Snowdon 2024 177/177 (y43), Snowdon 2026 177/177 (z55), studyx-033 100/100 (b33y), ofc-002 70/70 (o2r). Fixes this session: oversized-record chunk frames, GUID-sorted content records/segments, null m_oContentTable for nested families.
+remote-host lift of 2026 project: chunks of 12 get OOM-killed at 3 GB, use 1-4. Local project copies in private/files (git-ignored).
+NEXT: 2025 Contents sample (unverified format), 4-byte years 2017-2023 (needs Revit 2020 in oracle, NEEDS-FROM-ORACLE.md), CLI end-to-end run on a project with README numbers, standard materials Revit adds (optional).
