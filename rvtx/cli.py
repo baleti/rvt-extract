@@ -85,6 +85,16 @@ def main(argv=None):
         man['families'] = res['families']
         write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])
         import csv
+        for e in res['families']:      # type catalogue (Revit family type catalog .txt: ,Param##type##unit headers, one row per type); only named, non-element-id values
+            if not e['types']: continue
+            cols = sorted({k for t in e['types'] for k, v in t['values'].items() if not k.startswith('Param(') and not isinstance(v['value'], dict) and not v.get('instance')})
+            rf = (e.get('rfa') or {}).get('file')      # Revit looks for the catalog next to the .rfa with the same base name
+            base = os.path.join(a.out, os.path.splitext(rf)[0]) if rf else os.path.join(a.out, 'families', safepath.safe_name(e['category']), safe(e['name']))
+            os.makedirs(os.path.dirname(base), exist_ok=True)
+            with open(base + '.txt', 'w', encoding='utf-8') as fh:
+                fh.write(','.join([''] + [c.replace(',', ' ') + '##other##' for c in cols]) + '\n')
+                for t in e['types']: fh.write(','.join([t['name'].replace(',', ' ')] + [str(t['values'].get(c, {}).get('value', '')) for c in cols]) + '\n')
+        import csv
         with open(os.path.join(a.out, 'families', 'families.csv'), 'w', newline='') as fh:      # one row per family for auditing / standards checks
             w = csv.writer(fh); w.writerow(['category', 'name', 'types', 'parameters', 'shared', 'in_place', 'embedded_records', 'nested', 'rfa_status', 'rfa_file', 'validation'])
             for e in res['families']:

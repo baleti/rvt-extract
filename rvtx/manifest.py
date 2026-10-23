@@ -28,11 +28,23 @@ def param_name(pid, caps):
     return _par.get(str(sgn(v)), 'Param(%d)' % sgn(v))
 
 
+def _project_caps(prj):
+    c = getattr(prj, '_pcaps', None)
+    if c is None:
+        c = {}
+        for r in prj.by_class.get('ParamElemFamily', []):
+            d = r['fields'].get('m_pParamDef')
+            d = d.get('obj') if isinstance(d, dict) else None
+            if d and d.get('m_caption'): c[r['id']] = d['m_caption']
+        prj._pcaps = c
+    return c
+
+
 def family_entry(prj, fam_rec, doc):
     f = fam_rec['fields']
     recs = doc['records'] if doc else {}
     l2p = doc['l2p'] if doc else {}
-    caps = {}                                    # family-local id and project id -> caption
+    caps = dict(_project_caps(prj))              # project-side ParamElemFamily id -> caption (the Family record's type values refer to these)
     params = []
     for pid, r in recs.items():
         if r['class'] == 'ParamElemFamily':

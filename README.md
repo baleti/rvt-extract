@@ -14,6 +14,7 @@ Whole-project loads are heavy: on this machine run them on remote-host (`~/.loca
 families (manifest.json + families.csv audit table: category, types, parameters, embedded-record census, nested flag, .rfa status; .rfa only where validated), materials (with appearance assets, textures by library path),
 fill_patterns, line_patterns, shared_parameters (+ shared_parameters.txt), project_parameters, filters, phases (phases, phase filters, design options),
 levels_grids, views (incl. view templates, sheets), schedules (columns, headers, category; legend names), revisions, line_styles (user-defined line styles: pattern, pen number, colour; built-in styles carry no name in the file), worksets (user worksets with default visibility), cad_imports (imported/linked DWG: name, units, size, layers), images (embedded PNG/JPEG), project_info (+ preview.png), links (TransmissionData).
+Next to every .rfa a type catalogue `<Family>.txt` (Revit catalog layout, values in Revit internal units, columns typed `##other##`, only named non-instance values) is written.
 DIR/manifest.json lists counts and errors per type.
 
 ## How families are found
