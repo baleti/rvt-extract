@@ -4,7 +4,7 @@ A partition payload holds, per document, three item chains:  H  [id][L][body]  (
 R  [A][id][stamp][L][body]  (element records, stamp = adler32(body)),  Z  same layout (graphics/dummy 'zone' records).
 Every chain ends with a terminator (id = -1, L = 0); A = L of the previous item (0 at a chain start, no A at the very first item).
 The payload is cut into gzip members (<= LIMIT raw bytes, cut right after an A field, every chain starts a new member) with 32-byte frames."""
-import struct, zlib, sys, os
+import os, struct, zlib, sys, os
 WL = os.path.expanduser('~/rvt-research/write-lab')
 if WL not in sys.path: sys.path.append(WL)
 LIMIT = 131071
@@ -130,6 +130,9 @@ def build_payload(docs, W=8, element_count=None, blob=None, text_len_pad=0, gz_o
         out += m['gz']
         if k + 1 < len(members):
             n = members[k + 1]
+            if os.environ.get('RVTX_DOCSEP', '0') == '1' and n['doc'] != m['doc'] and n['region'] == 'H':      # Revit (oracle: 2024 and 2026 own files): the frame after the last member of a document is all zero after the member size
+                out += K['m0'] + struct.pack('<I', comp_field(m)) + K['m1'] + b'\0' * 16
+                continue
             out += K['m0'] + struct.pack('<I', comp_field(m)) + K['m1'] + struct.pack('<I', n['nf']) + struct.pack('<III', n['x1'], comp_field(n), n['x2']) + bytes([n['code']]) + b'\0' * 7
     if tail_override is not None: return bytes(out) + tail_override
     out += K['m0'] + struct.pack('<I', comp_field(members[-1])) + K['m1'] + b'\0' * 16
