@@ -389,7 +389,7 @@ class Builder:
         """content records (taken from the project's Latest) and the family document GUID list of the nested families"""
         guids = [g_ for _, g_ in nested]; want = set(guids)
         recs = [copy.deepcopy(e) for e in self.pd.latest_tree['m_oContentTable']['obj']['m_ContentRecSet'] if e['m_ContentKey']['m_guidKey']['m_guid'] in want]
-        recs.sort(key=lambda e: guids.index(e['m_ContentKey']['m_guidKey']['m_guid']))
+        recs.sort(key=lambda e: bytes.fromhex(e['m_ContentKey']['m_guidKey']['m_guid']))      # Revit keeps the content record set sorted by GUID bytes (BV-BNE title block: 4 records, A0 title block: 2)
         for e in recs:      # Revit zeroes the project history ids in the content records it writes into a family
             h = e.get('m_history')
             if isinstance(h, dict):
@@ -431,7 +431,7 @@ class Builder:
         st['Global/History'] = self.global_stream('Global/History', SS.history(doc_guid, save_guid))
         st['Global/DocumentIncrementTable'] = self.global_stream('Global/DocumentIncrementTable', SS.document_increment_table(n, when))
         st['Global/PartitionTable'] = self.global_stream('Global/PartitionTable', SS.PT_SAMPLES[pd.fmt] if (pd.fmt not in ('2024', '2026') and pd.fmt in SS.PT_SAMPLES) else SS.partition_table(part_guid))
-        st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents([(g_, self.nested_blob(g_, mx_ids)) for _, g_ in nested]) if nested else SS.content_documents_empty())
+        st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents([(g_, self.nested_blob(g_, mx_ids)) for _, g_ in sorted(nested, key=lambda n: bytes.fromhex(n[1]))]) if nested else SS.content_documents_empty())
         st['Partitions/0'] = self.partition_stream()
         st['BasicFileInfo'] = SS.basic_file_info(path, save_guid, pd.build, pd.fmt)
         st['Contents'] = pd.contents_stream
