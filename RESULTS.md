@@ -80,3 +80,6 @@ studyx-033 (Revit 2024): CLI output 100 of 100 .rfa open in Revit 2024 (out/rfa_
 - 1 family (AN_CenterLine) differs in parameters: Revit's own save has 2 extra instance parameters (Detail_No, Sheet_Name) with 6 new ids (1237400-05) that do not exist in the project, so Revit creates them on EditFamily; not reproduced.
 - 1 family (BL_Round) form bbox differs because the current type differs (see type note).
 - Naming caveat: 5 families whose categories our tool cannot name get the folder `Unknown(-2005002)` etc. (category id table gap, tag-type categories).
+
+### 2026-10-23 second 2025 project (ofc-007, Revit 2025 office model, 23 families with embedded documents)
+CLI output opened in Revit 2026 (upgrade): 12 open, 11 rejected (CorruptModelException); the 11 rejected are exactly the 11 families that contain nested family documents. With ofc-006: 41 of 57 2025 families open (all non-nested: 41 of 41), nested 0 of 16. The failure is specific to nested documents in 2025-format files (out/rfa_chk/cli07_*, solo06_*).
