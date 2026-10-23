@@ -13,7 +13,7 @@ Whole-project loads are heavy: on this machine run them on remote-host (`~/.loca
 ## Output types (DIR/<type>/...)
 families (manifest: category, types, parameters, embedded-record census; .rfa only where validated), materials (with appearance assets, textures by library path),
 fill_patterns, line_patterns, shared_parameters (+ shared_parameters.txt), project_parameters, filters, phases (phases, phase filters, design options),
-levels_grids, views (incl. view templates, sheets), schedules (columns, headers, category; legend names), revisions, worksets (user worksets with default visibility), cad_imports (imported/linked DWG: name, units, size, layers), images (embedded PNG/JPEG), project_info (+ preview.png), links (TransmissionData).
+levels_grids, views (incl. view templates, sheets), schedules (columns, headers, category; legend names), revisions, line_styles (user-defined line styles: pattern, pen number, colour; built-in styles carry no name in the file), worksets (user worksets with default visibility), cad_imports (imported/linked DWG: name, units, size, layers), images (embedded PNG/JPEG), project_info (+ preview.png), links (TransmissionData).
 DIR/manifest.json lists counts and errors per type.
 
 ## How families are found

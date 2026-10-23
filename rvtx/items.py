@@ -174,5 +174,24 @@ def worksets(prj):
     return {'user_worksets': [w for w in allw if w['kind'] == 0], 'other_entries': len(allw) - sum(1 for w in allw if w['kind'] == 0), 'note': 'kind 0 = user workset (verified against Revit WORKSET rows); other kinds are standard, family and view worksets, not listed'}, []
 
 
+def line_styles(prj):
+    """line styles = subcategories of the Lines category (parent -2002000): name, line pattern (name when defined in the file, else id), pen number (weight index), colour"""
+    pats = {r['id']: r['fields'].get('m_text') or r['fields'].get('m_name') for r in _cls(prj, 'LinePatternElem')}
+    gst = {r['id']: r for r in _cls(prj, 'GStyleElem')}; out = []
+    for r in _cls(prj, 'CategoryElem'):
+        c = ob(r['fields'].get('m_pCategory') or {}) or {}
+        if sg(c.get('m_parentCategoryId')) != -2002000: continue
+        e = {'id': r['id'], 'name': c.get('m_name'), 'pattern': None, 'pen_number': None, 'color_rgb': None}
+        for gid in r['fields'].get('m_gstyleIds') or []:
+            g = gst.get(int(gid))
+            if g is None or g['fields'].get('m_gstyleType') != 1: continue
+            o = ob(g['fields'].get('m_pGStyle') or {}) or {}; pid = sg(o.get('m_linePatternId'))
+            e['pattern'] = pats.get(pid) or ('Solid' if pid == -3000010 else None) or ('builtin %d' % pid if pid is not None else None); e['pen_number'] = o.get('m_penNumber')
+            col = o.get('m_color')
+            if isinstance(col, int): e['color_rgb'] = [col & 255, (col >> 8) & 255, (col >> 16) & 255]
+        out.append(e)
+    return out, []
+
+
 KINDS = {'fill_patterns': fill_patterns, 'line_patterns': line_patterns, 'shared_parameters': shared_parameters, 'project_parameters': project_parameters,
-         'filters': filters, 'phases': phases, 'levels_grids': levels_grids, 'views': views, 'images': images, 'schedules': schedules, 'revisions': revisions, 'cad_imports': imports, 'worksets': worksets}
+         'filters': filters, 'phases': phases, 'levels_grids': levels_grids, 'views': views, 'images': images, 'schedules': schedules, 'revisions': revisions, 'cad_imports': imports, 'worksets': worksets, 'line_styles': line_styles}
