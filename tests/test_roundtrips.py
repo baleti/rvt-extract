@@ -1,3 +1,4 @@
+import os
 """Deterministic round trips using only synthetic records and stream bytes."""
 
 import random
@@ -174,10 +175,12 @@ class ElementTable4Tests(unittest.TestCase):
     def test_four_byte_rows_are_28_bytes_and_keep_cd_words(self):
         ids = [5, 9, 12, 20]
         owners = {9: b"\x01\x02\x03\x04" + b"\xcf\x03\x00\x00" + b"\xef\x03\x00\x00"}
-        table = elemtable.build4(ids, {9}, owners, 77, special_neg={20})
+        os.environ['RVTX_ETDATES'] = 'old'      # the test pins the project-dates mode
+        try: table = elemtable.build4(ids, {9}, owners, 77, special_neg={20})
+        finally: os.environ.pop('RVTX_ETDATES', None)
         rows = [table[6 + 28 * k:6 + 28 * (k + 1)] for k in range(4)]
-        self.assertEqual(len(table), 6 + 28 * 4 + 12)
-        self.assertEqual(rows[1], struct.pack("<II", 9, 9) + b"\xcf\x03\x00\x00\xef\x03\x00\x00" + b"\xff" * 4 + b"\0" * 4 + b"\x01\x02\x03\x04")
+        self.assertEqual(len(table), 6 + 28 * 4 + 12 + len(elemtable.TRAILER_TABLE4))
+        self.assertEqual(rows[1], struct.pack("<II", 9, 9) + b"\xcf\x03\x00\x00\xef\x03\x00\x00" + b"\xef\x03\x00\x00" + b"\0" * 4 + b"\x01\x02\x03\x04")
         self.assertEqual(rows[0][-4:], struct.pack("<I", 77))
         self.assertEqual(rows[3][-4:], b"\xff" * 4)
 

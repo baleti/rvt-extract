@@ -437,9 +437,12 @@ class Builder:
             h = e.get('m_history')
             if isinstance(h, dict):
                 for k_, v in h.items():
-                    if isinstance(v, dict) and 'm_id' in v: v['m_id'] = 0xFFFFFFFF if k_ == 'm_lastUserModificationDate' else 0
+                    if isinstance(v, dict) and 'm_id' in v:
+                        v['m_id'] = 0xFFFFFFFF if k_ == 'm_lastUserModificationDate' else (int(e['m_id']) if k_ == 'm_originalElementId' and self.W == 4 and os.environ.get('RVTX_ORIG4', '1') != '0' else 0)      # 4-byte formats: Revit's own 2019 nested segment keeps the element id in m_originalElementId
         src = t['m_elemTable']['obj'].get('m_pSource')
-        if isinstance(src, dict) and src.get('obj') and 'm_last' in src['obj']: src['obj']['m_last']['m_id64'] = max_id
+        if isinstance(src, dict) and src.get('obj') and 'm_last' in src['obj']:
+            if self.W == 4 and os.environ.get('RVTX_LAST4', '1') != '0': src['obj']['m_last']['m_id'] = max_id      # was left at the project's small counter (1294) while the ids are 281886+; Revit's own file holds a value above every id
+            else: src['obj']['m_last']['m_id64'] = max_id
         return struct.pack('<H', tag) + enc.Enc(self.sch, self.W).body(tag, t)
 
     def add_nested_to_latest(self, lt, nested):
@@ -449,12 +452,16 @@ class Builder:
         gm = self.guid_map()
         for e in recs: e['m_ContentKey']['m_guidKey']['m_guid'] = gm.get(e['m_ContentKey']['m_guidKey']['m_guid'], e['m_ContentKey']['m_guidKey']['m_guid'])
         recs.sort(key=lambda e: bytes.fromhex(e['m_ContentKey']['m_guidKey']['m_guid']))      # Revit keeps the content record set sorted by GUID bytes (BV-BNE title block: 4 records, A0 title block: 2)
+        c4 = self.W == 4 and os.environ.get('RVTX_CREC4', '1') != '0'      # content record as in a real 2019 nested family: original id ffffffff, modification 1
         for e in recs:      # Revit zeroes the project history ids in the content records it writes into a family
             h = e.get('m_history')
             if isinstance(h, dict):
                 for k_, v in h.items():
-                    if isinstance(v, dict) and 'm_id' in v: v['m_id'] = 0xFFFFFFFF if k_ == 'm_lastUserModificationDate' else 0
+                    if isinstance(v, dict) and 'm_id' in v: v['m_id'] = 0xFFFFFFFF if k_ == 'm_lastUserModificationDate' or (k_ == 'm_originalElementId' and c4) else (1 if k_ == 'm_lastModificationDate' and c4 else 0)
             eps = e.get('m_EpisodeCounts') or []
+            if c4:
+                for ep in eps:
+                    if isinstance(ep.get('second'), int) and ep['second'] > 0: ep['second'] -= 1      # Revit's own 2019 file: the element count without the terminator (223 for 223 elements, the project holds 224)
             for n_, ep in enumerate(eps):      # RVTX_EPI (default keep): '0' zero every key (duplicates when several: Revit rejects the file, journal "can't fix the ordering of container m_EpisodeCounts"), 'keep' leave multi-entry keys, 'seq' keys 0,1,2.. in order
                 if isinstance(ep.get('first'), dict) and 'm_id' in ep['first']:
                     mode = os.environ.get('RVTX_EPI', 'keep')
@@ -503,6 +510,7 @@ class Builder:
         lt, notes = LAT.build_tree(self.sch, pd.latest_tree, bt, set(self.all_ids), remap={pd.kn_proj: self.kn, pd.ac_proj: self.ac}, cls_of=lambda i: self.class_of(self.R[i][0]) if i in self.R else (pd.byid[i]['class'] if i in pd.byid else None))
         nested = self.nested_docs(self.k)
         mx_ids = self.kn - 1
+        if self.W == 4 and os.environ.get('RVTX_LAST4', '1') != '0': mx_ids = max([i for i in self.all_ids if 0 <= i < (1 << 31)] + [self.kn, self.ac]) - 2      # nested ADoc m_last: Revit's own 2019 file holds the highest id minus the two new tables (23043380 for 23043382)
         gone = set(getattr(self, 'dropped', ()))
         for kn_, _g in nested: gone |= {i for i, b, *_ in pd.docs[kn_]['R'] if len(b) > 2 and self.class_of(b) in self.OBSOLETE} if self.W == 4 and os.environ.get('RVTX_DROPOBS', '1') != '0' else set()
         if gone: self.strip_ids(lt, gone)
