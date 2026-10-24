@@ -14,3 +14,5 @@
 - 2026-10-21 c8: corpus3 report done (93.3%). Oracle 2024 open-check of out_corpus3 corp-2024-43 slices hangs: rfacheck.py 0:2 inside run.ps1 job_rc_corp_2024_43 (port 23717) >15 min, no output (old 12-24 slice had worked with older rfa). Asked c8-writer to look at the VM; retry with single-file slices when it is free.
 - 2026-10-24 c8: corpus4 running on remote-host (out_corpus4). 2017: builds 41/41, 137/137 but Revit 2024 opens 0/4 (NEEDS-FROM-TEST).
 - 2026-10-24 c8: corp-2018-06 4/4 OPENFAIL CorruptModel in Revit 2024 as well (2017 and 2018 rejected; c3-fam validated only 2019-2022 flat). Next: 2019-12, 2020-18, 2021-24, 2022-30, 2023-36 when corpus4 reaches them.
+- 2026-10-24 c8: corp-2019-12 (2019, Revit 2024 upgrade) first 3 .rfa: 0000 OPEN, 0002 OPEN, 0001 OPENFAIL (Corrupt; to retest alone). Source: private/v2019.log
+- corp-2019-12 0001 refused ALONE (genuine). 0000, 0002 open.
