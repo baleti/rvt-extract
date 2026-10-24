@@ -94,3 +94,6 @@ The CLI now also lifts families that exist only as nested documents (recursively
 Content records with several m_EpisodeCounts entries had every key zeroed: Revit 2024 rejects the family (journal "ArchiveException 105 ... can't fix the ordering of container m_EpisodeCounts"). Found on 5 of 54 voestalpine SFS families; scan of 8147 earlier lifts: 206 affected (2.5
 ## 2026-10-24 episode-key bug (studyx)
 Content records with several m_EpisodeCounts entries had every key zeroed: Revit 2024 rejects the family (journal "ArchiveException 105 ... can't fix the ordering of container m_EpisodeCounts"). Found on 5 of 54 voestalpine SFS families; scan of 8147 earlier lifts: 206 affected (2.5%, from 3 projects, Metsec SFS / studyx library families with nested families); 25 of 25 sampled affected files fail to open. Fix 9ab44d5 (RVTX_EPI=keep default; seq also opens). Re-lift in progress, check pending. Journal helper: ~/studyx-tests/fam/rfacheck_j.py (journal.txt next to rfacheck.tsv).
+
+## 2026-10-24 nested depth-2 fix
+See ~/studyx-tests/fam/RESULTS.md: KeynoteTable id kept for nested families, per-child LoadedFamilyInfo chains, regenerated GUIDs in document order; 263/263 regression + 3/3 previously failing open in Revit 2024.
