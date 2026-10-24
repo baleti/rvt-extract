@@ -2,7 +2,7 @@
 import struct, zlib, copy, uuid, time, re, os, bisect, collections
 import numpy as np
 from . import RESEARCH  # noqa
-from . import partition as PT, enc, latest as LAT, elemtable as ET, smallstreams as SS, cfbw
+from . import partition as PT, enc, latest as LAT, elemtable as ET, smallstreams as SS, cfbw, dit_samples as DITS
 import olefile
 import rvt_scan as S, rvt_decode as D, rvt2text as T, rvtfmt, fmt_parser as fp
 
@@ -490,7 +490,7 @@ class Builder:
         st['Global/Latest'] = self.global_stream('Global/Latest', latest)
         st['Global/ElemTable'] = self.global_stream('Global/ElemTable', et)
         st['Global/History'] = self.global_stream('Global/History', SS.history(doc_guid, save_guid))
-        st['Global/DocumentIncrementTable'] = self.global_stream('Global/DocumentIncrementTable', SS.document_increment_table(n + (sum(len(self.pd.docs[kn_]['H']) - 1 for kn_, _ in nested) if os.environ.get('RVTX_DITN', '1') != '0' else 0), when))
+        st['Global/DocumentIncrementTable'] = self.global_stream('Global/DocumentIncrementTable', DITS.DIT_BY_FORMAT[str(pd.fmt)] if self.W == 4 and str(pd.fmt) in DITS.DIT_BY_FORMAT and os.environ.get('RVTX_OLDDIT', '1') != '0' else SS.document_increment_table(n + (sum(len(self.pd.docs[kn_]['H']) - 1 for kn_, _ in nested) if os.environ.get('RVTX_DITN', '1') != '0' else 0), when))
         st['Global/PartitionTable'] = self.global_stream('Global/PartitionTable', SS.PT_SAMPLES[pd.fmt] if (pd.fmt not in ('2024', '2026') and pd.fmt in SS.PT_SAMPLES) else SS.partition_table(part_guid))
         st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents([(self.guid_map().get(g_, g_), self.nested_blob(g_, mx_ids)) for _, g_ in sorted(nested, key=lambda n: bytes.fromhex(self.guid_map().get(n[1], n[1])))]) if nested else SS.content_documents_empty())
         st['Partitions/0'] = self.partition_stream()
