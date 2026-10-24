@@ -26,3 +26,4 @@
 - CORRECTION: oracle guest URLError 10061 intermittent; control corp-2022-30/0002 fails now -> 2023 'hang' and 2017-new results are unknown, re-test when control passes
 - stopped using pkill job_rc_ on remote-host (shared with studyx); retest.sh queues behind vmlock
 - 2023 flat 4/4 OPEN (earlier 'hang' retracted: oracle fault)
+- 2017 re-lift with year fix: 3/3 still CorruptModel (valid batch)

@@ -107,3 +107,6 @@ The oracle intermittently fails inside the guest with `URLError [WinError 10061]
 
 ## RESOLVED 2026-10-24: 2023 flat families OPEN (the "hang" was the oracle fault, caused partly by my pkill on a shared remote-host)
 Control passes; corp-2023-36 flat 0000, 0002, 0005, 0007 each alone in a fresh Revit 2024: 4/4 OPEN (private/retest.res). So flat families open for 2019-2023 (2019 2/2, 2020 2/2, 2021 5/5, 2022 5/5, 2023 4/4 in samples). 2017/2018 re-test with the year-detection fix pending.
+
+## 2017 re-test with main b090b75 (year-detection fix), valid batch (controls before and after pass)
+corp-2017-00 re-lifted with current main (CLI --experimental, 52 .rfa: 40 flat, 12 nested): 3 flat families alone in fresh Revit 2024 sessions: 3/3 OPENFAIL CorruptModelException. So the year fix did not make 2017 open; the 2017 format (and likely 2018) still needs its own layout work. Compare with the Revit-saved 2017 sample (~/rvt-research/samples-rfa).
