@@ -19,3 +19,5 @@
 - 2026-10-24 c8: corp-2020-18 first 3: 0000 OPEN, 0002 OPEN, 0001 OPENFAIL (same index/pattern as 2019-12, likely the same Detail Items family; private/v2020.log)
 - 2026-10-24 rvt-extract corpus4 (current main, 23 of 78 corpus files done, 2017-2020): .rfa built 2589/2589 embedded families; 17 non-family extractors 0 crashes on 23 files (empty: cad_imports 13, filters 10, shared_parameters 3); Revit 2024 opens: 2017 0/4, 2018 0/4, 2019 2/3, 2020 2/3 (private/v20*.log, tools/validate_year.sh)
 - corp-2019-12/0001 = nested (2 docs): expected refusal, resolved
+- 2026-10-24 c8: corp-2021-24 flat families (flatsplit) 5/5 OPEN in Revit 2024 (private/f21.res)
+- flat-only: 2017 0/4, 2018 0/4 (genuine), 2019 2/2, 2020 2/2, 2021 5/5 open in Revit 2024
