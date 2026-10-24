@@ -224,11 +224,15 @@ class Builder:
         fid = next(i for i, (b, s) in oR.items() if self.class_of(b) == 'Family')
         # shared set: standard + dependencies of the family's own records
         deps = set()
-        for i, (b, s) in oR.items():
-            out = set(); _eids(self.dec_loose(b)[1], out)
+        nest_recs = [] if os.environ.get('RVTX_NESTDEPS', '0') == '0' else [(kn_, b) for kn_, _g in self.nested_docs(kdoc) for i, b, *_ in pd.docs[kn_]['R'][:-1]]     # nested documents reference materials / shared parameters of the parent (Revit keeps them; dangling ones make the family 'corrupt' on open)
+        nest_own = set(i for kn_, _g in self.nested_docs(kdoc) for i, _b in pd.docs[kn_]['H'] if i != NEG)
+        nest_set = set(kn_ for kn_, _g in self.nested_docs(kdoc)) if os.environ.get('RVTX_NESTDEPS', '0') != '0' else set()
+        nest_fam = [{k_: v for k_, v in r['fields'].items() if k_ != 'm_oFamDoc'} for r in pd.byid.values() if r['class'] == 'Family' and nest_set and pd.family_doc_index(r) in nest_set]     # the project-level Family element of each nested family holds its shared-parameter references
+        for fl in [self.dec_loose(b)[1] for i, (b, s) in oR.items()] + [self.dec_loose(b)[1] for _kn, b in nest_recs] + nest_fam + ([f] if os.environ.get('RVTX_FAMDEPS', '0') != '0' else []):      # the family's own project-level Family element (m_oFamDoc id map included) references its shared parameters (ParamElemExternal) and materials; missing ones make a nesting family 'corrupt' in Revit
+            out = set(); _eids(fl, out)
             for e in out:
                 q = pd.byid.get(e)
-                if q is not None and q['class'] in TARGET and e not in pd.standard and e not in own: deps.add(e)
+                if q is not None and q['class'] in TARGET and e not in pd.standard and e not in own and e not in nest_own: deps.add(e)
         extra = set()
         if os.environ.get('RVTX_EXTRA', '1') != '0':
             IMG = {'ImageSymbol', 'ImageHolder'}
@@ -238,6 +242,7 @@ class Builder:
                     q = pd.byid.get(e)
                     if q is not None and q['class'] in EXTRA and e not in pd.standard and e not in own and (k < len(oR) or q['class'] in IMG): extra.add(e)
         shared = set(pd.standard) | pd.close(deps | extra, TARGET | EXTRA if extra else None)
+        if os.environ.get('RVTX_DBG_DEPS'): print('DEPS', len(oR), 'nestrecs', len(nest_recs), 'deps', len(deps), 'shared', len(shared), 'has', {w: (w in deps, w in shared, w in own, w in nest_own) for w in (486487, 77923, 754284, 152314)}, flush=True)
         nest_ids = [i for kn_, _ in self.nested_docs(kdoc) for i, _b in pd.docs[kn_]['H'] if i != NEG]
         mx = max([pd.max_id] + nest_ids)      # Revit allocates the new KeynoteTable/AssemblyCodeTable ids above the nested documents' ids too
         kn, ac = mx + 1, mx + 2
@@ -357,7 +362,9 @@ class Builder:
             if not cnt: continue
             kn = cnt.most_common(1)[0][0]
             if kn in seen: continue
-            seen.add(kn); out.append((kn, fd['obj']['m_contentDocGUID']['m_guid'])); out += self.nested_docs(kn, seen)
+            seen.add(kn); out.append((kn, fd['obj']['m_contentDocGUID']['m_guid']))
+            if os.environ.get('RVTX_DBG_NEST'): print('NEST parent doc', k, 'family rec', i, 'child doc', kn, 'guid', fd['obj']['m_contentDocGUID']['m_guid'], 'map', dict(cnt), flush=True)
+            out += self.nested_docs(kn, seen)
         return out
 
     def nested_names(self, k):
