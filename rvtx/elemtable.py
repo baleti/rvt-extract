@@ -47,7 +47,7 @@ def cd_rows4(seg):
     while k <= n:
         if seg[k + 4:k + 8] == seg[k + 8:k + 12] and seg[k + 24:k + 28] == b'\0\0\0\0' and seg[k + 20:k + 24] == b'\xff\xff\xff\xff':
             i = int.from_bytes(seg[k + 4:k + 8], 'little')
-            if 0 < i < 1 << 31 and i not in rows: rows[i] = seg[k:k + 4] + seg[k + 12:k + 20]     # owner + the two words a, b (not zero in 4-byte projects)
+            if 0 < i < 1 << 31 and i not in rows: rows[i] = (seg[k + 28:k + 32] if os.environ.get('RVTX_OWNER4', 'prev') == 'next' and k + 32 <= len(seg) else seg[k:k + 4]) + seg[k + 12:k + 20]     # owner + the two words a, b; the owner is the word AFTER the row [id][id][a][b][ffffffff][0][owner] (checked against Revit's own 2024 save: owner(i) = first word of the next row)
             k += 28
         else: k += 1
     return rows
@@ -62,7 +62,8 @@ def build4(all_ids, own, owners, family_id, special_neg=()):
         elif i in own:
             ow = owners.get(i, NEG4 + b'\0' * 8)
             c = ow[8:12] if os.environ.get('RVTX_ETC', 'b') == 'b' and ow[8:12] != NEG4 else NEG4     # Revit's own rows: c equals b in 1554 of 1713 rows of the 2019 sample (the project's content row has ffffffff there)
-            out += idb + idb + ow[4:12] + c + b'\0\0\0\0' + ow[:4]
+            if os.environ.get('RVTX_ETDATES', 'old') == 'zero': out += idb + idb + b'\0' * 12 + b'\0\0\0\0' + ow[:4]      # a, b, c are the element's creation/modification increments: the project's (e.g. 555, 582) exceed the family's history, Revit reports them 'missing elements'
+            else: out += idb + idb + ow[4:12] + c + b'\0\0\0\0' + ow[:4]
         else: out += idb + idb + b'\0' * 16 + fam
     out += (b'' if os.environ.get('RVTX_TRAILER4', '1') == '0' else TRAILER_TABLE4) + TRAILER4 + max([i for i in all_ids if 0 <= i < (1 << 31)] or [0]).to_bytes(4, 'little') + b'\0\0\0\0'
     return bytes(out)

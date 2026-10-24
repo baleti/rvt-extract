@@ -254,7 +254,7 @@ class Builder:
         # ---- items
         H, R, Z = {}, {}, {}
         for i in own: H[i] = oH[i]; R[i] = oR[i]; Z[i] = oZ.get(i)
-        if os.environ.get('RVTX_EMPTYZ', '1') != '0':     # Revit's saved family carries an empty guess cache (138-byte Z) for VarSketch elements whose project Z holds data
+        if os.environ.get('RVTX_EMPTYZ', '1') != '0' and (self.W == 8 or os.environ.get('RVTX_EMPTYZ4', '1') == '1'):      # the 138-byte empty cache is the 8-byte-id layout     # Revit's saved family carries an empty guess cache (138-byte Z) for VarSketch elements whose project Z holds data
             for i in own:
                 if Z[i] is not None and len(Z[i][0]) > 138 and len(oR[i][0]) > 2 and self.sch.name(struct.unpack_from('<H', oR[i][0], 0)[0]) == 'VarSketch' and self.sketch_cache_emptied(oH[i], oR[i][0]):
                     zb = empty_varsketch_z(i); Z[i] = (zb, zlib.adler32(zb) & 0xFFFFFFFF)
