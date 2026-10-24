@@ -89,3 +89,4 @@ Same for 2018: corp-2018-06 (4 first files) 4/4 OPENFAIL CorruptModelException i
 
 ## 2026-10-24 2019: one real refusal alone in a fresh session (corpus4)
 corp-2019-12 (rst_basic-like 2019 sample): of the first 3 .rfa, 0000 (Title Blocks) and 0002 (Structural Framing, 39 params, formulas intact) OPEN in Revit 2024 by upgrade; 0001 (Detail Items, 3 types, 49 params, 1230 records, 313 own / 1201 shared) is OPENFAIL CorruptModelException ALONE in a fresh session (so not poisoning). Repro: remote-host ~/src/rvt-extract-test/out_corpus4/corp-2019-12/0001.rfa -> oracle/rfacheck.py 2024. Please check whether it nests a family (default skip rule) or has classes absent from the two good ones.
+2020 (corp-2020-18): same pattern as 2019: 0000, 0002 open, 0001 refused (one batch; alone-retest pending). Both 2019 and 2020 refuse the family at index 1, probably the same library Detail Items family: a good single repro for c3-fam.

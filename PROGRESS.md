@@ -16,3 +16,4 @@
 - 2026-10-24 c8: corp-2018-06 4/4 OPENFAIL CorruptModel in Revit 2024 as well (2017 and 2018 rejected; c3-fam validated only 2019-2022 flat). Next: 2019-12, 2020-18, 2021-24, 2022-30, 2023-36 when corpus4 reaches them.
 - 2026-10-24 c8: corp-2019-12 (2019, Revit 2024 upgrade) first 3 .rfa: 0000 OPEN, 0002 OPEN, 0001 OPENFAIL (Corrupt; to retest alone). Source: private/v2019.log
 - corp-2019-12 0001 refused ALONE (genuine). 0000, 0002 open.
+- 2026-10-24 c8: corp-2020-18 first 3: 0000 OPEN, 0002 OPEN, 0001 OPENFAIL (same index/pattern as 2019-12, likely the same Detail Items family; private/v2020.log)
