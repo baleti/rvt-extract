@@ -386,6 +386,11 @@ class Builder:
         dec = lambda x: enc.decode_tree(self.sch, self.W, x, 2, struct.unpack_from('<H', x, 0)[0], defined=(1, 2))[0]
         return not (int(dec(hb)['m_abFlags4Bytes']) >> 24) & 1 and int(dec(rb)['m_allowResetLineEndConstr']) == 1
 
+    def nested_depth(self, k):
+        """nesting depth of the families inside document k: 0 = none, 1 = nests families that nest nothing, ..."""
+        nd = self.nested_docs(k)
+        return 0 if not nd else 1 + max(self.nested_depth(kn) for kn, _g in nd)
+
     def nested_docs(self, k, seen=None):
         """[(project doc index, content GUID hex)] of the families nested in document k (depth first): Family records inside the document that carry their own m_oFamDoc"""
         pd = self.pd; seen = seen if seen is not None else {k}; out = []
