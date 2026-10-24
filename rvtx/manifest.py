@@ -13,9 +13,13 @@ def sgn(v):
     return v - (1 << 32) if v >= (1 << 31) and v < (1 << 32) else v
 
 
+# categories missing from the research table, names as reported by Revit's own EditFamily rfa of the same family (oracle, 2026-10-23)
+_EXTRA = {'-2001094': 'Toposolid Tags', '-2001103': 'Toposolid Link Tags', '-2005002': 'Ceiling Tags', '-2005006': 'Furniture Tags', '-2005012': 'Curtain Panel Tags', '-2005014': 'Specialty Equipment Tags'}
+
+
 def category_name(cid):
     v = sgn(cid)
-    return _cat.get(str(v), 'Unknown(%d)' % v)
+    return _cat.get(str(v)) or _EXTRA.get(str(v)) or 'Unknown(%d)' % v
 
 
 def param_name(pid, caps):
@@ -24,18 +28,30 @@ def param_name(pid, caps):
     return _par.get(str(sgn(v)), 'Param(%d)' % sgn(v))
 
 
+def _project_caps(prj):
+    c = getattr(prj, '_pcaps', None)
+    if c is None:
+        c = {}
+        for r in prj.by_class.get('ParamElemFamily', []):
+            d = r['fields'].get('m_pParamDef')
+            d = d.get('obj') if isinstance(d, dict) else None
+            if d and d.get('m_caption'): c[r['id']] = d['m_caption']
+        prj._pcaps = c
+    return c
+
+
 def family_entry(prj, fam_rec, doc):
     f = fam_rec['fields']
     recs = doc['records'] if doc else {}
     l2p = doc['l2p'] if doc else {}
-    caps = {}                                    # family-local id and project id -> caption
+    caps = dict(_project_caps(prj))              # project-side ParamElemFamily id -> caption (the Family record's type values refer to these)
     params = []
     for pid, r in recs.items():
         if r['class'] == 'ParamElemFamily':
             d = r['fields']['m_pParamDef']['obj']
             caps[pid] = caps[r['A']] = d['m_caption']
             params.append({'name': d['m_caption'], 'id': r['A'], 'project_id': pid, 'instance': bool(r['fields'].get('m_instanceParam')),
-                           'unit_type': d.get('m_unitType'), 'read_only': bool(d.get('m_readOnly')), 'description': r['fields'].get('m_description', '')})
+                           'unit_type': d.get('m_unitType'), 'spec': ((d.get('m_specTypeId') or {}).get('m_typeId') if isinstance(d.get('m_specTypeId'), dict) else None) or None, 'read_only': bool(d.get('m_readOnly')), 'description': r['fields'].get('m_description', '')})
     types = []
     pt = f.get('m_pFamilyTypes')
     for t in (pt['obj']['m_pairs'] if pt and pt.get('obj') else []):

@@ -21,9 +21,10 @@ def _dirent(name, typ, color, left, right, child, start, size):
     return bytes(b)
 
 
-def write_rfa(streams):
-    """streams: {path: bytes} with the 13 rfa stream paths -> CFB file bytes"""
-    ents = RFA_DIR
+def write_rfa(streams, part='Partitions/0'):
+    """streams: {path: bytes} with the 13 rfa stream paths -> CFB file bytes; part = name of the partition stream"""
+    ents = [(part if e[0] == 'Partitions/0' else e[0],) + tuple(e[1:]) for e in RFA_DIR]
+    streams = {(part if k == 'Partitions/0' else k): v for k, v in streams.items()}
     for p in streams:
         assert any(e[0] == p for e in ents), 'unexpected stream ' + p
     mini = bytearray(); minifat = []; big = []

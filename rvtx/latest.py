@@ -26,7 +26,7 @@ def _entries(tree, sch):
     return out
 
 
-def build_tree(sch, proj, blob, ids, remap=None):
+def build_tree(sch, proj, blob, ids, remap=None, cls_of=None):
     """proj, blob: decoded ADocument trees; ids: set of ints = element ids of the final family document. returns the rfa Latest tree"""
     remap = remap or {}                       # project element id -> id in the family document (KeynoteTable, AssemblyCodeTable are re-created with new ids)
     rm = lambda x: remap.get(_int(x), _int(x))
@@ -63,10 +63,44 @@ def build_tree(sch, proj, blob, ids, remap=None):
                     if ps is not None:
                         cls = type(ps['second']['m_idSet'][0]) if ps['second']['m_idSet'] else int
                         x['second']['m_idSet'] = [cls(i) if cls is not int else i for i in sorted({rm(i) for i in ps['second']['m_idSet'] if rm(i) in ids})]
+            elif name == 'ElemsSetWithCellsTracking' and k == 'm_elemIdSetMap' and False: pass
+            elif name == 'CategoryTracking' and k == 'm_categoryData':
+                have = {_int(x['m_categoryId']) for x in v}
+                E[k] = [copy.deepcopy(x) for x in pv if rm(x['m_categoryId']) in ids and _int(x['m_categoryId']) not in have] + list(v)
+            elif name == 'ExternalParamTracking' and k == 'm_keyDataMap':
+                have = {x['first']['m_guidValue']['m_guid'] for x in v}
+                v.extend(copy.deepcopy(x) for x in pv if x['first']['m_guidValue']['m_guid'] not in have and rm(x['second']['m_paramId']) in ids)
             elif name == 'UniqueElementsTracking' and k == 'm_elemIds':
                 for i, (a, b) in enumerate(zip(v, pv)):
                     if rm(b) in ids and rm(b) != _int(b) and _int(a) == 0xFFFFFFFFFFFFFFFF: v[i] = type(a)(rm(b))
+    if cls_of is not None: _class_completion(t, proj, sch, ids, cls_of, rm)
     return t, notes
+
+
+IMAGE_CATEGORY = (1 << 64) - 2000560       # raster images category: the symbol table entry that lists ImageSymbol elements
+CLASS_SETS = {'DataStorage': (4294967196,), 'ImageSymbol': (1201,)}     # ElemsSetWithCellsTracking keys that hold elements of a class (observed in Revit's own family files)
+
+
+def _class_completion(t, proj, sch, ids, cls_of, rm):
+    """Revit rebuilds the element tracking sets from the elements the family contains: DataStorage and ImageSymbol elements are listed in fixed tracking sets, ImageSymbols also in the symbol table entry whose project members are all image symbols"""
+    P = _entries(proj, sch); T = _entries(t, sch); ids = set(ids)
+    te = T.get('ElemsSetWithCellsTracking')
+    def add_to(lst, new):
+        if not new: return lst
+        import rvt_decode as D
+        cls = type(lst[0]) if lst else D.EID
+        return sorted(list(lst) + [cls(i) for i in new], key=_int)
+    if te:
+        for c, keys in CLASS_SETS.items():
+            want = {i for i in ids if cls_of(i) == c}
+            for x in te.get('m_elemIdSetMap', []):
+                if _int(x['first']) in keys:
+                    have = {_int(i) for i in x['second']['m_idSet']}; x['second']['m_idSet'] = add_to(x['second']['m_idSet'], sorted(want - have))
+    want = {i for i in ids if cls_of(i) == 'ImageSymbol'}
+    for name, E in T.items():
+        for x in E.get('m_symbols') or []:
+            if 'm_categoryId' in x and 'm_elemIdSet' in x and _int(x['m_categoryId']) == IMAGE_CATEGORY and want:
+                have = {_int(i) for i in x['m_elemIdSet']}; x['m_elemIdSet'] = add_to(x['m_elemIdSet'], sorted(want - have))
 
 
 def encode(sch, W, tag, tree):

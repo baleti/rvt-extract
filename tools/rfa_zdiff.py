@@ -1,13 +1,14 @@
-import sys,os,struct,collections
-sys.path.insert(0,'.')
-import rvtx, olefile, rvt2text as T
+"""rfa_zdiff.py OURS_DIR GT_DIR : Z-region byte-differing records over all families (light)"""
+import sys,os,struct,glob,collections
+sys.path.insert(0,os.path.join(os.path.dirname(os.path.realpath(__file__)),'..')); import rvtx, olefile, rvt2text as T
 from rvtx import partition as PT
-def parts(p):
+def reg(p):
     o=olefile.OleFileIO(p); return PT.parse_joined(T.joined(o.openstream('Partitions/0').read()),8)[0]
-NEG=(1<<64)-1
-for l in open('private/cmp_list.tsv'):
-    f,s,g=l.rstrip('\n').split('\t')
-    a=parts('private/rfa/corp-2024-43/'+f); b=parts(g)
-    za={x[0]:x for x in a['Z'] if x[0]!=NEG}; zb={x[0]:x for x in b['Z'] if x[0]!=NEG}
-    d=[(i,struct.unpack_from('<H',za[i][1],0)[0],len(za[i][1]),len(zb[i][1])) for i in sorted(set(za)&set(zb)) if za[i]!=zb[i]]
-    print(f,s,len(set(za)^set(zb)),len(d),d[:3],flush=True)
+c=collections.Counter(); ex=[]
+for p in sorted(glob.glob(sys.argv[1]+'/*/*.rfa')):
+    g=os.path.join(sys.argv[2],os.path.relpath(p,sys.argv[1]))
+    if not os.path.exists(g): continue
+    A=reg(p); B=reg(g); a={r[0]:r[1] for r in A['Z']}; b={r[0]:r[1] for r in B['Z']}
+    for i in a:
+        if i in b and a[i]!=b[i]: c[(len(a[i])>len(b[i]), len(b[i]))]+=1; ex.append((os.path.relpath(p,sys.argv[1]),i,len(a[i]),len(b[i])))
+print(c); print(ex[:30])

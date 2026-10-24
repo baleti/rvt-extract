@@ -1,5 +1,5 @@
 """Project-level content extractors. Each takes a core.Project and returns (json_data, [(relative_path, bytes)])."""
-import json, re, io, zipfile, struct, collections
+import json, re, io, zipfile, struct, collections, sys
 from .core import eid
 from . import manifest
 
@@ -148,5 +148,68 @@ def images(prj):
     return out, files
 
 
+def schedules(prj):
+    """schedule views: name, category, columns (heading, hidden, width) and sort field count; legends are listed by name"""
+    out = []
+    for r in _cls(prj, 'DBViewSchedule'):
+        f = r['fields']; sc = ob(f.get('m_pSchema') or {}) or {}
+        cols = [{'heading': ob(x).get('m_columnHeading'), 'hidden': bool(ob(x).get('m_hidden')), 'width_ft': ob(x).get('m_columnWidth')} for x in (sc.get('m_pFields') or [])]
+        out.append({'id': r['id'], 'name': f.get('m_viewName'), 'is_template': bool(f.get('m_isTemplate')), 'category_id': sg(sc.get('m_categoryId')), 'category': manifest.category_name(sc.get('m_categoryId')) if sc.get('m_categoryId') is not None else '',
+                    'columns': cols, 'sort_fields': len(sc.get('m_sortFieldArr') or []), 'filters': len(sc.get('m_filterArr') or []),
+                    'headers': [h.get('m_caption') for h in (sc.get('m_headerSet') or []) if isinstance(h, dict)]})
+    return {'schedules': out, 'legends': [{'id': r['id'], 'name': r['fields'].get('m_viewName'), 'components': None} for r in _cls(prj, 'DBViewLegend')]}, []
+
+
+def revisions(prj):
+    return [{'id': r['id'], 'sequence': r['fields'].get('m_sequenceNumber'), 'number': r['fields'].get('m_numberStr'), 'description': r['fields'].get('m_description'),
+             'date': r['fields'].get('m_date'), 'issued_by': r['fields'].get('m_issuedBy'), 'issued_to': r['fields'].get('m_issuedTo'), 'issued': bool(r['fields'].get('m_issued'))}
+            for r in sorted(_cls(prj, 'ProjectRevision'), key=lambda r: r['fields'].get('m_sequenceNumber') or 0)], []
+
+
+def imports(prj):
+    """imported / linked CAD files (MasterImportSymbol): name, link flag, unit, byte size, layer count"""
+    out = []
+    for r in _cls(prj, 'MasterImportSymbol'):
+        f = r['fields']; st = f.get('m_importSettings') or {}
+        out.append({'id': r['id'], 'name': ob(f.get('m_symbolInfo') or {}).get('m_name'), 'linked': bool(st.get('m_link')) if isinstance(st, dict) else None, 'view_specific': bool(st.get('m_viewSpecific')) if isinstance(st, dict) else None,
+                    'unit': (f.get('m_unitTypeId') or {}).get('m_typeId') if isinstance(f.get('m_unitTypeId'), dict) else None, 'bytes': f.get('m_size'), 'layers': len(f.get('m_layerCategoryIdSet') or []),
+                    'instances': len(f.get('m_parentIdSet') or [])})
+    return out, []
+
+
+def worksets(prj):
+    """worksets of a workshared file (PartitionTable entries): id, name, kind (0 user workset, others standard/family/view), default visibility in new views"""
+    sys.path.insert(0, manifest.RESEARCH)
+    import rvt_worksets
+    inv = set()
+    for r in _cls(prj, 'WorksetVisibilitySettingsElem'):
+        for g in r['fields'].get('m_invisibleWorksets') or []:
+            v = (g.get('m_guid') or {}).get('m_guid') if isinstance(g, dict) else None
+            if isinstance(v, (bytes, bytearray)): v = v.hex()
+            if v: inv.add(str(v).lower())
+    ws = rvt_worksets.worksets(prj.path, invisible=inv)
+    allw = sorted(({'id': v['id'], 'guid': g, 'name': v['name'], 'kind': v['kind'], 'default_visible': v['default_visible']} for g, v in ws.items()), key=lambda w: w['id'])
+    return {'user_worksets': [w for w in allw if w['kind'] == 0], 'other_entries': len(allw) - sum(1 for w in allw if w['kind'] == 0), 'note': 'kind 0 = user workset (verified against Revit WORKSET rows); other kinds are standard, family and view worksets, not listed'}, []
+
+
+def line_styles(prj):
+    """line styles = subcategories of the Lines category (parent -2002000): name, line pattern (name when defined in the file, else id), pen number (weight index), colour"""
+    pats = {r['id']: r['fields'].get('m_text') or r['fields'].get('m_name') for r in _cls(prj, 'LinePatternElem')}
+    gst = {r['id']: r for r in _cls(prj, 'GStyleElem')}; out = []
+    for r in _cls(prj, 'CategoryElem'):
+        c = ob(r['fields'].get('m_pCategory') or {}) or {}
+        if sg(c.get('m_parentCategoryId')) != -2002000: continue
+        e = {'id': r['id'], 'name': c.get('m_name'), 'pattern': None, 'pen_number': None, 'color_rgb': None}
+        for gid in r['fields'].get('m_gstyleIds') or []:
+            g = gst.get(int(gid))
+            if g is None or g['fields'].get('m_gstyleType') != 1: continue
+            o = ob(g['fields'].get('m_pGStyle') or {}) or {}; pid = sg(o.get('m_linePatternId'))
+            e['pattern'] = pats.get(pid) or ('Solid' if pid == -3000010 else None) or ('builtin %d' % pid if pid is not None else None); e['pen_number'] = o.get('m_penNumber')
+            col = o.get('m_color')
+            if isinstance(col, int): e['color_rgb'] = [col & 255, (col >> 8) & 255, (col >> 16) & 255]
+        out.append(e)
+    return out, []
+
+
 KINDS = {'fill_patterns': fill_patterns, 'line_patterns': line_patterns, 'shared_parameters': shared_parameters, 'project_parameters': project_parameters,
-         'filters': filters, 'phases': phases, 'levels_grids': levels_grids, 'views': views, 'images': images}
+         'filters': filters, 'phases': phases, 'levels_grids': levels_grids, 'views': views, 'images': images, 'schedules': schedules, 'revisions': revisions, 'cad_imports': imports, 'worksets': worksets, 'line_styles': line_styles}
