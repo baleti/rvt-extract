@@ -54,7 +54,7 @@ if todo:
             try:
                 b = B.build(fr); fn = os.path.join(od, fid, '%04d.rfa' % i)
                 B.write(fn, fr['fields']['m_name'], r.get('category', 'Unknown'))
-                r.update(status='written', file='%s/%04d.rfa' % (fid, i), bytes=os.path.getsize(fn), elements=len(b.all_ids), own=len(b.own), shared=len(b.shared))
+                r['nested'] = bool(B.nested_docs(B.k)); r.update(status='written', file='%s/%04d.rfa' % (fid, i), bytes=os.path.getsize(fn), elements=len(b.all_ids), own=len(b.own), shared=len(b.shared))
             except Exception as ex:
                 r.update(status='error', error='%s: %s' % (type(ex).__name__, str(ex)[:300]), trace=traceback.format_exc()[-500:])
         r['secs'] = round(time.time() - t2, 2); r['rss_mb'] = rss()

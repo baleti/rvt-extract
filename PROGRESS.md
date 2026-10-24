@@ -17,3 +17,4 @@
 - 2026-10-24 c8: corp-2019-12 (2019, Revit 2024 upgrade) first 3 .rfa: 0000 OPEN, 0002 OPEN, 0001 OPENFAIL (Corrupt; to retest alone). Source: private/v2019.log
 - corp-2019-12 0001 refused ALONE (genuine). 0000, 0002 open.
 - 2026-10-24 c8: corp-2020-18 first 3: 0000 OPEN, 0002 OPEN, 0001 OPENFAIL (same index/pattern as 2019-12, likely the same Detail Items family; private/v2020.log)
+- 2026-10-24 rvt-extract corpus4 (current main, 23 of 78 corpus files done, 2017-2020): .rfa built 2589/2589 embedded families; 17 non-family extractors 0 crashes on 23 files (empty: cad_imports 13, filters 10, shared_parameters 3); Revit 2024 opens: 2017 0/4, 2018 0/4, 2019 2/3, 2020 2/3 (private/v20*.log, tools/validate_year.sh)
