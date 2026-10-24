@@ -113,3 +113,6 @@ All committed on branch test. Read NEEDS-FROM-TEST.md (bottom sections) and RESU
 Refusal bisect: Partitions/0 stream swap fixes (tools/rfa_streamswap.py), record-only swap does not: causes = missing derived records, nested second document, plus an unknown third (0039). RVTX_ZSTUB=1 is opt-in (net zero).
 Tools: oracle/rfacheck.py (single-file sessions; after a hang run ssh remote-host 'pkill -f job_rc_'), tools/rfa_variants.py (id lists), rfa_ndocs.py, rfa_zdiff.py, rfa_zrule*.py. Check for leftover oracle loops (pgrep -f oracle_run) before starting new ones; private/ has all scripts/results.
 Next: real-world studyx oracle checks, per-year single-file opens after c3-fam fixes, rerun corpus after fixes.
+
+## c8-famtest takeover (claude8, 2026-10-24)
+Merged main into test (clean; RESULTS-fam.md = c3-fam's results file). c3-fam/studyx now reports opens 177/177 (2024, 2026), flat old formats 111/111, nested 2025 still rejected. Launched corpus4 (all 78 corpus files, current main) on remote-host via tools/h1_launch.sh (log private/launch_corpus4.log, waits for gate). Next: report.py on results, oracle opens per year, extractor crash/empty check, update RESULTS.md headline, tell orchestrator.
