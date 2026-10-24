@@ -246,6 +246,7 @@ class Builder:
         nest_ids = [i for kn_, _ in self.nested_docs(kdoc) for i, _b in pd.docs[kn_]['H'] if i != NEG]
         mx = max([pd.max_id] + nest_ids)      # Revit allocates the new KeynoteTable/AssemblyCodeTable ids above the nested documents' ids too
         kn, ac = mx + 1, mx + 2
+        if self.nested_docs(kdoc) and pd.kn_proj is not None and os.environ.get('RVTX_KEEPKN', '1') != '0': kn, ac = pd.kn_proj, mx + 1      # Revit keeps the project's KeynoteTable id when nested families exist (their records reference it), the AssemblyCodeTable is new
         fam_guid = f['m_famDocGUID']['m_guid']
         g, blob = pd.segment(f['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid'])
         # ---- items
@@ -336,8 +337,32 @@ class Builder:
         Zl = [(i, self.Z[i][0], 0) for i in ids if self.Z.get(i)] + [(NEGW, b'', 1)]
         return {'H': Hl, 'R': Rl, 'Z': Zl}
 
+    def guid_map(self):
+        """nested content document GUIDs -> new GUIDs sorted in document (depth-first) order: Revit writes the ContentDocuments segments in GUID order and pairs them with the partition documents by position, and it regenerates the GUIDs of the nested families when it saves a family; with the project's GUIDs the two orders differ as soon as a family is nested two levels deep ('Family X is corrupt and needs to be reloaded')"""
+        if getattr(self, '_gmap', None) is not None: return self._gmap
+        nested = self.nested_docs(self.k); m = {}
+        if nested and os.environ.get('RVTX_NEWGUID', '1') != '0':
+            new = sorted(uuid.uuid5(uuid.NAMESPACE_OID, g_ + str(n)).bytes.hex() for n, (_, g_) in enumerate(nested))
+            m = {g_: new[n] for n, (_, g_) in enumerate(nested)}
+        self._gmap = m; return m
+
+    def remap_fam(self, body):
+        m = self.guid_map()
+        if not m or self.class_of(body) != 'Family': return body
+        tree = self.dec_loose(body)[1]; fd = tree.get('m_oFamDoc')
+        if not (isinstance(fd, dict) and 'obj' in fd) or fd['obj']['m_contentDocGUID']['m_guid'] not in m: return body
+        def fn(t): t['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid'] = m[t['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid']]
+        return self.edit(body, fn)
+
     def partition_stream(self):
-        payload = PT.build_payload([self.doc_items()] + [self.pd.docs[kn] for kn, _ in self.nested_docs(self.k)], self.W)
+        main = self.doc_items(); m = self.guid_map()
+        if m: main['R'] = [(i, self.remap_fam(b) if len(b) > 2 else b, z) for i, b, z in main['R']]
+        docs = [main]
+        for kn, _ in self.nested_docs(self.k):
+            d = self.pd.docs[kn]
+            if m: d = {'H': d['H'], 'Z': d['Z'], 'R': [(i, self.remap_fam(b), *rest) if len(b) > 2 else (i, b, *rest) for i, b, *rest in d['R']]}
+            docs.append(d)
+        payload = PT.build_payload(docs, self.W)
         return PT.page_stream(payload)
 
     def global_stream(self, name, raw):
@@ -405,6 +430,8 @@ class Builder:
         """content records (taken from the project's Latest) and the family document GUID list of the nested families"""
         guids = [g_ for _, g_ in nested]; want = set(guids)
         recs = [copy.deepcopy(e) for e in self.pd.latest_tree['m_oContentTable']['obj']['m_ContentRecSet'] if e['m_ContentKey']['m_guidKey']['m_guid'] in want]
+        gm = self.guid_map()
+        for e in recs: e['m_ContentKey']['m_guidKey']['m_guid'] = gm.get(e['m_ContentKey']['m_guidKey']['m_guid'], e['m_ContentKey']['m_guidKey']['m_guid'])
         recs.sort(key=lambda e: bytes.fromhex(e['m_ContentKey']['m_guidKey']['m_guid']))      # Revit keeps the content record set sorted by GUID bytes (BV-BNE title block: 4 records, A0 title block: 2)
         for e in recs:      # Revit zeroes the project history ids in the content records it writes into a family
             h = e.get('m_history')
@@ -420,14 +447,26 @@ class Builder:
         if 'obj' not in lt['m_oContentTable']:      # the family had no content records of its own (null pointer): instantiate the table from the project's
             tbl = copy.deepcopy(self.pd.latest_tree['m_oContentTable']); tbl['obj']['m_ContentRecSet'] = []; lt['m_oContentTable'] = tbl
         lt['m_oContentTable']['obj']['m_ContentRecSet'] = recs
-        sur = set()      # surrogates of the nested Family records of the document: their LoadedFamilyInfo lists the nested document GUIDs
+        sur = {}      # surrogates of the nested Family records of the document -> GUID list of their LoadedFamilyInfo
         for i, b, *_ in self.pd.docs[self.k]['R'][:-1]:
             if self.class_of(b) == 'Family':
                 t = self.dec_loose(b)[1]; fd = t.get('m_oFamDoc')
-                if isinstance(fd, dict) and 'obj' in fd: sur.add(int(t['m_surrogateId']))
+                if isinstance(fd, dict) and 'obj' in fd:
+                    sur[int(t['m_surrogateId'])] = self.nested_chain(fd)
         for s_ in lt['m_pAppInfoManager']['obj']['m_appInfoArr']:
             for li in ((s_.get('obj') or {}).get('m_arrLoadedFamilyInfo') or []):
-                if int(li['m_surrogateId']) in sur: li['m_familyDocGUIDs'] = [{'m_guid': g_} for g_ in reversed(guids)]
+                if int(li['m_surrogateId']) in sur:
+                    ch = sur[int(li['m_surrogateId'])]
+                    li['m_familyDocGUIDs'] = [{'m_guid': gm.get(g_, g_)} for g_ in reversed(ch if ch and os.environ.get('RVTX_CHAIN', '1') != '0' else guids)]
+
+    def nested_chain(self, fd):
+        """GUIDs a nested Family's LoadedFamilyInfo lists in a family file (Revit, TC_9 Pile with a family nested two levels deep): its own content document, then the documents nested in it (depth first)"""
+        pd = self.pd
+        cnt = collections.Counter(pd.id_doc.get(int(x['second'].get('m_id') or x['second'].get('m_id64'))) for x in fd['obj']['m_big2SmallMap2'])
+        cnt.pop(None, None); cnt.pop(self.k, None)
+        if not cnt: return None
+        kn = cnt.most_common(1)[0][0]
+        return [fd['obj']['m_contentDocGUID']['m_guid']] + [g_ for _kn, g_ in self.nested_docs(kn, {self.k, kn})]
 
     def streams(self, family_name, category, path, when=None):
         pd = self.pd; when = when or time.time()
@@ -453,7 +492,7 @@ class Builder:
         st['Global/History'] = self.global_stream('Global/History', SS.history(doc_guid, save_guid))
         st['Global/DocumentIncrementTable'] = self.global_stream('Global/DocumentIncrementTable', SS.document_increment_table(n + (sum(len(self.pd.docs[kn_]['H']) - 1 for kn_, _ in nested) if os.environ.get('RVTX_DITN', '1') != '0' else 0), when))
         st['Global/PartitionTable'] = self.global_stream('Global/PartitionTable', SS.PT_SAMPLES[pd.fmt] if (pd.fmt not in ('2024', '2026') and pd.fmt in SS.PT_SAMPLES) else SS.partition_table(part_guid))
-        st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents([(g_, self.nested_blob(g_, mx_ids)) for _, g_ in sorted(nested, key=lambda n: bytes.fromhex(n[1]))]) if nested else SS.content_documents_empty())
+        st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents([(self.guid_map().get(g_, g_), self.nested_blob(g_, mx_ids)) for _, g_ in sorted(nested, key=lambda n: bytes.fromhex(self.guid_map().get(n[1], n[1])))]) if nested else SS.content_documents_empty())
         st['Partitions/0'] = self.partition_stream()
         st['BasicFileInfo'] = SS.basic_file_info(path, save_guid, pd.build, pd.fmt)
         st['Contents'] = pd.contents_stream
