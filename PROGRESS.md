@@ -27,3 +27,4 @@
 - stopped using pkill job_rc_ on remote-host (shared with studyx); retest.sh queues behind vmlock
 - 2023 flat 4/4 OPEN (earlier 'hang' retracted: oracle fault)
 - 2017 re-lift with year fix: 3/3 still CorruptModel (valid batch)
+- 2025 flat 5/5 open in Revit 2026 (valid batch)

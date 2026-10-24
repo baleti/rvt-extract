@@ -110,3 +110,5 @@ Control passes; corp-2023-36 flat 0000, 0002, 0005, 0007 each alone in a fresh R
 
 ## 2017 re-test with main b090b75 (year-detection fix), valid batch (controls before and after pass)
 corp-2017-00 re-lifted with current main (CLI --experimental, 52 .rfa: 40 flat, 12 nested): 3 flat families alone in fresh Revit 2024 sessions: 3/3 OPENFAIL CorruptModelException. So the year fix did not make 2017 open; the 2017 format (and likely 2018) still needs its own layout work. Compare with the Revit-saved 2017 sample (~/rvt-research/samples-rfa).
+
+2025 flat (corp-2025-48, 33 flat / 54 nested in the corpus4 build): first 5 flat families 5/5 OPEN in Revit 2026 by upgrade; controls before and after pass (private/t25.res). Nested 2025 not tested here (corpus4 predates the nested fix fc7aae5).
