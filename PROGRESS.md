@@ -21,3 +21,4 @@
 - corp-2019-12/0001 = nested (2 docs): expected refusal, resolved
 - 2026-10-24 c8: corp-2021-24 flat families (flatsplit) 5/5 OPEN in Revit 2024 (private/f21.res)
 - flat-only: 2017 0/4, 2018 0/4 (genuine), 2019 2/2, 2020 2/2, 2021 5/5 open in Revit 2024
+- 2022 (corp-2022-30) flat 5/5 OPEN in Revit 2024 (41 families: 30 flat, 11 nested). private/f22.res

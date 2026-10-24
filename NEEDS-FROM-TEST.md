@@ -97,3 +97,4 @@ RESOLVED (2026-10-24): corp-2019-12 0001 has 2 documents in Partitions/62 (PT.pa
 
 ## 2026-10-24 flat-only retest (tools/flatsplit.py splits flat vs nested): 2017 and 2018 are genuine failures
 corp-2017-00 flat 0000/0002/0005/0007: 0/4 open in Revit 2024 (CorruptModelException). corp-2018-06 flat 0000/0002/0005/0007: 0/4. By contrast flat families of 2019 (2/2 non-nested), 2020 (2/2) and 2021 (corp-2021-24: 5/5) open. So the 4-byte-id window that works is 2019+; 2017 and 2018 formats need their own layout check (compare with Revit-saved rac_basic_sample_family 2017/2018 in ~/rvt-research/samples-rfa). Repro: python3 tools/flatsplit.py DIR; oracle/rfacheck.py 2024 DIR OUT with corpus4 files from remote-host ~/src/rvt-extract-test/out_corpus4/corp-2017-00 and corp-2018-06.
+2022 (corp-2022-30): flat 5/5 open in Revit 2024.
