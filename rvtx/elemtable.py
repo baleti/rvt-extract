@@ -62,9 +62,9 @@ def build4(all_ids, own, owners, family_id, special_neg=()):
         elif i in own:
             ow = owners.get(i, NEG4 + b'\0' * 8)
             c = ow[8:12] if os.environ.get('RVTX_ETC', 'b') == 'b' and ow[8:12] != NEG4 else NEG4     # Revit's own rows: c equals b in 1554 of 1713 rows of the 2019 sample (the project's content row has ffffffff there)
-            if os.environ.get('RVTX_ETDATES', 'old') == 'real': out += idb + idb + b'\0' * 8 + NEG4 + b'\0\0\0\0' + ow[:4]      # Revit's own 2019 nested family: a = b = 0, c = ffffffff for geometry, 0 for style rows
-            elif os.environ.get('RVTX_ETDATES', 'old') == 'real0': out += idb + idb + b'\0' * 12 + b'\0\0\0\0' + ow[:4]
-            elif os.environ.get('RVTX_ETDATES', 'old') == 'zero': out += idb + idb + b'\0' * 12 + b'\0\0\0\0' + ow[:4]      # a, b, c are the element's creation/modification increments: the project's (e.g. 555, 582) exceed the family's history, Revit reports them 'missing elements'
+            if os.environ.get('RVTX_ETDATES', 'real') == 'real': out += idb + idb + b'\0' * 8 + NEG4 + b'\0\0\0\0' + ow[:4]      # Revit's own 2019 nested family: a = b = 0, c = ffffffff for geometry, 0 for style rows
+            elif os.environ.get('RVTX_ETDATES', 'real') == 'real0': out += idb + idb + b'\0' * 12 + b'\0\0\0\0' + ow[:4]
+            elif os.environ.get('RVTX_ETDATES', 'real') == 'zero': out += idb + idb + b'\0' * 12 + b'\0\0\0\0' + ow[:4]      # a, b, c are the element's creation/modification increments: the project's (e.g. 555, 582) exceed the family's history, Revit reports them 'missing elements'
             else: out += idb + idb + ow[4:12] + c + b'\0\0\0\0' + ow[:4]
         else: out += idb + idb + b'\0' * 16 + fam
     out += (b'' if os.environ.get('RVTX_TRAILER4', '1') == '0' else TRAILER_TABLE4) + TRAILER4 + max([i for i in all_ids if 0 <= i < (1 << 31)] or [0]).to_bytes(4, 'little') + b'\0\0\0\0'
