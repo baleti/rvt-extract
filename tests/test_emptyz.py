@@ -12,3 +12,8 @@ def test_empty_z_only_in_8_byte_years_by_default(monkeypatch):
 def test_empty_z_opt_in_for_4_byte(monkeypatch):
     monkeypatch.setenv('RVTX_EMPTYZ4', '1')
     assert rfa.use_empty_z(4)
+
+
+def test_empty_z_only_verified_formats(monkeypatch):
+    monkeypatch.delenv('RVTX_EMPTYZ', raising=False); monkeypatch.delenv('RVTX_EMPTYZ4', raising=False)
+    assert rfa.use_empty_z(8, '2024') and rfa.use_empty_z(8, '2026') and not rfa.use_empty_z(8, '2025')
