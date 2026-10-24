@@ -57,12 +57,12 @@ def build4(all_ids, own, owners, family_id, special_neg=()):
     out = bytearray((TAG or HDR) + struct.pack('<I', len(all_ids)))
     fam = family_id.to_bytes(4, 'little'); NEG4 = b'\xff\xff\xff\xff'
     for i in sorted(all_ids):
-        idb = i.to_bytes(4, 'little')
+        idb = (i & 0xFFFFFFFF).to_bytes(4, 'little')      # negative / 64-bit sentinel ids wrap to 32 bit
         if i in special_neg: out += idb + idb + b'\0' * 16 + NEG4
         elif i in own:
             ow = owners.get(i, NEG4 + b'\0' * 8)
             c = ow[8:12] if os.environ.get('RVTX_ETC', 'b') == 'b' and ow[8:12] != NEG4 else NEG4     # Revit's own rows: c equals b in 1554 of 1713 rows of the 2019 sample (the project's content row has ffffffff there)
             out += idb + idb + ow[4:12] + c + b'\0\0\0\0' + ow[:4]
         else: out += idb + idb + b'\0' * 16 + fam
-    out += (b'' if os.environ.get('RVTX_TRAILER4', '1') == '0' else TRAILER_TABLE4) + TRAILER4 + max(all_ids).to_bytes(4, 'little') + b'\0\0\0\0'
+    out += (b'' if os.environ.get('RVTX_TRAILER4', '1') == '0' else TRAILER_TABLE4) + TRAILER4 + max([i for i in all_ids if 0 <= i < (1 << 31)] or [0]).to_bytes(4, 'little') + b'\0\0\0\0'
     return bytes(out)

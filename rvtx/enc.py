@@ -36,7 +36,9 @@ class Enc:
         if kind == 9: return bytes.fromhex(v)
         if kind == 8:
             e = v.encode('utf-16le'); return struct.pack('<I', len(e) // 2) + e
-        fmt, sz = D.PRIM[kind]; return struct.pack(fmt, v)
+        fmt, sz = D.PRIM[kind]
+        if fmt == '<I' and not 0 <= v <= 0xFFFFFFFF: v &= 0xFFFFFFFF      # 4-byte element id formats: the 8-byte sentinel -1 (and negative ids) wrap to ffffffff
+        return struct.pack(fmt, v)
 
     def value(self, f, v, pend, lvl=0):
         types = f['types']; ns = f.get('ns') or [None] * len(types)

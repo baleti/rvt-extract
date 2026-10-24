@@ -53,11 +53,11 @@ def serialize(docs, W=8):
                 if reg == 'H':
                     apos = None if prevL is None else len(out)
                     if prevL is not None: out += struct.pack('<I', prevL)
-                    items.append((reg, di, len(out), apos)); out += idv.to_bytes(W, 'little') + struct.pack('<I', L) + body
+                    items.append((reg, di, len(out), apos)); out += (idv & NEG).to_bytes(W, 'little') + struct.pack('<I', L) + body
                 else:
                     apos = len(out); out += struct.pack('<I', prevL)
-                    st = 1 if idv == NEG else adler(body)
-                    items.append((reg, di, len(out), apos)); out += idv.to_bytes(W, 'little') + struct.pack('<II', st, L) + body
+                    st = 1 if (idv & NEG) == NEG else adler(body)
+                    items.append((reg, di, len(out), apos)); out += (idv & NEG).to_bytes(W, 'little') + struct.pack('<II', st, L) + body
                 prevL = L
     out += struct.pack('<I', prevL)
     return bytes(out), items
