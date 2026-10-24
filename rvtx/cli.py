@@ -11,7 +11,7 @@ HELP = {'families': 'every family: manifest entry (category, types, parameters, 
 
 
 VALIDATION = {'2024': 'validated: opens in Revit 2024, facts equal to EditFamily+SaveAs (Snowdon 177/177, office project 100/100)',
-              '2025': 'partly validated: 29 of 34 sampled families of one office project open in Revit 2026 (upgrade); families containing nested families (5 of 5 sampled) are rejected, do not rely on those',
+              '2025': 'validated on sampled families of an office project (Revit 2026 upgrade open); nested families open since the document tail block fix (6 of 6 re-tested)',
               'old': 'Revit 2019-2023 files (4-byte element ids): flat and nested families open in Revit 2024 after its upgrade (Autodesk sample projects 2019, 2020, 2022, 2023: 51 of 52 each, see RESULTS.md)',
               'older': 'Revit 2016-2018 files: Revit 2024 refuses the assembled .rfa (0 of 8 sampled), kept for the manifest and experiments only',
               '2026': 'streams byte-identical to Revit 2026 output for tested families; open check pending'}
@@ -87,7 +87,7 @@ def main(argv=None):
             try:
                 B.build(fr)
                 d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
-                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_depth': B.nested_depth(B.k) if nest else 0, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': ('known-bad: nested families in a 2025 file are rejected by Revit 2026' if nest and str(pd.fmt) == '2025' else VALIDATION.get(str(pd.fmt), (VALIDATION['older'] if int(pd.fmt) < 2019 else VALIDATION['old']) if old_fmt else 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
+                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_depth': B.nested_depth(B.k) if nest else 0, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': (VALIDATION.get(str(pd.fmt), (VALIDATION['older'] if int(pd.fmt) < 2019 else VALIDATION['old']) if old_fmt else 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
                 if os.environ.get('RVTX_TB'): import traceback; traceback.print_exc()

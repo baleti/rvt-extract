@@ -122,7 +122,7 @@ class ProjectDocs:
         else: ET.TRAILER4 = et[-12:-8]
         self._partition_markers()
         t = o.openstream('BasicFileInfo').read().decode('utf-16le', 'ignore') + o.openstream('BasicFileInfo').read()[1:].decode('utf-16le', 'ignore')
-        m = re.search(r'Format: (\d+)', t); self.fmt = m.group(1) if m else '2024'
+        m = re.search(r'Format: (\d+)', t) or re.search(r'Autodesk Revit (20\d\d)', t); self.fmt = m.group(1) if m else '2024'      # BasicFileInfo of 2016-2018 files has no 'Format:' line
         m = re.search(r'Build: (\S+\(x64\))', t); self.build = m.group(1) if m else SS.BUILD
         self.contents_guid, self.contents_stream = SS.CONTENTS_BY_FORMAT.get(self.fmt, (None, None))
 
