@@ -221,6 +221,8 @@ class Builder:
         doc = pd.docs[k]
         oH = {i: b for i, b in doc['H'][:-1]}; oR = {i: (b, s) for i, b, s in doc['R'][:-1]}; oZ = {i: (b, s) for i, b, s in doc['Z'][:-1]}
         own = set(oH)
+        if self.W == 4 and os.environ.get('RVTX_DROPOBS', '1') != '0':      # Revit 2024 saves no LynxTracker (obsolete class of the older formats)
+            self.dropped = {i for i, (b, s_) in oR.items() if len(b) > 2 and self.class_of(b) in self.OBSOLETE}; own -= self.dropped
         fid = next(i for i, (b, s) in oR.items() if self.class_of(b) == 'Family')
         # shared set: standard + dependencies of the family's own records
         deps = set()
@@ -354,12 +356,21 @@ class Builder:
         def fn(t): t['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid'] = m[t['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid']]
         return self.edit(body, fn)
 
+    OBSOLETE = ('LynxTracker',)      # classes Revit 2024 discards when it upgrades an older file; inside a nested document they make it 'corrupt' ("can't load top object ... runtime class LynxTracker")
+
+    def drop_obsolete(self, d):
+        if self.W != 4 or os.environ.get('RVTX_DROPOBS', '1') == '0': return d
+        gone = {i for i, b, *_ in d['R'] if len(b) > 2 and self.class_of(b) in self.OBSOLETE}
+        if not gone: return d
+        return {'H': [x for x in d['H'] if x[0] not in gone], 'R': [x for x in d['R'] if x[0] not in gone], 'Z': [x for x in d['Z'] if x[0] not in gone]}
+
     def partition_stream(self):
         main = self.doc_items(); m = self.guid_map()
         if m: main['R'] = [(i, self.remap_fam(b) if len(b) > 2 else b, z) for i, b, z in main['R']]
         docs = [main]
         for kn, _ in self.nested_docs(self.k):
             d = self.pd.docs[kn]
+            d = self.drop_obsolete(d)
             if m: d = {'H': d['H'], 'Z': d['Z'], 'R': [(i, self.remap_fam(b), *rest) if len(b) > 2 else (i, b, *rest) for i, b, *rest in d['R']]}
             docs.append(d)
         payload = PT.build_payload(docs, self.W)
@@ -417,6 +428,11 @@ class Builder:
         pd = self.pd; g, blob = pd.segment(guid); tag = pd.tag_adoc
         t = enc.decode_tree(self.sch, self.W, blob, 2, tag)[0]
         t['m_pHistory'] = {'null': 0}; t['m_oContentTable'] = {'null': 0}
+        if self.W == 4 and os.environ.get('RVTX_DROPOBS', '1') != '0':      # element table rows of records dropped from the nested document (obsolete classes)
+            kn_ = next((k_ for k_, g_ in self.nested_docs(self.k) if g_ == guid), None)
+            if kn_ is not None:
+                gone = {i for i, b, *_ in pd.docs[kn_]['R'] if len(b) > 2 and self.class_of(b) in self.OBSOLETE}
+                if gone: t['m_elemTable']['obj']['m_elemArr'] = [e for e in t['m_elemTable']['obj']['m_elemArr'] if int(e['m_id']) not in gone]
         for e in t['m_elemTable']['obj']['m_elemArr']:
             h = e.get('m_history')
             if isinstance(h, dict):
@@ -459,6 +475,14 @@ class Builder:
                     ch = sur[int(li['m_surrogateId'])]
                     li['m_familyDocGUIDs'] = [{'m_guid': gm.get(g_, g_)} for g_ in reversed(ch if ch and os.environ.get('RVTX_CHAIN', '1') != '0' else guids)]
 
+    def strip_ids(self, v, gone):
+        """remove element ids of dropped records from every id list of a decoded tree (Latest)"""
+        if isinstance(v, dict):
+            for x in v.values(): self.strip_ids(x, gone)
+        elif isinstance(v, list):
+            v[:] = [x for x in v if not (isinstance(x, EID) and int(getattr(x, 'v', x)) in gone)]
+            for x in v: self.strip_ids(x, gone)
+
     def nested_chain(self, fd):
         """GUIDs a nested Family's LoadedFamilyInfo lists in a family file (Revit, TC_9 Pile with a family nested two levels deep): its own content document, then the documents nested in it (depth first)"""
         pd = self.pd
@@ -479,6 +503,9 @@ class Builder:
         lt, notes = LAT.build_tree(self.sch, pd.latest_tree, bt, set(self.all_ids), remap={pd.kn_proj: self.kn, pd.ac_proj: self.ac}, cls_of=lambda i: self.class_of(self.R[i][0]) if i in self.R else (pd.byid[i]['class'] if i in pd.byid else None))
         nested = self.nested_docs(self.k)
         mx_ids = self.kn - 1
+        gone = set(getattr(self, 'dropped', ()))
+        for kn_, _g in nested: gone |= {i for i, b, *_ in pd.docs[kn_]['R'] if len(b) > 2 and self.class_of(b) in self.OBSOLETE} if self.W == 4 and os.environ.get('RVTX_DROPOBS', '1') != '0' else set()
+        if gone: self.strip_ids(lt, gone)
         if nested: self.add_nested_to_latest(lt, nested)
         latest = LAT.encode(self.sch, self.W, tag, lt)
         if self.W == 8:
