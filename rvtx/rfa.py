@@ -32,6 +32,11 @@ def _eids(o, out, key=''):
 _EMPTY_Z = bytes.fromhex('3f08ffffffffffffffffa69f0e00000000000480080000000000' + 'ea8ca039593e2946' * 3 + 'ea8ca039593e29c6' * 3 + 'ea8ca039593e2946' * 3 + 'ea8ca039593e29c6' * 3 + 'a69f0e00000000000200000000000000')
 
 
+def use_empty_z(W):
+    """the 138-byte empty VarSketch cache is the 8-byte-id layout: 4-byte years keep the project Z unless RVTX_EMPTYZ4=1"""
+    return os.environ.get('RVTX_EMPTYZ', '1') != '0' and (W == 8 or os.environ.get('RVTX_EMPTYZ4', '0') == '1')
+
+
 def empty_varsketch_z(i):
     return _EMPTY_Z.replace(struct.pack('<Q', 0xE9FA6), struct.pack('<Q', i))
 
@@ -257,7 +262,7 @@ class Builder:
         # ---- items
         H, R, Z = {}, {}, {}
         for i in own: H[i] = oH[i]; R[i] = oR[i]; Z[i] = oZ.get(i)
-        if os.environ.get('RVTX_EMPTYZ', '1') != '0' and (self.W == 8 or os.environ.get('RVTX_EMPTYZ4', '1') == '1'):      # the 138-byte empty cache is the 8-byte-id layout     # Revit's saved family carries an empty guess cache (138-byte Z) for VarSketch elements whose project Z holds data
+        if use_empty_z(self.W):      # the 138-byte empty cache is the 8-byte-id layout; in 4-byte years it is opt-in (default keeps the project Z): writing it made M_Boundary Condition-Fixed (34 VarSketch) unopenable, oracle 2026-10-24     # Revit's saved family carries an empty guess cache (138-byte Z) for VarSketch elements whose project Z holds data
             for i in own:
                 if Z[i] is not None and len(Z[i][0]) > 138 and len(oR[i][0]) > 2 and self.sch.name(struct.unpack_from('<H', oR[i][0], 0)[0]) == 'VarSketch' and self.sketch_cache_emptied(oH[i], oR[i][0]):
                     zb = empty_varsketch_z(i); Z[i] = (zb, zlib.adler32(zb) & 0xFFFFFFFF)
