@@ -12,6 +12,7 @@ HELP = {'families': 'every family: manifest entry (category, types, parameters, 
 
 VALIDATION = {'2024': 'validated: opens in Revit 2024, facts equal to EditFamily+SaveAs (Snowdon 177/177, office project 100/100)',
               '2025': 'partly validated: 29 of 34 sampled families of one office project open in Revit 2026 (upgrade); families containing nested families (5 of 5 sampled) are rejected, do not rely on those',
+              'old': 'flat families (no nested family) of Revit 2017-2023 files: open in Revit 2024 after its upgrade (sample result in RESULTS.md); nested ones are rejected and only written with --experimental',
               '2026': 'streams byte-identical to Revit 2026 output for tested families; open check pending'}
 
 
@@ -48,7 +49,7 @@ def main(argv=None):
     ap.add_argument('rvt', nargs='?'); ap.add_argument('--out', default=None, help='output folder')
     ap.add_argument('--only', default=None, help='comma list of output types (see --list-kinds): ' + ','.join(KINDS))
     ap.add_argument('--no-rfa', action='store_true', help='families: only the manifest, do not assemble .rfa files')
-    ap.add_argument('--experimental', action='store_true', help='also write .rfa for Revit formats known to be rejected by Revit (2017-2023, 4-byte element ids)')
+    ap.add_argument('--experimental', action='store_true', help='also write .rfa for 2017-2023 (4-byte element ids) families that nest other families (flat ones are written by default; Revit 2024 rejects the nested ones)')
     ap.add_argument('--low-memory', action='store_true', help='families only: decode just the classes family lifting needs (100+ MB projects fit in a few GB)')
     ap.add_argument('--match', default=None, help='families: only those whose name or category matches this regular expression (case-insensitive)')
     ap.add_argument('--list', action='store_true', help='print what the file contains and exit')
@@ -79,12 +80,13 @@ def main(argv=None):
         for fr in prj.families():
             e = byid.get(fr['id'])
             if e is None or not e['embedded_doc']: continue
-            if str(pd.fmt).isdigit() and int(pd.fmt) < 2024 and not a.experimental:
-                e['rfa'] = {'status': 'skipped', 'validation': 'Revit %s files: .rfa assembly is not validated (Revit rejects it); use --experimental to write anyway' % pd.fmt}; continue
+            old_fmt = str(pd.fmt).isdigit() and int(pd.fmt) < 2024
             try:
                 B.build(fr)
+                if old_fmt and not a.experimental and B.nested_docs(B.k):
+                    e['rfa'] = {'status': 'skipped', 'nested': True, 'validation': 'Revit %s file with nested families: Revit 2024 rejects the assembled .rfa (flat families open); use --experimental to write anyway' % pd.fmt}; continue
                 d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
-                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': ('known-bad: nested families in a 2025 file are rejected by Revit 2026' if nest and str(pd.fmt) == '2025' else VALIDATION.get(str(pd.fmt), 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
+                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': ('known-bad: nested families in a 2025 file are rejected by Revit 2026' if nest and str(pd.fmt) == '2025' else VALIDATION.get(str(pd.fmt), VALIDATION['old'] if old_fmt else 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
                 if os.environ.get('RVTX_TB'): import traceback; traceback.print_exc()
