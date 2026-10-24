@@ -104,3 +104,6 @@ Flat 0000 (Title Blocks) OPENS; flat 0002 (Structural Framing), 0005 (Generic An
 
 ## CORRECTION 2026-10-24 (oracle health): the "2023 hang" and "2017 new-code no result" entries above are NOT valid yet
 The oracle intermittently fails inside the guest with `URLError [WinError 10061] connection refused` (rfacheck prints it as the tail of its output, no rfacheck.tsv is produced). A known-good control (corp-2022-30 0002, opened fine earlier the same day) now fails the same way, so NORESULT runs cannot be attributed to the .rfa. Treat 2023 (4 of 5 no result) and the 2017 re-lift (3 of 3 no result) as UNKNOWN until the oracle passes its control again; only OPEN/OPENFAIL lines are evidence. Always run a control before and after a batch.
+
+## RESOLVED 2026-10-24: 2023 flat families OPEN (the "hang" was the oracle fault, caused partly by my pkill on a shared remote-host)
+Control passes; corp-2023-36 flat 0000, 0002, 0005, 0007 each alone in a fresh Revit 2024: 4/4 OPEN (private/retest.res). So flat families open for 2019-2023 (2019 2/2, 2020 2/2, 2021 5/5, 2022 5/5, 2023 4/4 in samples). 2017/2018 re-test with the year-detection fix pending.

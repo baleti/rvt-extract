@@ -24,3 +24,5 @@
 - 2022 (corp-2022-30) flat 5/5 OPEN in Revit 2024 (41 families: 30 flat, 11 nested). private/f22.res
 - 2023 flat: 1/5 opens, 4 hang (control 2022 passes). 2019-2022 flat all open; 2017/2018 refused; 2023 hang.
 - CORRECTION: oracle guest URLError 10061 intermittent; control corp-2022-30/0002 fails now -> 2023 'hang' and 2017-new results are unknown, re-test when control passes
+- stopped using pkill job_rc_ on remote-host (shared with studyx); retest.sh queues behind vmlock
+- 2023 flat 4/4 OPEN (earlier 'hang' retracted: oracle fault)
