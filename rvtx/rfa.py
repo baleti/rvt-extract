@@ -376,6 +376,8 @@ class Builder:
             d = self.drop_obsolete(d)
             if m: d = {'H': d['H'], 'Z': d['Z'], 'R': [(i, self.remap_fam(b), *rest) if len(b) > 2 else (i, b, *rest) for i, b, *rest in d['R']]}
             docs.append(d)
+        if os.environ.get('RVTX_DROPCLS'):      # bisect aid: drop records of these classes from every document
+            dc = set(os.environ['RVTX_DROPCLS'].split(',')); docs = [{k: [x for x in d[k] if len(x[1]) < 3 or self.class_of(x[1]) not in dc] for k in 'HRZ'} for d in docs]
         dg = None
         if os.environ.get('RVTX_DOCBLK', '1') != '0' and len(docs) > 1:      # old formats: Revit writes a tail block + next document header between documents
             dg = {i + 1: (len(docs[i + 1]['R']) - 1, bytes.fromhex(m.get(g_, g_))) for i, (_, g_) in enumerate(self.nested_docs(self.k))}
