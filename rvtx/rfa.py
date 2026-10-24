@@ -374,7 +374,7 @@ class Builder:
             if m: d = {'H': d['H'], 'Z': d['Z'], 'R': [(i, self.remap_fam(b), *rest) if len(b) > 2 else (i, b, *rest) for i, b, *rest in d['R']]}
             docs.append(d)
         dg = None
-        if self.W == 4 and os.environ.get('RVTX_DOCBLK', '1') != '0' and len(docs) > 1:      # old formats: Revit writes a tail block + next document header between documents
+        if os.environ.get('RVTX_DOCBLK', '1') != '0' and len(docs) > 1:      # old formats: Revit writes a tail block + next document header between documents
             dg = {i + 1: (len(docs[i + 1]['R']) - 1, bytes.fromhex(m.get(g_, g_))) for i, (_, g_) in enumerate(self.nested_docs(self.k))}
         payload = PT.build_payload(docs, self.W, doc_guids=dg)
         return PT.page_stream(payload)
