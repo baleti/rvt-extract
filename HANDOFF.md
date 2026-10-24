@@ -151,3 +151,9 @@ NEXT: 2025 Contents sample (unverified format), 4-byte years 2017-2023 (needs Re
 - 2025 smallest nested bisect case: 'Graphic Scale 1 - 20' of ofc-006 (out/cli_o6n/families/Generic Annotations/Graphic Scale 1 - 20.rfa), nested leaf 'Graphic Scale 1 - 100 5M' opens alone.
 - 2025 nested variant v5 (content records kept exactly as in the project, not zeroed): still OPENFAIL. Untested: partition member framing of multi-doc streams in 2025, Latest ptr/handle table of the added content table, ElemTable trailer.
 - Doc-boundary zero frame (Revit writes N/x1/comp/x2 = 0 in the frame after the last member of a document; ours wrote a normal frame): implemented as opt-in RVTX_DOCSEP=1 (partition.build_payload), frames now equal Revit's at the boundary, but the 2025 nested files still fail (docsep25: 3 nested fail, non-nested open). Default off because 2024/2026 validated output opens without it.
+
+## 2026-10-24 c8-fam handoff
+State: all work committed (main). Nested fix done; README documents system/in-place families as no standalone .rfa.
+Open: M_Boundary Condition-Fixed (2017-2023 samples, nested, ArchiveException classTag=32767). Not dangling refs, not class tags. Suspect ElementGroup records with curve/sketch members (only this family has them; TJL groups hold family instances and open). Variants built in out/bcfv/in (v_g, v_gm, v_grp_only; script scratchpad bcfvar.py: drops groups / groups+members / ElementGroup only from the 2022 sample's doc 29).
+Running job: oracle queue 000043_bcfvar (rfacheck_j.py 2024), result in ~/rvt-research/write-lab/out/rfa_chk/bcfv/rfacheck.tsv. Whichever variant opens names the cause; then fix the encoder by that class, add test, re-run 2017-2023 samples.
+Next: c7 census into NESTED-BY-CATEGORY.md and SCOREBOARD per category/year; 2016 untested (no project); ofc-007 h/k/l families need remote-host via h1run (one job, 11 GB gate); years x class proof table in README.
