@@ -122,7 +122,7 @@ class ProjectDocs:
         else: ET.TRAILER4 = et[-12:-8]
         self._partition_markers()
         t = o.openstream('BasicFileInfo').read().decode('utf-16le', 'ignore') + o.openstream('BasicFileInfo').read()[1:].decode('utf-16le', 'ignore')
-        m = re.search(r'Format: (\d+)', t); self.fmt = m.group(1) if m else '2024'
+        m = re.search(r'Format: (\d+)', t) or re.search(r'Autodesk Revit (20\d\d)', t); self.fmt = m.group(1) if m else '2024'      # BasicFileInfo of 2016-2018 files has no 'Format:' line
         m = re.search(r'Build: (\S+\(x64\))', t); self.build = m.group(1) if m else SS.BUILD
         self.contents_guid, self.contents_stream = SS.CONTENTS_BY_FORMAT.get(self.fmt, (None, None))
 
@@ -373,7 +373,10 @@ class Builder:
             d = self.drop_obsolete(d)
             if m: d = {'H': d['H'], 'Z': d['Z'], 'R': [(i, self.remap_fam(b), *rest) if len(b) > 2 else (i, b, *rest) for i, b, *rest in d['R']]}
             docs.append(d)
-        payload = PT.build_payload(docs, self.W)
+        dg = None
+        if os.environ.get('RVTX_DOCBLK', '1') != '0' and len(docs) > 1:      # old formats: Revit writes a tail block + next document header between documents
+            dg = {i + 1: (len(docs[i + 1]['R']) - 1, bytes.fromhex(m.get(g_, g_))) for i, (_, g_) in enumerate(self.nested_docs(self.k))}
+        payload = PT.build_payload(docs, self.W, doc_guids=dg)
         return PT.page_stream(payload)
 
     def global_stream(self, name, raw):
@@ -385,6 +388,11 @@ class Builder:
         """Revit empties the VarSketch Z cache when element flag bit 24 is clear and m_allowResetLineEndConstr is set (0 errors on 459 sketches of Snowdon 2024 vs Revit's own rfa)"""
         dec = lambda x: enc.decode_tree(self.sch, self.W, x, 2, struct.unpack_from('<H', x, 0)[0], defined=(1, 2))[0]
         return not (int(dec(hb)['m_abFlags4Bytes']) >> 24) & 1 and int(dec(rb)['m_allowResetLineEndConstr']) == 1
+
+    def nested_depth(self, k):
+        """nesting depth of the families inside document k: 0 = none, 1 = nests families that nest nothing, ..."""
+        nd = self.nested_docs(k)
+        return 0 if not nd else 1 + max(self.nested_depth(kn) for kn, _g in nd)
 
     def nested_docs(self, k, seen=None):
         """[(project doc index, content GUID hex)] of the families nested in document k (depth first): Family records inside the document that carry their own m_oFamDoc"""
@@ -450,6 +458,7 @@ class Builder:
         guids = [g_ for _, g_ in nested]; want = set(guids)
         recs = [copy.deepcopy(e) for e in self.pd.latest_tree['m_oContentTable']['obj']['m_ContentRecSet'] if e['m_ContentKey']['m_guidKey']['m_guid'] in want]
         gm = self.guid_map()
+        kn_of = {g_: kn_ for kn_, g_ in nested}; nelem = {id(e): len(self.pd.docs[kn_of[e['m_ContentKey']['m_guidKey']['m_guid']]]['R']) - 1 for e in recs if e['m_ContentKey']['m_guidKey']['m_guid'] in kn_of}
         for e in recs: e['m_ContentKey']['m_guidKey']['m_guid'] = gm.get(e['m_ContentKey']['m_guidKey']['m_guid'], e['m_ContentKey']['m_guidKey']['m_guid'])
         recs.sort(key=lambda e: bytes.fromhex(e['m_ContentKey']['m_guidKey']['m_guid']))      # Revit keeps the content record set sorted by GUID bytes (BV-BNE title block: 4 records, A0 title block: 2)
         c4 = self.W == 4 and os.environ.get('RVTX_CREC4', '1') != '0'      # content record as in a real 2019 nested family: original id ffffffff, modification 1
@@ -461,7 +470,7 @@ class Builder:
             eps = e.get('m_EpisodeCounts') or []
             if c4:
                 for ep in eps:
-                    if isinstance(ep.get('second'), int) and ep['second'] > 0: ep['second'] -= 1      # Revit's own 2019 file: the element count without the terminator (223 for 223 elements, the project holds 224)
+                    if isinstance(ep.get('second'), int) and ep['second'] > 0: ep['second'] = nelem[id(e)] if (id(e) in nelem and len(eps) == 1 and os.environ.get('RVTX_EPCOUNT', 'n') == 'n') else ep['second'] - 1      # real 2019-2022 nested files: the child document's element count without its terminator (224 records -> 223)      # Revit's own 2019 file: the element count without the terminator (223 for 223 elements, the project holds 224)
             for n_, ep in enumerate(eps):      # RVTX_EPI (default keep): '0' zero every key (duplicates when several: Revit rejects the file, journal "can't fix the ordering of container m_EpisodeCounts"), 'keep' leave multi-entry keys, 'seq' keys 0,1,2.. in order
                 if isinstance(ep.get('first'), dict) and 'm_id' in ep['first']:
                     mode = os.environ.get('RVTX_EPI', 'keep')
@@ -510,7 +519,7 @@ class Builder:
         lt, notes = LAT.build_tree(self.sch, pd.latest_tree, bt, set(self.all_ids), remap={pd.kn_proj: self.kn, pd.ac_proj: self.ac}, cls_of=lambda i: self.class_of(self.R[i][0]) if i in self.R else (pd.byid[i]['class'] if i in pd.byid else None))
         nested = self.nested_docs(self.k)
         mx_ids = self.kn - 1
-        if self.W == 4 and os.environ.get('RVTX_LAST4', '1') != '0': mx_ids = max([i for i in self.all_ids if 0 <= i < (1 << 31)] + [self.kn, self.ac]) - 2      # nested ADoc m_last: Revit's own 2019 file holds the highest id minus the two new tables (23043380 for 23043382)
+        if self.W == 4 and os.environ.get('RVTX_LAST4', '1') != '0': mx_ids = max([i for i in self.all_ids if 0 <= i < (1 << 31)] or [0]) + 1      # nested ADoc m_last: above every id of the family (Revit's own 2020 file: 325626 for ids up to 321437)
         gone = set(getattr(self, 'dropped', ()))
         for kn_, _g in nested: gone |= {i for i, b, *_ in pd.docs[kn_]['R'] if len(b) > 2 and self.class_of(b) in self.OBSOLETE} if self.W == 4 and os.environ.get('RVTX_DROPOBS', '1') != '0' else set()
         if gone: self.strip_ids(lt, gone)
@@ -519,14 +528,15 @@ class Builder:
         if self.W == 8:
             rows = ET.cd_rows(pd.cd[g:g + 400000]); et = ET.build(self.all_ids, self.own, rows, self.fid, special_neg=(self.fid, self.kn, self.ac), shared_owner=self.shared_owners())
         else:
-            rows = ET.cd_rows4(pd.cd[g:g + 400000]); et = ET.build4(self.all_ids, self.own, rows, self.fid, special_neg=(self.fid, self.kn, self.ac))
+            rows = ET.cd_rows4(pd.cd[g:g + 400000]); ids_ = set(self.all_ids); rows = {i_: (v_ if int.from_bytes(v_[:4], 'little') in ids_ or v_[:4] == b'\xff' * 4 else b'\xff' * 4 + v_[4:]) for i_, v_ in rows.items()}      # an owner that is not an element of the document (DimensionStyle with owner 617) would be a missing owner for Revit
+            et = ET.build4(self.all_ids, self.own, rows, self.fid, special_neg=(self.fid, self.kn, self.ac))
         st = {}
         st['Formats/Latest'] = pd.formats_raw
         st['Global/Latest'] = self.global_stream('Global/Latest', latest)
         st['Global/ElemTable'] = self.global_stream('Global/ElemTable', et)
         st['Global/History'] = self.global_stream('Global/History', SS.history(doc_guid, save_guid))
-        st['Global/DocumentIncrementTable'] = self.global_stream('Global/DocumentIncrementTable', DITS.DIT_BY_FORMAT[str(pd.fmt)] if self.W == 4 and str(pd.fmt) in DITS.DIT_BY_FORMAT and os.environ.get('RVTX_OLDDIT', '1') != '0' else SS.document_increment_table(n + (sum(len(self.pd.docs[kn_]['H']) - 1 for kn_, _ in nested) if os.environ.get('RVTX_DITN', '1') != '0' else 0), when))
-        st['Global/PartitionTable'] = self.global_stream('Global/PartitionTable', SS.PT_SAMPLES[pd.fmt] if (pd.fmt not in ('2024', '2026') and pd.fmt in SS.PT_SAMPLES) else SS.partition_table(part_guid))
+        st['Global/DocumentIncrementTable'] = self.global_stream('Global/DocumentIncrementTable', open(os.environ['RVTX_DITFILE'], 'rb').read()) if os.environ.get('RVTX_DITFILE') else self.global_stream('Global/DocumentIncrementTable', DITS.DIT_BY_FORMAT[str(pd.fmt)] if self.W == 4 and str(pd.fmt) in DITS.DIT_BY_FORMAT and os.environ.get('RVTX_OLDDIT', '1') != '0' else SS.document_increment_table(n + (sum(len(self.pd.docs[kn_]['H']) - 1 for kn_, _ in nested) if os.environ.get('RVTX_DITN', '1') != '0' else 0), when))
+        st['Global/PartitionTable'] = self.global_stream('Global/PartitionTable', SS.PT_SAMPLES[pd.fmt] if (pd.fmt not in ('2024', '2026') and pd.fmt in SS.PT_SAMPLES and not (nested and self.W == 4 and os.environ.get('RVTX_PT4', '1') != '0')) else SS.partition_table(part_guid))      # real Revit nested 2022 family: a single 'Workset1' entry, not the sample's two named partitions
         st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents([(self.guid_map().get(g_, g_), self.nested_blob(g_, mx_ids)) for _, g_ in sorted(nested, key=lambda n: bytes.fromhex(self.guid_map().get(n[1], n[1])))]) if nested else SS.content_documents_empty())
         st['Partitions/0'] = self.partition_stream()
         st['BasicFileInfo'] = SS.basic_file_info(path, save_guid, pd.build, pd.fmt)
@@ -545,4 +555,5 @@ class Builder:
         st = self.streams(family_name, category, out_path)
         fmt = int(self.pd.fmt) if str(self.pd.fmt).isdigit() else 2024
         part = 'Partitions/%d' % PARTITION_NUMBER[fmt] if fmt in PARTITION_NUMBER else 'Partitions/0'   # Revit 2024 rejects a 2020 file whose partition stream is not named like Revit's (oracle bisect 2026-10-22)
+        part = os.environ.get('RVTX_PNAME') or part
         open(out_path, 'wb').write(cfbw.write_rfa(st, part)); return st

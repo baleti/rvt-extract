@@ -11,8 +11,9 @@ HELP = {'families': 'every family: manifest entry (category, types, parameters, 
 
 
 VALIDATION = {'2024': 'validated: opens in Revit 2024, facts equal to EditFamily+SaveAs (Snowdon 177/177, office project 100/100)',
-              '2025': 'partly validated: 29 of 34 sampled families of one office project open in Revit 2026 (upgrade); families containing nested families (5 of 5 sampled) are rejected, do not rely on those',
-              'old': 'flat families (no nested family) of Revit 2017-2023 files: open in Revit 2024 after its upgrade (sample result in RESULTS.md); nested ones are rejected and only written with --experimental',
+              '2025': 'validated on sampled families of an office project (Revit 2026 upgrade open); nested families open since the document tail block fix (6 of 6 re-tested)',
+              'old': 'Revit 2019-2023 files (4-byte element ids): flat and nested families open in Revit 2024 after its upgrade (Autodesk sample projects 2019, 2020, 2022, 2023: 51 of 52 each, see RESULTS.md)',
+              'older': 'Revit 2016-2018 files: Revit 2024 refuses the assembled .rfa (0 of 8 sampled), kept for the manifest and experiments only',
               '2026': 'streams byte-identical to Revit 2026 output for tested families; open check pending'}
 
 
@@ -49,7 +50,7 @@ def main(argv=None):
     ap.add_argument('rvt', nargs='?'); ap.add_argument('--out', default=None, help='output folder')
     ap.add_argument('--only', default=None, help='comma list of output types (see --list-kinds): ' + ','.join(KINDS))
     ap.add_argument('--no-rfa', action='store_true', help='families: only the manifest, do not assemble .rfa files')
-    ap.add_argument('--experimental', action='store_true', help='also write .rfa for 2017-2023 (4-byte element ids) families that nest other families (flat ones are written by default; Revit 2024 rejects the nested ones)')
+    ap.add_argument('--experimental', action='store_true', help='also write .rfa for Revit 2016-2018 files (Revit 2024 refuses them so far)')
     ap.add_argument('--low-memory', action='store_true', help='families only: decode just the classes family lifting needs (100+ MB projects fit in a few GB)')
     ap.add_argument('--match', default=None, help='families: only those whose name or category matches this regular expression (case-insensitive)')
     ap.add_argument('--list', action='store_true', help='print what the file contains and exit')
@@ -81,17 +82,17 @@ def main(argv=None):
             e = byid.get(fr['id'])
             if e is None or not e['embedded_doc']: continue
             old_fmt = str(pd.fmt).isdigit() and int(pd.fmt) < 2024
+            if str(pd.fmt).isdigit() and int(pd.fmt) < 2019 and not a.experimental:
+                e['rfa'] = {'status': 'skipped', 'validation': VALIDATION['older'] + '; use --experimental to write anyway'}; continue
             try:
                 B.build(fr)
-                if old_fmt and not a.experimental and B.nested_docs(B.k):
-                    e['rfa'] = {'status': 'skipped', 'nested': True, 'validation': 'Revit %s file with nested families: Revit 2024 rejects the assembled .rfa (flat families open); use --experimental to write anyway' % pd.fmt}; continue
                 d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
-                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': ('known-bad: nested families in a 2025 file are rejected by Revit 2026' if nest and str(pd.fmt) == '2025' else VALIDATION.get(str(pd.fmt), VALIDATION['old'] if old_fmt else 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
+                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_depth': B.nested_depth(B.k) if nest else 0, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': (VALIDATION.get(str(pd.fmt), (VALIDATION['older'] if int(pd.fmt) < 2019 else VALIDATION['old']) if old_fmt else 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
                 if os.environ.get('RVTX_TB'): import traceback; traceback.print_exc()
         # families that exist only as nested documents inside other families (not loaded in the project itself): extract them standalone too
-        if not (str(pd.fmt).isdigit() and int(pd.fmt) < 2024 and not a.experimental):
+        if not (str(pd.fmt).isdigit() and int(pd.fmt) < 2019 and not a.experimental):
             have = {e['content_doc_guid'] for e in res['families'] if e.get('content_doc_guid')}; todo = [(fr['id'], B.pd.family_doc_index(fr), e['name']) for fr in prj.families() for e in [byid.get(fr['id'])] if e and e['embedded_doc'] and e.get('rfa', {}).get('status') == 'written']
             seen = set()
             while todo:
