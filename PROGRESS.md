@@ -22,3 +22,4 @@
 - 2026-10-24 c8: corp-2021-24 flat families (flatsplit) 5/5 OPEN in Revit 2024 (private/f21.res)
 - flat-only: 2017 0/4, 2018 0/4 (genuine), 2019 2/2, 2020 2/2, 2021 5/5 open in Revit 2024
 - 2022 (corp-2022-30) flat 5/5 OPEN in Revit 2024 (41 families: 30 flat, 11 nested). private/f22.res
+- 2023 flat: 1/5 opens, 4 hang (control 2022 passes). 2019-2022 flat all open; 2017/2018 refused; 2023 hang.
