@@ -136,6 +136,9 @@ class ProjectDocs:
             PT.K['blobm'] = pay[t - 4 - 4 - 64 - 2:t - 4 - 4 - 64]
             k = pay.rfind(PT.K['m1'] + b'\0' * 16, 0, t)
             if k >= 6: PT.K['m0'] = pay[k - 6:k - 4]
+        else:      # 2016/2017 partitions have no blob and text block: the last member frame still carries the marker
+            k = pay.rfind(PT.K['m1'] + b'\0' * 16)
+            if k >= 6: PT.K['m0'] = pay[k - 6:k - 4]
         PT.K['cdtag'] = SS.TAGS.get('CD', PT.K['cdtag'])
 
     # ---- shared (standard) elements: builtin-category graphics styles + referenced materials/patterns/assets + the special materials
@@ -376,7 +379,7 @@ class Builder:
         dg = None
         if os.environ.get('RVTX_DOCBLK', '1') != '0' and len(docs) > 1:      # old formats: Revit writes a tail block + next document header between documents
             dg = {i + 1: (len(docs[i + 1]['R']) - 1, bytes.fromhex(m.get(g_, g_))) for i, (_, g_) in enumerate(self.nested_docs(self.k))}
-        payload = PT.build_payload(docs, self.W, doc_guids=dg)
+        payload = PT.build_payload(docs, self.W, doc_guids=dg, nf_seq=(400, 4) if str(self.pd.fmt) in ('2016', '2017') else None, hs_adj=-4 if str(self.pd.fmt) in ('2016', '2017') else 0, plain_tail=str(self.pd.fmt) in ('2016', '2017'))
         return PT.page_stream(payload)
 
     def global_stream(self, name, raw):
