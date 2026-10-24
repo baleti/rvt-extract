@@ -89,3 +89,8 @@ The CLI now also lifts families that exist only as nested documents (recursively
 
 ### 2026-10-23 2025 nested families as standalone files (ofc-006, 16 files, Revit 2026)
 11 of 11 standalone families without nested documents open; 4 of 4 with nested documents are rejected (380, ISSUANCE-REVISION TAB, Graphic Scale 1 - 20 x2). Same nested-only failure as the project families (out/rfa_chk/nn6/rfacheck.tsv). Smallest failing case for a future bisect: "Graphic Scale 1 - 20" (one nested leaf "Graphic Scale 1 - 100 5M", which opens alone).
+
+## 2026-10-24 episode-key bug (studyx)
+Content records with several m_EpisodeCounts entries had every key zeroed: Revit 2024 rejects the family (journal "ArchiveException 105 ... can't fix the ordering of container m_EpisodeCounts"). Found on 5 of 54 voestalpine SFS families; scan of 8147 earlier lifts: 206 affected (2.5
+## 2026-10-24 episode-key bug (studyx)
+Content records with several m_EpisodeCounts entries had every key zeroed: Revit 2024 rejects the family (journal "ArchiveException 105 ... can't fix the ordering of container m_EpisodeCounts"). Found on 5 of 54 voestalpine SFS families; scan of 8147 earlier lifts: 206 affected (2.5%, from 3 projects, Metsec SFS / studyx library families with nested families); 25 of 25 sampled affected files fail to open. Fix 9ab44d5 (RVTX_EPI=keep default; seq also opens). Re-lift in progress, check pending. Journal helper: ~/studyx-tests/fam/rfacheck_j.py (journal.txt next to rfacheck.tsv).
