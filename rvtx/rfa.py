@@ -528,7 +528,8 @@ class Builder:
         if self.W == 8:
             rows = ET.cd_rows(pd.cd[g:g + 400000]); et = ET.build(self.all_ids, self.own, rows, self.fid, special_neg=(self.fid, self.kn, self.ac), shared_owner=self.shared_owners())
         else:
-            rows = ET.cd_rows4(pd.cd[g:g + 400000]); et = ET.build4(self.all_ids, self.own, rows, self.fid, special_neg=(self.fid, self.kn, self.ac))
+            rows = ET.cd_rows4(pd.cd[g:g + 400000]); ids_ = set(self.all_ids); rows = {i_: (v_ if int.from_bytes(v_[:4], 'little') in ids_ or v_[:4] == b'\xff' * 4 else b'\xff' * 4 + v_[4:]) for i_, v_ in rows.items()}      # an owner that is not an element of the document (DimensionStyle with owner 617) would be a missing owner for Revit
+            et = ET.build4(self.all_ids, self.own, rows, self.fid, special_neg=(self.fid, self.kn, self.ac))
         st = {}
         st['Formats/Latest'] = pd.formats_raw
         st['Global/Latest'] = self.global_stream('Global/Latest', latest)
