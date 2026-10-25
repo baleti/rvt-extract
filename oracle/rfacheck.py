@@ -9,7 +9,7 @@ files = sorted(glob.glob(os.path.join(src, '**', '*.rfa'), recursive=True))
 if os.environ.get('RFA_SLICE'): tag += '_' + os.environ['RFA_SLICE'].replace(':', '_')   # fresh guest dir per slice (a reused dir kept the first slice's files)
 if os.environ.get('RFA_SLICE'):
     a, b = os.environ['RFA_SLICE'].split(':'); files = files[int(a):int(b)]
-cs = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rfacheck.cs')).read().replace('__DIR__', 'C:/wl/in_' + tag).replace('__TAG__', tag).replace('__LOAD__', os.environ.get('RFA_LOAD', '0')).replace('__FAILH__', 'true' if os.environ.get('RFA_FAILH') == '1' else 'false').replace('__AUDIT__', 'true' if os.environ.get('RFA_AUDIT') == '1' else 'false')
+cs = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rfacheck.cs')).read().replace('__DIR__', 'C:/wl/in_' + tag).replace('__TAG__', tag).replace('__LOAD__', os.environ.get('RFA_LOAD', '0')).replace('__FAILH__', 'false' if os.environ.get('RFA_FAILH') == '0' else 'true').replace('__AUDIT__', 'true' if os.environ.get('RFA_AUDIT') == '1' else 'false')
 with guest.vmlock():
     guest.script("Remove-Item -Recurse -Force C:/wl/in_%s -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force C:/wl/in_%s | Out-Null" % (tag, tag))
     for f in files: guest.put(f, 'C:/wl/in_%s/%s' % (tag, os.path.relpath(f, src).replace(os.sep, '__') if os.environ.get('RFA_FLAT') else os.path.basename(f)))
