@@ -62,12 +62,22 @@ def _null_exprs(o):
     return o
 
 
+def by_id(recs):
+    """{element id: record}. A project also holds incomplete placeholder records (Hub, Element, Analytical*... uninitialised memory) whose ids can equal a real element's id
+    (e.g. a nameless 'Hub' at the KeynoteTable's id 6): a complete record always wins, in any iteration order."""
+    out = {}
+    for (i, c), r in recs.items():
+        if i in out and out[i].get('complete', True) and not r.get('complete', True): continue
+        out[i] = r
+    return out
+
+
 class ProjectDocs:
     """everything about a project needed to lift families out (heavy: whole partition parsed)"""
     def __init__(self, prj):
         self.prj = prj; path = prj.path; self.path = path
         self.o, self.cls, self.ids = S.load(path); self.W = S.id_size(self.cls); self.sch = D.Schema(self.cls)
-        self.byid = {i: r for (i, c), r in prj.recs.items()}
+        self.byid = by_id(prj.recs)
         # items of the main document that may be copied into family documents (graphics styles, materials, patterns, assets, property sets, keynote/assembly tables)
         keep = {i for i, r in self.byid.items() if r['class'] in TARGET or r['class'] in EXTRA or r['class'] in ('KeynoteTable', 'AssemblyCodeTable')}
         self.docs = [None]; self.doc0 = {'H': {}, 'R': {}, 'Z': {}}
