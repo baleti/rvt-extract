@@ -4,7 +4,7 @@ A project stores, per loaded family, a content document: Global/ContentDocuments
 (GUID = Family.m_oFamDoc.m_contentDocGUID) with the family doc's own table rows; the family's internal elements
 (reference planes, forms, sketches, parameters) sit in the project partitions with header [A = family-local id]
 [id = project id] and are NOT listed in the project ElemTable."""
-import struct, collections, bisect
+import os, struct, collections, bisect
 import numpy as np
 from . import RESEARCH  # noqa
 import rvt_scan as S, rvt_decode as D, rvt2text as T, rvt_inventory as I, rvtfmt, rvt_xcache as X
@@ -36,7 +36,7 @@ class Project:
         self.path = path; self.lowmem = lowmem
         if x is None and lowmem:
             import rvt_entities as E
-            x = E.extract(path, want_all=True, slim=lowmem_keep, window=WINDOW, skip_eh=True); x.pop('sch', None)
+            x = E.extract(path, want_all=True, slim=lowmem_keep, window=WINDOW, skip_eh=True, skip_stubs=not os.environ.get("RVTX_NOSKIP")); x.pop('sch', None)
         self.x = x if x is not None else X.get_x(path)
         self.recs = self.x['recs']                       # {(id, class): record}
         self.W = self.x['W']
