@@ -71,7 +71,11 @@ class _Rolling:
 
 
 def parse_stream(chunks, W=8, keep0=None):
-    """parse_joined over an iterable of decoded chunks without ever holding the whole stream (same result as parse_joined(b''.join(chunks), W, keep0))"""
+    return list(iter_stream(chunks, W, keep0))
+
+
+def iter_stream(chunks, W=8, keep0=None):
+    """generator of the documents of parse_joined over an iterable of decoded chunks without ever holding the whole stream (same result as parse_joined(b''.join(chunks), W, keep0))"""
     R = _Rolling(chunks); docs = []; p = 0; NEG = (1 << (8 * W)) - 1
     while not R.at_end(p, W + 4):
         doc = {'H': [], 'R': [], 'Z': []}
@@ -90,9 +94,8 @@ def parse_stream(chunks, W=8, keep0=None):
                 doc[r].append((idv, b'' if skip0 and idv not in keep0 else bytes(R.get(p + W + 8, L)), st)); p += W + 8 + L
                 R.trim(p)
                 if idv == NEG: break
-        docs.append(doc)
+        docs.append(doc is None); yield doc
         if R.at_end(p, 5) or bytes(R.get(p, 4)) == b'\0\0\0\0' and R.at_end(p, 4 + W + 4): break
-    return docs
 
 
 def serialize(docs, W=8):

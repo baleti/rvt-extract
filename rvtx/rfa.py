@@ -72,6 +72,27 @@ def by_id(recs):
     return out
 
 
+class SpillDocs:
+    """list of family-document dicts kept on disk (pickled) with a small cache: the documents of a big project add up to GBs; index 0 is None as in the plain list"""
+    def __init__(self, cache=6):
+        import tempfile, collections
+        self.f = tempfile.TemporaryFile(); self.off = [None]; self.cache = collections.OrderedDict(); self.cap = cache
+
+    def append(self, d):
+        import pickle
+        self.f.seek(0, 2); a = self.f.tell(); pickle.dump(d, self.f, protocol=4); self.off.append(a)
+
+    def __len__(self): return len(self.off)
+
+    def __getitem__(self, k):
+        import pickle
+        if k == 0: return None
+        if k in self.cache: self.cache.move_to_end(k); return self.cache[k]
+        self.f.seek(self.off[k]); d = pickle.load(self.f); self.cache[k] = d
+        if len(self.cache) > self.cap: self.cache.popitem(last=False)
+        return d
+
+
 class ProjectDocs:
     """everything about a project needed to lift families out (heavy: whole partition parsed)"""
     def __init__(self, prj):
@@ -80,29 +101,31 @@ class ProjectDocs:
         self.byid = by_id(prj.recs)
         # items of the main document that may be copied into family documents (graphics styles, materials, patterns, assets, property sets, keynote/assembly tables)
         keep = {i for i, r in self.byid.items() if r['class'] in TARGET or r['class'] in EXTRA or r['class'] in ('KeynoteTable', 'AssemblyCodeTable')}
-        self.docs = [None]; self.doc0 = {'H': {}, 'R': {}, 'Z': {}}
+        self.docs = SpillDocs() if prj.lowmem else [None]; self.id_doc = {}; self.doc0 = {'H': {}, 'R': {}, 'Z': {}}
         pns = sorted((y for y in ['/'.join(e) for e in self.o.listdir(streams=True)] if y.startswith('Partitions/')), key=lambda s_: int(s_.split('/')[1]))
         for pn in pns:
             try:
                 st_ = [self.o.openstream(pn).read()]
-                ds = PT.parse_stream(T.member_chunks(st_), self.W, keep0=keep) if prj.lowmem else PT.parse_joined(T.joined(st_[0]), self.W, keep0=keep); del st_
+                ds = PT.iter_stream(T.member_chunks(st_), self.W, keep0=keep) if prj.lowmem else PT.parse_joined(T.joined(st_[0]), self.W, keep0=keep); del st_
             except Exception as e:
                 self.errors = getattr(self, 'errors', []) + ['%s: %s' % (pn, e)]; continue
-            for kdoc, d in enumerate(ds):
-                if kdoc == 0:      # first document of every partition = part of the main document
-                    for i, b_ in d['H']:
-                        if i in keep: self.doc0['H'][i] = b_
-                    for i, b_, st_ in d['R']:
-                        if i in keep: self.doc0['R'][i] = (b_, st_)
-                    for i, b_, st_ in d['Z']:
-                        if i in keep: self.doc0['Z'][i] = (b_, st_)
-                else: self.docs.append(d)
+            try:
+                for kdoc, d in enumerate(ds):
+                    if kdoc == 0:      # first document of every partition = part of the main document
+                        for i, b_ in d['H']:
+                            if i in keep: self.doc0['H'][i] = b_
+                        for i, b_, st_ in d['R']:
+                            if i in keep: self.doc0['R'][i] = (b_, st_)
+                        for i, b_, st_ in d['Z']:
+                            if i in keep: self.doc0['Z'][i] = (b_, st_)
+                    else:
+                        self.docs.append(d); k_ = len(self.docs) - 1
+                        for i, b_ in d['H']: self.id_doc.setdefault(i, k_)
+                    del d
+            except Exception as e:
+                self.errors = getattr(self, 'errors', []) + ['%s: %s' % (pn, e)]
         self.cd = rvtfmt.inflate_stream(self.o.openstream('Global/ContentDocuments').read())[1]
         self.formats_raw = self.o.openstream('Formats/Latest').read()
-        self.id_doc = {}
-        for k, d in enumerate(self.docs):
-            if k == 0: continue
-            for i, b in d['H']: self.id_doc.setdefault(i, k)
         lat = rvtfmt.inflate_stream(self.o.openstream('Global/Latest').read())[1]
         self.tag_adoc = struct.unpack_from('<H', lat, 0)[0]
         self.latest_tree = enc.decode_tree(self.sch, self.W, lat, 2, self.tag_adoc)[0]
