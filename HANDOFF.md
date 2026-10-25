@@ -160,3 +160,10 @@ Next: c7 census into NESTED-BY-CATEGORY.md and SCOREBOARD per category/year; 201
 
 ### BCF bisect result (job 000043, Revit 2024)
 v_gm (groups + their CurveElem/SketchPlane/VarSketch/Pattern members dropped) OPENS. v_g (groups only dropped) and v_grp_only (12 ElementGroup only) still fail. So the cause is in the group MEMBER records (CurveElem/SketchPlane/VarSketch/Pattern referenced by the groups), not the group records. Next: bisect by member class (drop only Pattern; only CurveElem+VarSketch; only SketchPlane) using the same script, then diff those records against a working family's equivalents (the same classes occur in TJL Wood Open Web Joist, which opens) and fix the encoder.
+
+## 2026-10-24 c8-fam (claude8, remote-host) stop note
+DONE (committed): VarSketch empty-Z block (138 bytes, 8-byte layout) now only for Revit 2024/2026 files (rfa.use_empty_z, tests/test_emptyz.py). Fixed M_Boundary Condition-Fixed (2017-2023) and 2025 failures (Boundary Condition-Fixed, Sym_Detail Guide, Howe Flat Truss, 36 Rebar Shape cancels).
+Measured (remote-host oracle, out/chk/*): rst_basic samples 2017-2023 52/52 each in Revit 2024; Snowdon Structural 2024 276/276 (Revit 2024); 2025 276/276 (237 + 42/42 re-lift, Revit 2026); 2026 slice 0 70/70.
+Running/queued jobs (write-lab/pipeline/queue): c8x_s2026_70/140/210 (Revit 2026 open check of out/all/2026, results out/chk/s2026_N/rfacheck.tsv). out/all/2026 was lifted BEFORE the use_empty_z year restriction; the restriction does not change 2026 output, so results stand.
+Env on remote-host: PYTHONPATH=~/h2/sp (numpy) with ~/rvt-env/bin/python; oracle jobs via pipeline/enqueue.sh; slice checks with RFA_SLICE=a:b (70 files max per job).
+NEXT: collect s2026 slices -> README years x class table + SCOREBOARD; 2016 samples; in-place/system families; ofc-007 families; merge branch to remote-host owner (git fetch ssh://user@remote-host~/src/rvt-extract h2-fam).
