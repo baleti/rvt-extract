@@ -25,6 +25,17 @@ LOWMEM_KEEP = {'Family', 'FamilySymbol', 'KeynoteTable', 'AssemblyCodeTable', 'M
                'PropertySetElement', 'ImageSymbol', 'ImageHolder', 'CategoryElem', 'GStyleElem'}
 
 
+def lowmem_reduce(r):
+    """FamilySymbol and ImageHolder records are large (type data, pixels) and family lifting reads one field of each (rfa.symbol_names: m_symbolInfo.obj.m_name + m_familyId; ImageHolder owner: m_idImageSymbol)"""
+    c = r['class']; f = r['fields']
+    if c == 'FamilySymbol':
+        si = f.get('m_symbolInfo'); o = si.get('obj') if isinstance(si, dict) else None
+        r = dict(r); r['fields'] = {'m_familyId': f.get('m_familyId'), 'm_symbolInfo': {'obj': {'m_name': o.get('m_name')}} if isinstance(o, dict) else si, 'm_id': f.get('m_id')}
+    elif c == 'ImageHolder':
+        r = dict(r); r['fields'] = {k: f[k] for k in ('m_id', 'm_idImageSymbol') if k in f}
+    return r
+
+
 def lowmem_keep(cls):
     """classes whose decoded records family lifting needs (rfa.py TARGET/EXTRA, Family, FamilySymbol, ParamElem*)"""
     return cls in LOWMEM_KEEP or cls.startswith('ParamElem')
@@ -36,7 +47,7 @@ class Project:
         self.path = path; self.lowmem = lowmem
         if x is None and lowmem:
             import rvt_entities as E
-            x = E.extract(path, want_all=True, slim=lowmem_keep, window=WINDOW, skip_eh=True, skip_stubs=not os.environ.get("RVTX_NOSKIP")); x.pop('sch', None)
+            x = E.extract(path, want_all=True, slim=lowmem_keep, window=WINDOW, skip_eh=True, skip_stubs=not os.environ.get("RVTX_NOSKIP"), reduce=None if os.environ.get('RVTX_NOREDUCE') else lowmem_reduce); x.pop('sch', None)
         self.x = x if x is not None else X.get_x(path)
         self.recs = self.x['recs']                       # {(id, class): record}
         self.W = self.x['W']
@@ -86,8 +97,8 @@ def scan_family_docs(prj, keep=True, raw=False, only=None, lowmem=None):
     idarr = np.array(sorted(seg_of), dtype=np.uint32 if IDW == 4 else np.uint64); IDF = '<I' if IDW == 4 else '<Q'
     st = collections.Counter()
     for pn in sorted(y for y in ['/'.join(e) for e in o.listdir(streams=True)] if y.startswith('Partitions/')):
-      stored = o.openstream(pn).read()
-      for chunk, lim in (T.windows(stored, WINDOW) if lowmem else [(T.joined(stored), None)]):
+      stored = [o.openstream(pn).read()]
+      for chunk, lim in (T.windows(stored, WINDOW) if lowmem else [(T.joined(stored[0]), None)]):
         for i in (S.header_candidates_tagged(chunk, idarr, IDW, set(etags)).tolist() if lowmem else S.header_candidates(chunk, idarr, IDW)):
             if lim is not None and i >= lim: continue
             e = struct.unpack_from(IDF, chunk, i + 4)[0]
