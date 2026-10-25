@@ -18,23 +18,24 @@ def adler(body):
     return zlib.adler32(body) & 0xFFFFFFFF
 
 
-def parse_joined(j, W=8):
-    """-> list of docs {'H': [(id, body)], 'R': [(id, body, stamp)], 'Z': [...]}; stops at the trailing zero A"""
+def parse_joined(j, W=8, keep0=None):
+    """-> list of docs {'H': [(id, body)], 'R': [(id, body, stamp)], 'Z': [...]}; stops at the trailing zero A.
+    keep0: optional set of ids; in the FIRST document (the main document of a project partition) bodies of other ids are not copied (b''), which keeps 100+ MB projects small"""
     docs = []; p = 0; NEG = (1 << (8 * W)) - 1
     while p + W + 4 <= len(j):
         doc = {'H': [], 'R': [], 'Z': []}
-        first = (p == 0)
+        first = (p == 0); skip0 = keep0 is not None and not docs
         while True:
             if not first: p += 4
             first = False
             idv = int.from_bytes(j[p:p + W], 'little'); L, = struct.unpack_from('<I', j, p + W)
-            doc['H'].append((idv, bytes(j[p + W + 4:p + W + 4 + L]))); p += W + 4 + L
+            doc['H'].append((idv, b'' if skip0 and idv not in keep0 else bytes(j[p + W + 4:p + W + 4 + L]))); p += W + 4 + L
             if idv == NEG: break
         for r in ('R', 'Z'):
             while True:
                 p += 4
                 idv = int.from_bytes(j[p:p + W], 'little'); st, L = struct.unpack_from('<II', j, p + W)
-                doc[r].append((idv, bytes(j[p + W + 8:p + W + 8 + L]), st)); p += W + 8 + L
+                doc[r].append((idv, b'' if skip0 and idv not in keep0 else bytes(j[p + W + 8:p + W + 8 + L]), st)); p += W + 8 + L
                 if idv == NEG: break
         docs.append(doc)
         if p + 4 >= len(j) or j[p:p + 4] == b'\0\0\0\0' and p + 4 + W + 4 > len(j): break

@@ -84,7 +84,7 @@ class ProjectDocs:
         pns = sorted((y for y in ['/'.join(e) for e in self.o.listdir(streams=True)] if y.startswith('Partitions/')), key=lambda s_: int(s_.split('/')[1]))
         for pn in pns:
             try:
-                j = T.joined(self.o.openstream(pn).read()); ds = PT.parse_joined(j, self.W); del j
+                j = (T.joined_lowmem if prj.lowmem else T.joined)(self.o.openstream(pn).read()); ds = PT.parse_joined(j, self.W, keep0=keep); del j
             except Exception as e:
                 self.errors = getattr(self, 'errors', []) + ['%s: %s' % (pn, e)]; continue
             for kdoc, d in enumerate(ds):

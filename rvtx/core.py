@@ -19,6 +19,8 @@ def eid(v):
     return int(getattr(v, 'v', v))
 
 
+WINDOW = 96 << 20     # lowmem: decode partitions in windows of this many bytes (peak memory no longer scales with the partition size)
+
 LOWMEM_KEEP = {'Family', 'FamilySymbol', 'KeynoteTable', 'AssemblyCodeTable', 'MaterialElem', 'FillPatternElem', 'LinePatternElem', 'AppearanceAssetElem',
                'PropertySetElement', 'ImageSymbol', 'ImageHolder', 'CategoryElem', 'GStyleElem'}
 
@@ -31,10 +33,10 @@ def lowmem_keep(cls):
 class Project:
     def __init__(self, path, x=None, lowmem=False):
         """lowmem: other classes stay as empty stubs (class census only); big projects (100+ MB) then fit in ~1-2 GB. Only for families output."""
-        self.path = path
+        self.path = path; self.lowmem = lowmem
         if x is None and lowmem:
             import rvt_entities as E
-            x = E.extract(path, want_all=True, slim=lowmem_keep); x.pop('sch', None)
+            x = E.extract(path, want_all=True, slim=lowmem_keep, window=WINDOW, skip_eh=True); x.pop('sch', None)
         self.x = x if x is not None else X.get_x(path)
         self.recs = self.x['recs']                       # {(id, class): record}
         self.W = self.x['W']
@@ -55,8 +57,9 @@ def _segments(cd, fams):
     return pos
 
 
-def scan_family_docs(prj, keep=True, raw=False, only=None):
+def scan_family_docs(prj, keep=True, raw=False, only=None, lowmem=None):
     """-> ({family_id: {'name','guid','l2p':{local:project},'records':{project_id: record}}}, stats). Heavy: run big files on remote-host."""
+    if lowmem is None: lowmem = getattr(prj, 'lowmem', False)
     fams = {}
     for r in prj.families():
         f = r['fields']; d = f.get('m_oFamDoc')
@@ -83,8 +86,10 @@ def scan_family_docs(prj, keep=True, raw=False, only=None):
     idarr = np.array(sorted(seg_of), dtype=np.uint32 if IDW == 4 else np.uint64); IDF = '<I' if IDW == 4 else '<Q'
     st = collections.Counter()
     for pn in sorted(y for y in ['/'.join(e) for e in o.listdir(streams=True)] if y.startswith('Partitions/')):
-        chunk = T.joined(o.openstream(pn).read())
-        for i in S.header_candidates(chunk, idarr, IDW):
+      stored = o.openstream(pn).read()
+      for chunk, lim in (T.windows(stored, WINDOW) if lowmem else [(T.joined(stored), None)]):
+        for i in (S.header_candidates_tagged(chunk, idarr, IDW, set(etags)).tolist() if lowmem else S.header_candidates(chunk, idarr, IDW)):
+            if lim is not None and i >= lim: continue
             e = struct.unpack_from(IDF, chunk, i + 4)[0]
             for short in (False, True):
                 tag = struct.unpack_from('<H', chunk, i + 12 + IDW - (4 if short else 0))[0]
@@ -97,6 +102,6 @@ def scan_family_docs(prj, keep=True, raw=False, only=None):
                 if e in fams[owner]['records']: st['superseded'] += 1  # later copy of an element wins
                 r['A'] = struct.unpack_from('<I', chunk, i)[0]; r['len'] = q - i; r['where'] = (pn, i)
                 if raw: r['raw'] = bytes(chunk[i:q])
-                if not keep: r = {k: r[k] for k in ('id', 'class', 'A')}
+                if not keep or (lowmem and not r['class'].startswith('ParamElem')): r = {k: r[k] for k in ('id', 'class', 'A', 'len')}   # lowmem: the manifest only reads ParamElemFamily fields
                 fams[owner]['records'][e] = r; st['ok'] += 1
     return fams, dict(st)
