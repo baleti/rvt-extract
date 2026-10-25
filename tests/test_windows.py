@@ -16,6 +16,19 @@ class WindowsMatchJoined(unittest.TestCase):
             rebuilt += buf[:lim] if lim is not None else buf
         self.assertEqual(bytes(rebuilt), whole)
         self.assertEqual(bytes(T.joined_lowmem(st)), whole)
+        self.assertEqual(b''.join(T.member_chunks(st)), whole)
+        from rvtx import partition as PT
+        W = 8
+        for W in (8, 4):
+            try: a = PT.parse_joined(whole, W); break
+            except Exception: a = None
+        if a is None: self.skipTest('sample partition not parseable as chain')
+        b = PT.parse_stream(T.member_chunks(st), W); self.assertEqual(a, b)
+        PT.TRIM = 1000
+        try: self.assertEqual(a, PT.parse_stream(T.member_chunks(st), W))
+        finally: PT.TRIM = 32 << 20
+        ids = {x[0] for x in a[0]['H'][::3]}
+        self.assertEqual(PT.parse_joined(whole, W, keep0=ids), PT.parse_stream(T.member_chunks(st), W, keep0=ids))
 
 
 if __name__ == '__main__': unittest.main()

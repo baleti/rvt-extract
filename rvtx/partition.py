@@ -42,6 +42,59 @@ def parse_joined(j, W=8, keep0=None):
     return docs
 
 
+TRIM = 32 << 20
+
+
+class _Rolling:
+    """read-only view of a decoded stream that is produced chunk by chunk; bytes before the read position are dropped (bounded memory)"""
+    def __init__(self, chunks):
+        self.it = iter(chunks); self.buf = bytearray(); self.base = 0; self.done = False
+
+    def _fill(self, end):
+        while not self.done and self.base + len(self.buf) < end:
+            try: self.buf += next(self.it)
+            except StopIteration: self.done = True
+
+    def get(self, p, n):
+        self._fill(p + n)
+        return self.buf[p - self.base:p - self.base + n]
+
+    def at_end(self, p, n):
+        """True when fewer than n bytes remain at p"""
+        self._fill(p + n)
+        return self.base + len(self.buf) < p + n
+
+    def trim(self, p):
+        if p - self.base > TRIM:
+            self._fill(p)          # p may lie beyond what was loaded (skipped bodies)
+            del self.buf[:p - self.base]; self.base = p
+
+
+def parse_stream(chunks, W=8, keep0=None):
+    """parse_joined over an iterable of decoded chunks without ever holding the whole stream (same result as parse_joined(b''.join(chunks), W, keep0))"""
+    R = _Rolling(chunks); docs = []; p = 0; NEG = (1 << (8 * W)) - 1
+    while not R.at_end(p, W + 4):
+        doc = {'H': [], 'R': [], 'Z': []}
+        first = (p == 0); skip0 = keep0 is not None and not docs
+        while True:
+            if not first: p += 4
+            first = False
+            idv = int.from_bytes(R.get(p, W), 'little'); L, = struct.unpack('<I', R.get(p + W, 4))
+            doc['H'].append((idv, b'' if skip0 and idv not in keep0 else bytes(R.get(p + W + 4, L)))); p += W + 4 + L
+            R.trim(p)
+            if idv == NEG: break
+        for r in ('R', 'Z'):
+            while True:
+                p += 4
+                idv = int.from_bytes(R.get(p, W), 'little'); st, L = struct.unpack('<II', R.get(p + W, 8))
+                doc[r].append((idv, b'' if skip0 and idv not in keep0 else bytes(R.get(p + W + 8, L)), st)); p += W + 8 + L
+                R.trim(p)
+                if idv == NEG: break
+        docs.append(doc)
+        if R.at_end(p, 5) or bytes(R.get(p, 4)) == b'\0\0\0\0' and R.at_end(p, 4 + W + 4): break
+    return docs
+
+
 def serialize(docs, W=8):
     """-> (joined bytes, items) ; items = list of (region, doc_index, id_pos, apos_or_None)"""
     NEG = (1 << (8 * W)) - 1
