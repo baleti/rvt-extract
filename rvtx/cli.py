@@ -1,5 +1,5 @@
 import argparse, gc, json, os, re, sys, time
-from . import core, manifest, items, files, safepath
+from . import core, manifest, items, files, safepath, knownbad
 
 KINDS = ['families'] + list(items.KINDS) + list(files.KINDS)
 HELP = {'families': 'every family: manifest entry (category, types, parameters, embedded-record census); .rfa when validation passes',
@@ -87,7 +87,7 @@ def main(argv=None):
             try:
                 B.build(fr)
                 d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
-                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_depth': B.nested_depth(B.k) if nest else 0, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': (VALIDATION.get(str(pd.fmt), (VALIDATION['older'] if int(pd.fmt) < 2017 else VALIDATION['old']) if old_fmt else 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}
+                B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_depth': B.nested_depth(B.k) if nest else 0, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': (VALIDATION.get(str(pd.fmt), (VALIDATION['older'] if int(pd.fmt) < 2017 else VALIDATION['old']) if old_fmt else 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}; knownbad.mark(e['rfa'], pd.fmt, e['category'], e['name'], a.experimental)
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
                 if os.environ.get('RVTX_TB'): import traceback; traceback.print_exc()
@@ -113,7 +113,7 @@ def main(argv=None):
                         B.build({'id': i, 'fields': t})
                         d = os.path.join(a.out, 'families', safepath.safe_name(cat)); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, t['m_name'], '.rfa'))
                         B.write(fn, t['m_name'], cat); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k)
-                        ne['rfa'] = {'nested': bool(nd), 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': 'standalone copy of a family nested inside "%s"; ' % parent + (VALIDATION.get(str(pd.fmt)) or 'experimental')}
+                        ne['rfa'] = {'nested': bool(nd), 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': 'standalone copy of a family nested inside "%s"; ' % parent + (VALIDATION.get(str(pd.fmt)) or 'experimental')}; knownbad.mark(ne['rfa'], pd.fmt, cat, t['m_name'], a.experimental)
                     except Exception as ex:
                         ne['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: nested rfa failed: %s' % (t['m_name'], ex))
                     res['families'].append(ne)
