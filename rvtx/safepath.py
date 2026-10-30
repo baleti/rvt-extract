@@ -45,7 +45,7 @@ class Namer:
 
     def take(self, directory: str, name: str, ext: str = "") -> str:
         """Return an unused sanitized name, preserving the supplied extension."""
-        seen = self._seen.setdefault(directory, set())
+        seen = self._seen.setdefault(directory.lower(), set())
         base = safe_name(name)
         candidate = base + ext
         number = 2

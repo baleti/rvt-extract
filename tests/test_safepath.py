@@ -44,3 +44,13 @@ class T(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TestNamerCaseDirs(unittest.TestCase):
+    def test_case_variant_directories_share_name_space(self):
+        # Linux keeps "Doors" and "doors" apart, Windows merges them
+        from rvtx import safepath
+        n = safepath.Namer()
+        a = n.take("out/Doors", "Door", ".rfa")
+        b = n.take("out/doors", "Door", ".rfa")
+        self.assertNotEqual(a.lower(), b.lower())
