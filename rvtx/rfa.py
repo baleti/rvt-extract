@@ -334,6 +334,7 @@ class Builder:
         for i in shared:
             H[i] = fix_h(pd.doc0['H'][i]); R[i] = (fix_r(pd.doc0['R'][i][0]), None); Z[i] = pd.doc0['Z'].get(i)
         for new, old in ((kn, pd.kn_proj), (ac, pd.ac_proj)):
+            if old is None or old not in pd.doc0['H']: raise RuntimeError('project KeynoteTable/AssemblyCodeTable not decoded by the reader (cannot template the family tables)')
             def hh(t, new=new, old=old):
                 dl = t['m_parents']['obj']['m_deletion']
                 t['m_parents']['obj']['m_deletion'] = [EID(new) if int(x) == old else x for x in dl]
