@@ -614,4 +614,10 @@ class Builder:
         fmt = int(self.pd.fmt) if str(self.pd.fmt).isdigit() else 2024
         part = 'Partitions/%d' % PARTITION_NUMBER[fmt] if fmt in PARTITION_NUMBER else 'Partitions/0'   # Revit 2024 rejects a 2020 file whose partition stream is not named like Revit's (oracle bisect 2026-10-22)
         part = os.environ.get('RVTX_PNAME') or part
-        open(out_path, 'wb').write(cfbw.write_rfa(st, part)); return st
+        data = cfbw.write_rfa(st, part); tmp = out_path + '.tmp%d' % os.getpid()      # atomic: a crash or full disk never leaves a truncated .rfa under the final name
+        try:
+            with open(tmp, 'wb') as fh: fh.write(data); fh.flush(); os.fsync(fh.fileno())
+            os.replace(tmp, out_path)
+        finally:
+            if os.path.exists(tmp): os.unlink(tmp)
+        return st
