@@ -31,3 +31,15 @@ See HANDOFF.md for the evidence and status of the .rfa assembly.
 - 2017-2023 (4-byte element ids): flat and nested families are written (Autodesk sample projects 2017, 2018, 2019, 2020, 2021, 2022, 2023: 52 of 52 families each open in Revit 2024, which upgrades them on open; 2026-10-24). 2016: skipped unless `--experimental` (no test project). JSON/manifest extraction works for all.
 - 2025: 57 of 57 sampled families of two office projects (ofc-006, ofc-007; including every nested-family .rfa, 0 of 20 before) open in Revit 2026 (upgrade open, 2026-10-24).
 Shared-parameter closure (needed by Rebar Shape families) is on by default; RVTX_PEE=0 disables it. The manifest field `rfa.validation` states the status per file.
+
+## Years x class (lifted / opens in Revit; Autodesk sample projects only, 2026-10-30, tools/yeartable.py)
+Projects: 2017-2023 = rst_basic_sample_project of that year (opened in Revit 2024, upgrade open); 2024, 2025, 2026 = Snowdon Towers Structural of that year (2024 checked in Revit 2024, 2025 and 2026 in Revit 2026). Classes: flat = no nested family; parent = family that contains nested families; depth2 = nested depth >= 2; standalone = copy of a family that exists only nested inside another.
+
+| year | flat | parent | depth2 | standalone nested | no .rfa (system/in-place) |
+|---|---|---|---|---|---|
+| 2017-2023 (each) | 30/30 | 10/10 | 1/1 | 11/11 | 9 |
+| 2024 | 141/141 | 32/32 | 4/4 | 99/99 | 8 |
+| 2025 | 141/141 | 32/32 | 4/4 | 99/99 | 8 |
+| 2026 | 141/141 | 32/32 | 4/4 | 99/99 | 8 |
+
+Not covered: 2016 (no project), a real (non-sample) 2017-2023 project, depth 2 beyond 1 to 4 families per project.
