@@ -23,7 +23,12 @@ def safe(s):
 
 def write_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    json.dump(data, open(path, 'w'), indent=1, default=str)
+    text = json.dumps(data, indent=1, default=str); tmp = path + '.tmp%d' % os.getpid()      # atomic: the manifest is what marks known-bad / error families, never leave it truncated
+    try:
+        with open(tmp, 'w', encoding='utf-8') as fh: fh.write(text); fh.flush(); os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    finally:
+        if os.path.exists(tmp): os.unlink(tmp)
 
 
 def nested_params_types(B, kn, t):
