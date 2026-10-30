@@ -1,0 +1,9 @@
+# Permanent regression families (Autodesk sample projects only; Revit-open check required, run via oracle/rfacheck.py)
+Re-lift these after any encoder change and open them in Revit; each failed once.
+| family (project) | years | failure | cause / fix |
+|---|---|---|---|
+| M_Boundary Condition-Fixed (rst_basic) | 2017-2023 | Revit 2024 ArchiveException too many corrupt elements | 138-byte empty VarSketch Z block belongs only to the 8-byte layout; use_empty_z year restriction (tests/test_emptyz.py) |
+| Boundary Condition-Fixed, Sym_Detail Guide, Howe Flat Truss, 36 Rebar Shape (Snowdon Structural) | 2025 | rejected in Revit 2026 | same empty Z block, now only 2024/2026 |
+| every nested family (rst_basic, Snowdon, office files) | 2017-2025 | rejected | doc-boundary tail block between documents of a multi-document partition stream (tests/test_nested.py) |
+| Rebar Shape 00-xx | 2024+ | task dialog 'required internal settings missing' | shared-parameter closure (RVTX_PEE) |
+| title blocks (ofc-002) | 2024 | rejected | GUID-sorted content records |
