@@ -73,7 +73,13 @@ def transmission_data(kn, ac):
     return struct.pack('<I', len(xml)) + xml.encode('utf-16le')
 
 
+def _xml(s):
+    s = ''.join(c for c in str(s) if c in '\t\n\r' or ord(c) >= 0x20 and not 0xD800 <= ord(c) <= 0xDFFF and ord(c) not in (0xFFFE, 0xFFFF))      # XML 1.0 forbids control chars and surrogates
+    return s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+
 def part_atom(title, category, filename, when=None, fmt=FORMAT):
+    title, category, filename = _xml(title), _xml(category), _xml(filename)
     w = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime(when or time.time()))
     return ('<?xml version="1.0" encoding="UTF-8"?>\r\n<entry xmlns="http://www.w3.org/2005/Atom" xmlns:A="urn:schemas-autodesk-com:partatom"><title>%s</title><id></id><updated>%s</updated>'
             '<A:taxonomy><term>adsk:revit</term><label>Autodesk Revit</label></A:taxonomy><A:taxonomy><term>adsk:revit:grouping</term><label>Autodesk Revit Grouping</label></A:taxonomy>'
