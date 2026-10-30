@@ -72,3 +72,12 @@ def relpath_budget(root: str, parts: list[str], limit=240) -> list[str]:
             parts[index], len(result[index]) - 1, parts[index]
         )
     return result
+
+
+def rfa_target(root: str, category: str, name: str, limit=240):
+    """Return (category dir name, family stem) so root/families/<cat>/<stem> (~NN) .rfa stays under the Windows path limit."""
+    cat, stem = safe_name(category), safe_name(name)
+    reserve = len(' (99).rfa')
+    try: cat, stem = relpath_budget(os.path.join(root, 'families'), [cat, stem], limit - reserve)
+    except ValueError: pass      # output root alone is too long: keep the 120-char names rather than fail every family
+    return cat, stem

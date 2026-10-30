@@ -86,7 +86,7 @@ def main(argv=None):
                 e['rfa'] = {'status': 'skipped', 'validation': VALIDATION['older'] + '; use --experimental to write anyway'}; continue
             try:
                 B.build(fr)
-                d = os.path.join(a.out, 'families', safepath.safe_name(e['category'])); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, e['name'], '.rfa'))
+                cat_, stem_ = safepath.rfa_target(a.out, e['category'], e['name']); d = os.path.join(a.out, 'families', cat_); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, stem_, '.rfa'))
                 B.write(fn, e['name'], e['category']); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k); nest = bool(nd); e['rfa'] = {'nested': nest, 'nested_depth': B.nested_depth(B.k) if nest else 0, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': (VALIDATION.get(str(pd.fmt), (VALIDATION['older'] if int(pd.fmt) < 2017 else VALIDATION['old']) if old_fmt else 'experimental: this Revit format is not validated yet (see RESULTS.md)'))}; knownbad.mark(e['rfa'], pd.fmt, e['category'], e['name'], a.experimental)
             except Exception as ex:
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
@@ -111,7 +111,7 @@ def main(argv=None):
                     except Exception as ex: log.append('%s: nested manifest failed: %s' % (t['m_name'], ex))
                     try:
                         B.build({'id': i, 'fields': t})
-                        d = os.path.join(a.out, 'families', safepath.safe_name(cat)); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, t['m_name'], '.rfa'))
+                        cat_, stem_ = safepath.rfa_target(a.out, cat, t['m_name']); d = os.path.join(a.out, 'families', cat_); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, stem_, '.rfa'))
                         B.write(fn, t['m_name'], cat); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k)
                         ne['rfa'] = {'nested': bool(nd), 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': 'standalone copy of a family nested inside "%s"; ' % parent + (VALIDATION.get(str(pd.fmt)) or 'experimental')}; knownbad.mark(ne['rfa'], pd.fmt, cat, t['m_name'], a.experimental)
                     except Exception as ex:

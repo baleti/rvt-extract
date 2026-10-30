@@ -34,6 +34,13 @@ class T(unittest.TestCase):
         self.assertEqual(P.relpath_budget(root, ['a', 'b.rfa'], 240), ['a', 'b.rfa'])
         with self.assertRaises(ValueError): P.relpath_budget('/' + 'r' * 200, ['a', 'b'], 100)
 
+    def test_rfa_target(self):
+        cat, stem = P.rfa_target('/tmp/out', 'C' * 120, 'F' * 120)
+        self.assertLessEqual(len(os.path.join('/tmp/out', 'families', cat, stem + ' (99).rfa')), 240)
+        self.assertNotEqual(stem, 'F' * 120)
+        self.assertEqual(P.rfa_target('/tmp/out', 'Doors', 'A door'), ('Doors', 'A door'))
+        self.assertEqual(P.rfa_target('/' + 'r' * 300, 'Doors', 'x'), ('Doors', 'x'))
+
 
 if __name__ == '__main__':
     unittest.main()
