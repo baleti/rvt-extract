@@ -83,9 +83,12 @@ def main(argv=None):
     if 'families' in only and a.out and not a.no_rfa and not a.list:
         from . import rfa as RFA
         pd = RFA.ProjectDocs(prj); B = RFA.Builder(pd); byid = {e['family_id']: e for e in res['families']}; namer = safepath.Namer()
+        ncp = 0
         for fr in prj.families():
             e = byid.get(fr['id'])
             if e is None or not e['embedded_doc']: continue
+            ncp += 1
+            if ncp % 25 == 0: write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])      # checkpoint: a killed run (OOM) still leaves a manifest next to the files it wrote
             old_fmt = str(pd.fmt).isdigit() and int(pd.fmt) < 2024
             if str(pd.fmt).isdigit() and int(pd.fmt) < 2017 and not a.experimental:
                 e['rfa'] = {'status': 'skipped', 'validation': VALIDATION['older'] + '; use --experimental to write anyway'}; continue
