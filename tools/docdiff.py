@@ -5,7 +5,7 @@ import rvtx, olefile, rvt2text as T
 from rvtx import partition as PT
 def load(p):
     o = olefile.OleFileIO(p); pn = [y for y in ['/'.join(e) for e in o.listdir(streams=True)] if y.startswith('Partitions/')][0]
-    return PT.parse_joined(T.joined(o.openstream(pn).read()), 8)
+    return PT.parse_joined(T.joined(o.openstream(pn).read()), int(os.environ.get('W', 8)))
 A, B = load(sys.argv[1]), load(sys.argv[2])
 print('docs', len(A), len(B))
 for di in range(max(len(A), len(B))):
