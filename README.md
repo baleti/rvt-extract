@@ -43,3 +43,18 @@ Projects: 2017-2023 = rst_basic_sample_project of that year (opened in Revit 202
 | 2026 | 141/141 | 32/32 | 4/4 | 99/99 | 8 |
 
 Not covered: 2016 (no project), a real (non-sample) 2017-2023 project, depth 2 beyond 1 to 4 families per project.
+
+## Real-project campaign sample (opens in Revit 2024, 2026-10-31; aggregate numbers only, files stay local)
+Families lifted from real office projects and opened in Revit 2024 (rfacheck). Cells are opened / checked. Batches for 2021 and 2024 of the 382-family stratified sample were still queued when this was written.
+
+| year | stratified sample flat | stratified sample nested | big-file sample flat | big-file sample nested |
+|---|---|---|---|---|
+| 2019 | 28/28 | 36/36 | 2/2 | 6/6 |
+| 2020 | 19/19 | 27/27 | 15/15 | 1/1 |
+| 2021 | pending | pending | 5/5 | 3/3 |
+| 2022 | 12/12 | 22/22 | 36/36 | 8/20 (12 rejected: "needs recovery") |
+| 2023 | 10/10 | 11/11 | - | - |
+| 2024 | pending | pending | 2/2 | 6/6 |
+| 2025 | 27/27 | 37/37 | - | - |
+
+The 12 rejected 2022 nested families all hold a `ProjectPhase` record in the family document that the opening ones lack; the extractor now marks such families `known_bad` in the manifest (root-cause fix under test).
