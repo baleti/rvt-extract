@@ -412,7 +412,7 @@ class Builder:
         def fn(t): t['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid'] = m[t['m_oFamDoc']['obj']['m_contentDocGUID']['m_guid']]
         return self.edit(body, fn)
 
-    OBSOLETE = ('LynxTracker',)      # classes Revit 2024 discards when it upgrades an older file; inside a nested document they make it 'corrupt' ("can't load top object ... runtime class LynxTracker")
+    OBSOLETE = ('LynxTracker',) + tuple(x for x in os.environ.get('RVTX_DROPCLASSES', '').split(',') if x)      # RVTX_DROPCLASSES: oracle experiments only;  # classes Revit 2024 discards when it upgrades an older file; inside a nested document they make it 'corrupt' ("can't load top object ... runtime class LynxTracker")
 
     def drop_obsolete(self, d):
         if self.W != 4 or os.environ.get('RVTX_DROPOBS', '1') == '0': return d
