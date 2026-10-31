@@ -22,7 +22,7 @@ def _eids(o, out, key=''):
     if isinstance(o, EID): out.add(int(getattr(o, 'v', o)))
     elif isinstance(o, bool): pass
     elif isinstance(o, int):
-        if KEY.search(key): out.add(o)
+        if o != 0 and KEY.search(key): out.add(o)      # a plain 0 under an ...Id key means 'none'; the project's CategoryElem with id 0 was pulled into 2022 nested families through it (Revit 2024: needs recovery)
     elif isinstance(o, dict):
         for k, v in o.items(): _eids(v, out, k)
     elif isinstance(o, list):
