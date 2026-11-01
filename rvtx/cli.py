@@ -82,6 +82,7 @@ def main(argv=None):
             for e in ents: print('%-28s %-50s types=%-3d params=%-3d records=%d' % (e['category'], e['name'], len(e['types']), len(e['parameters']), e['embedded_records']))
     if 'families' in only and a.out and not a.no_rfa and not a.list:
         from . import rfa as RFA
+        pre_rfa = set(safepath.stale_rfa(a.out, []))      # .rfa already in --out before this run: any of them rewritten below was silently replaced
         pd = RFA.ProjectDocs(prj); B = RFA.Builder(pd); byid = {e['family_id']: e for e in res['families']}; namer = safepath.Namer()
         ncp = 0
         for fr in prj.families():
@@ -143,6 +144,10 @@ def main(argv=None):
         man['families'] = res['families']
         write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])
         stale = safepath.stale_rfa(a.out, res['families'])
+        over = sorted(locals().get('pre_rfa', set()) & {os.path.normpath((e.get('rfa') or {}).get('file', '')) for e in res['families'] if e.get('rfa')})
+        if over:
+            man['overwritten_rfa'] = over
+            msg = 'WARNING: %d .rfa file(s) from an earlier run in %s were overwritten by this run; use an empty --out' % (len(over), a.out); log.append(msg); print(msg, file=sys.stderr)
         if stale:      # leftovers of an earlier run in the same --out: not in this manifest, so never trust them as this run's output
             man['stale_rfa_not_in_manifest'] = stale
             msg = 'WARNING: %d .rfa file(s) in %s are not in this run\'s manifest (left over from an earlier run); use an empty --out' % (len(stale), a.out); log.append(msg); print(msg, file=sys.stderr)

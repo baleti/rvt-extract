@@ -37,6 +37,20 @@ class T(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
+    def test_overwrite_flagged(self):
+        """a family written over an .rfa of an earlier run in the same --out must be reported"""
+        import json
+        tmp = tempfile.mkdtemp()
+        try:
+            out = os.path.join(tmp, 'out')
+            cmd = [sys.executable, os.path.join(ROOT, 'bin', 'rvt-extract'), '--only', 'families', '--low-memory', '--match', '^000_BreakLine_Pick', '--out', out, os.environ['RVTX_SAMPLE']]
+            subprocess.run(cmd, check=True, capture_output=True, timeout=900)
+            self.assertNotIn('overwritten_rfa', json.load(open(os.path.join(out, 'manifest.json'))))
+            subprocess.run(cmd, check=True, capture_output=True, timeout=900)
+            self.assertEqual(len(json.load(open(os.path.join(out, 'manifest.json')))['overwritten_rfa']), 1)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
 
 if __name__ == '__main__':
     unittest.main()
