@@ -25,6 +25,13 @@ class NestedDepthTests(unittest.TestCase):
         self.assertEqual(b.nested_depth(2), 0)
         self.assertEqual(b.nested_depth(0), 3)      # 0 -> 1 -> 3 -> 4
 
+    def test_deep_chain_and_diamond(self):
+        b = FakeBuilder({0: [1], 1: [2], 2: [3], 3: [4], 4: [5]})
+        self.assertEqual(b.nested_depth(0), 5)      # depth > 3 chain
+        self.assertEqual(len(b.nested_docs(0)), 5)
+        d = FakeBuilder({0: [1, 2], 1: [3], 2: [3]})  # diamond: 3 reached twice
+        self.assertEqual(d.nested_depth(0), 2)
+
     def test_flat_has_depth_zero(self):
         self.assertEqual(FakeBuilder({}).nested_depth(0), 0)
 
