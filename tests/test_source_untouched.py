@@ -26,6 +26,17 @@ class T(unittest.TestCase):
             os.chmod(os.path.join(tmp, 'in'), 0o755)
             shutil.rmtree(tmp, ignore_errors=True)
 
+    def test_stale_rfa_flagged(self):
+        """a leftover .rfa from an earlier run in the same --out must be reported in the manifest, not silently sit unlisted"""
+        import json
+        tmp = tempfile.mkdtemp()
+        try:
+            out = os.path.join(tmp, 'out'); stale = os.path.join(out, 'families', 'X'); os.makedirs(stale); open(os.path.join(stale, 'old.rfa'), 'wb').write(b'x')
+            r = subprocess.run([sys.executable, os.path.join(ROOT, 'bin', 'rvt-extract'), '--only', 'families', '--low-memory', '--match', '^NoSuchFamilyXYZ', '--out', out, os.environ['RVTX_SAMPLE']], check=True, capture_output=True, timeout=900)
+            self.assertEqual(json.load(open(os.path.join(out, 'manifest.json')))['stale_rfa_not_in_manifest'], [os.path.join('families', 'X', 'old.rfa')])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
 
 if __name__ == '__main__':
     unittest.main()
