@@ -549,6 +549,17 @@ class Builder:
                 if int(li['m_surrogateId']) in sur:
                     ch = sur[int(li['m_surrogateId'])]
                     li['m_familyDocGUIDs'] = [{'m_guid': gm.get(g_, g_)} for g_ in reversed(ch if ch and os.environ.get('RVTX_CHAIN', '1') != '0' else guids)]
+        if os.environ.get('RVTX_LFI_ADD', '0') != '0' and sur:      # a nested family the project's content-document segment has no LoadedFamilyInfo for (2020 Body-Exterior-Stn style families): Revit's own save lists one per nested Family surrogate; without it Revit 2024 never returns from the open
+            for s_ in lt['m_pAppInfoManager']['obj']['m_appInfoArr']:
+                arr = (s_.get('obj') or {}).get('m_arrLoadedFamilyInfo')
+                if not arr: continue
+                have = {int(li['m_surrogateId']) for li in arr}
+                tpl = next((li for li in arr if int(li['m_surrogateId']) not in sur), arr[0])
+                for sid, ch in sur.items():
+                    if sid in have: continue
+                    n_ = copy.deepcopy(tpl); n_['m_surrogateId'] = type(tpl['m_surrogateId'])(sid)
+                    n_['m_familyDocGUIDs'] = [{'m_guid': gm.get(g_, g_)} for g_ in reversed(ch if ch and os.environ.get('RVTX_CHAIN', '1') != '0' else guids)]
+                    arr.append(n_)
 
     def strip_ids(self, v, gone):
         """remove element ids of dropped records from every id list of a decoded tree (Latest)"""
