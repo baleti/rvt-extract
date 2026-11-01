@@ -45,17 +45,17 @@ Projects: 2017-2023 = rst_basic_sample_project of that year (opened in Revit 202
 Not covered: 2016 (no project), a real (non-sample) 2017-2023 project, depth 2 beyond 1 to 4 families per project.
 
 ## Real-project campaign sample (opens in Revit 2024, 2026-11-01; aggregate numbers only, files stay local)
-Families lifted from real office projects and opened in Revit 2024 (rfacheck, upgrade open). Stratified sample (382 + 64 families, 2019-2025): 0 rejected among 434 checked non-title-block families (2019 64, 2020 56, 2021 37, 2022 63, 2023 56 + 2024 64, 2025 64). Cells are opened / checked.
+Families lifted from real office projects and opened in Revit 2024 (rfacheck, upgrade open). Stratified sample (382 + 64 families, 2019-2025): 0 rejected among 430 checked non-title-block families (2019 64, 2020 63, 2021 52, 2022 62, 2023 63, 2024 64, 2025 62). Cells are opened / checked.
 
 | year | stratified sample flat | stratified sample nested | nested title blocks |
 |---|---|---|---|
 | 2019 | 28/28 | 36/36 | none in sample |
-| 2020 | 29/29 | 31/31 | 0/1 (hangs) |
-| 2021 | 30/30 | 21/21 | 0/10 (hang) |
-| 2022 | 28/28 | 35/35 | flat title blocks 2/2 open |
+| 2020 | 29/29 | 34/34 | 0/1 (hangs) |
+| 2021 | 30/30 | 22/22 | 0/10 (hang) |
+| 2022 | 27/27 | 35/35 | flat title blocks 2/2 open |
 | 2023 | 30/30 | 33/33 | 0/1 (hangs) |
 | 2024 | 31/31 | 33/33 | none in sample |
-| 2025 | 27/27 | 37/37 | 1/1 nested opens |
+| 2025 | 26/26 | 36/36 | 2/2 open (1 nested) |
 
 Big-file sample (96 families from 12 large projects): before the 2026-11-01 fix 84 open and 12 rejected ("needs recovery"), all 2022 nested. Cause: an integer 0 under an ...Id key was treated as an element reference and pulled the project CategoryElem with id 0 into the family (rfa._eids, tests/test_eids_zero.py). Re-lifted with the fix: 11 of the 12 open, the old versions still rejected. The 12th is a nested title block.
 
