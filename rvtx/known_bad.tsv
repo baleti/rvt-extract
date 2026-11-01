@@ -1,1 +1,2 @@
 # year	category regex	name regex	reason
+2022	Title Block	^studyx_TitleBlock_A1Landscape	nested depth-2 title block lifted from a 2022 office project stalls Revit 2024 on open (script timeout 280 s, no dialog captured; 4 of 4 variants, 2026-11-01); cause not found
