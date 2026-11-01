@@ -5,10 +5,10 @@ var sb = new StringBuilder(); Func<double, string> N = (x) => x.ToString("R", Cu
 Func<object, string, object> Prop = (o, n) => { try { var pi = o.GetType().GetProperty(n); return pi == null ? null : pi.GetValue(o, null); } catch { return null; } };
 Document proj = null;
 var dlgs = new List<string>(); string curName = "";
-UIApp.DialogBoxShowing += (sender, e) => { var t = e as Autodesk.Revit.UI.Events.TaskDialogShowingEventArgs; if (t != null) { dlgs.Add("DIALOG\t" + curName + "\t" + t.DialogId + "\t" + (t.Message ?? "").Replace("\n", " ")); try { t.OverrideResult(1001); } catch { } } else { try { e.OverrideResult(1); } catch { } } };
+UIApp.DialogBoxShowing += (sender, e) => { var t = e as Autodesk.Revit.UI.Events.TaskDialogShowingEventArgs; if (t != null) { dlgs.Add("DIALOG\t" + curName + "\t" + t.DialogId + "\t" + (t.Message ?? "").Replace("\n", " ")); try { File.AppendAllText(Path.Combine(outd, "dialogs.txt"), curName + "\t" + t.DialogId + "\t" + (t.Message ?? "").Replace("\n", " ") + "\n"); } catch { } try { t.OverrideResult(1001); } catch { } } else { try { File.AppendAllText(Path.Combine(outd, "dialogs.txt"), curName + "\tnon-task dialog " + e.GetType().Name + "\n"); } catch { } try { e.OverrideResult(1); } catch { } } };
 if (__FAILH__) { app.FailuresProcessing += (sender, e) => { try { var fa = e.GetFailuresAccessor(); fa.DeleteAllWarnings(); e.SetProcessingResult(Autodesk.Revit.DB.FailureProcessingResult.Continue); } catch { } }; }
 try { proj = app.NewProjectDocument(UnitSystem.Imperial); } catch (Exception ex) { sb.AppendLine("NOPROJECT\t" + ex.Message.Split((char)10)[0]); }
-Action fl = () => { try { File.WriteAllText(Path.Combine(outd, "rfacheck.tsv"), sb.ToString(), new UTF8Encoding(false)); } catch { } };      // partial output so a Revit stall still shows how far it got
+Action fl = () => { try { File.WriteAllText(Path.Combine(outd, "rfacheck.tsv"), sb.ToString() + string.Join("\n", dlgs.ToArray()) + "\n", new UTF8Encoding(false)); } catch { } };      // partial output so a Revit stall still shows how far it got
 foreach (var path in Directory.GetFiles(dir, "*.rfa").OrderBy(x => x)) {
   sb.AppendLine("START\t" + Path.GetFileName(path)); fl();
   var name = Path.GetFileName(path); Document d = null; curName = name; int nd0 = dlgs.Count;
