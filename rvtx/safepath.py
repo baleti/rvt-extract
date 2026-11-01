@@ -81,3 +81,10 @@ def rfa_target(root: str, category: str, name: str, limit=240):
     try: cat, stem = relpath_budget(os.path.join(root, 'families'), [cat, stem], limit - reserve)
     except ValueError: pass      # output root alone is too long: keep the 120-char names rather than fail every family
     return cat, stem
+
+
+def stale_rfa(out, families):
+    """relative paths of .rfa files under out/families that this run's manifest entries do not list (left by an earlier run in the same --out)"""
+    import os
+    listed = {os.path.normpath(os.path.join(out, (e.get('rfa') or {}).get('file', ''))) for e in families if e.get('rfa')}
+    return sorted(os.path.relpath(os.path.join(dp, f), out) for dp, _, fs in os.walk(os.path.join(out, 'families')) for f in fs if f.endswith('.rfa') and os.path.normpath(os.path.join(dp, f)) not in listed)

@@ -142,8 +142,7 @@ def main(argv=None):
     if 'families' in res:
         man['families'] = res['families']
         write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])
-        listed = {os.path.normpath(os.path.join(a.out, (e.get('rfa') or {}).get('file', ''))) for e in res['families'] if e.get('rfa')}
-        stale = sorted(os.path.relpath(os.path.join(dp, f), a.out) for dp, _, fs in os.walk(os.path.join(a.out, 'families')) for f in fs if f.endswith('.rfa') and os.path.normpath(os.path.join(dp, f)) not in listed)
+        stale = safepath.stale_rfa(a.out, res['families'])
         if stale:      # leftovers of an earlier run in the same --out: not in this manifest, so never trust them as this run's output
             man['stale_rfa_not_in_manifest'] = stale
             msg = 'WARNING: %d .rfa file(s) in %s are not in this run\'s manifest (left over from an earlier run); use an empty --out' % (len(stale), a.out); log.append(msg); print(msg, file=sys.stderr)
