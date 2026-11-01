@@ -13,5 +13,5 @@ cs = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rfacheck.cs'
 with guest.vmlock():
     guest.script("Remove-Item -Recurse -Force C:/wl/in_%s -ErrorAction SilentlyContinue; New-Item -ItemType Directory -Force C:/wl/in_%s | Out-Null" % (tag, tag))
     for f in files: guest.put(f, 'C:/wl/in_%s/%s' % (tag, os.path.relpath(f, src).replace(os.sep, '__') if os.environ.get('RFA_FLAT') else os.path.basename(f)))
-    p = guest.fresh(year); o = guest.run_job(year, p, cs, tag, 2400); print(len(files), 'files', o[-400:].replace('\n', ' ')); jt = guest.journal_tail(year, int(os.environ.get('JN', '120')))
+    p = guest.fresh(year); o = guest.run_job(year, p, cs, tag, 2400); print(len(files), 'files', o[-400:].replace('\n', ' ')); import time; time.sleep(int(os.environ.get('JW', '0'))); jt = guest.journal_tail(year, int(os.environ.get('JN', '120')))
     shutil.rmtree(od, ignore_errors=True); os.makedirs(os.path.dirname(od), exist_ok=True); guest.get('C:/wl/out/' + tag, od); open(os.path.join(od, 'journal.txt'), 'w').write(jt if isinstance(jt, str) else str(jt)); guest.down(year)
