@@ -53,14 +53,35 @@ def cd_rows4(seg):
     return rows
 
 
+def owner_cycles4(all_ids, own, owners, special_neg=()):
+    """ids whose owner must become ffffffff so that no owner chain loops: the owners of the 4-byte content-document rows are read from neighbouring bytes and
+    for style elements (FilledRegion/TextNote/TagNote attributes of 2020 families) they can form a ring A->B->C->A, on which Revit 2024 never finishes loading the
+    ElemTable (families Body-Exterior and SWC title block of two real 2020 projects hung the open). Revit's own chains start at the lowest id with owner ffffffff; the lowest id of
+    every ring of length >= 2 gets that. Self-owners (length 1) are left as they are (they open)."""
+    ow = {i: int.from_bytes(owners.get(i, b'\xff' * 4)[:4], 'little') for i in all_ids if i in own and i not in special_neg}
+    fix = set(); done = set()
+    for i in sorted(ow):
+        if i in done: continue
+        path = []; x = i
+        while x in ow and x not in done and x not in path:
+            path.append(x); x = ow[x]
+        if x in path:
+            ring = path[path.index(x):]
+            if len(ring) > 1: fix.add(min(ring))
+        done.update(path)
+    return fix
+
+
 def build4(all_ids, own, owners, family_id, special_neg=()):
     out = bytearray((TAG or HDR) + struct.pack('<I', len(all_ids)))
     fam = family_id.to_bytes(4, 'little'); NEG4 = b'\xff\xff\xff\xff'
+    ring_fix = owner_cycles4(all_ids, own, owners, special_neg) if os.environ.get('RVTX_OWNRING', '1') != '0' else set()
     for i in sorted(all_ids):
         idb = (i & 0xFFFFFFFF).to_bytes(4, 'little')      # negative / 64-bit sentinel ids wrap to 32 bit
         if i in special_neg: out += idb + idb + b'\0' * 16 + NEG4
         elif i in own:
             ow = owners.get(i, NEG4 + b'\0' * 8)
+            if i in ring_fix: ow = NEG4 + ow[4:]
             c = ow[8:12] if os.environ.get('RVTX_ETC', 'b') == 'b' and ow[8:12] != NEG4 else NEG4     # Revit's own rows: c equals b in 1554 of 1713 rows of the 2019 sample (the project's content row has ffffffff there)
             if os.environ.get('RVTX_ETDATES', 'real') == 'real': out += idb + idb + b'\0' * 8 + NEG4 + b'\0\0\0\0' + ow[:4]      # Revit's own 2019 nested family: a = b = 0, c = ffffffff for geometry, 0 for style rows
             elif os.environ.get('RVTX_ETDATES', 'real') == 'real0': out += idb + idb + b'\0' * 12 + b'\0\0\0\0' + ow[:4]
