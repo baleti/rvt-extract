@@ -50,13 +50,13 @@ Families lifted from real office projects and opened in Revit 2024 (rfacheck, up
 | year | stratified sample flat | stratified sample nested | nested title blocks |
 |---|---|---|---|
 | 2019 | 28/28 | 36/36 | none in sample |
-| 2020 | 29/29 | 34/34 | 0/1 (hangs) |
-| 2021 | 30/30 | 22/22 | 0/10 (hang) |
+| 2020 | 29/29 | 34/34 | 0/1 pre-fix (hang), opens after ring fix |
+| 2021 | 30/30 | 22/22 | 0/10 pre-fix (hang), 10/10 open after ring fix |
 | 2022 | 27/27 | 35/35 | flat title blocks 2/2 open |
-| 2023 | 30/30 | 33/33 | 0/1 (hangs) |
+| 2023 | 30/30 | 33/33 | 0/1 pre-fix (hang), opens after ring fix |
 | 2024 | 31/31 | 33/33 | none in sample |
 | 2025 | 26/26 | 36/36 | 2/2 open (1 nested) |
 
 Big-file sample (96 families from 12 large projects): before the 2026-11-01 fix 84 open and 12 rejected ("needs recovery"), all 2022 nested. Cause: an integer 0 under an ...Id key was treated as an element reference and pulled the project CategoryElem with id 0 into the family (rfa._eids, tests/test_eids_zero.py). Re-lifted with the fix: 11 of the 12 open, the old versions still rejected. The 12th is a nested title block.
 
-Nested title blocks of the 4-byte-id years (2017-2023) hang Revit 2024 in OpenDocumentFile (no dialog; 13 of 13 checked, plus 4 re-lifted 2022 variants). Flat title blocks open. Cause not found; the extractor marks them `known_bad` in the manifest (rvtx/knownbad.py).
+Title blocks: lifts made before the ElemTable owner-ring fix (bdcfd33) hung Revit 2024 in OpenDocumentFile for nested title blocks of 2020, 2021 and 2023 (no dialog). After the fix the 2020, 2021 and 2023 ones tested open; the title block rows above show the pre-fix state and are being re-lifted. Flat title blocks always opened.
