@@ -19,12 +19,3 @@ def mark(entry, fmt, category, name, experimental=False):
     why = reason(fmt, category, name) or ('Revit 2016 layout not validated' if str(fmt).isdigit() and int(fmt) < 2017 and experimental else None)
     if why: entry['known_bad'] = why
     return entry
-
-
-def mark_nested_titleblock(entry, fmt, category, nested):
-    """4-byte-id years (2017-2023): every nested Title Block lifted from real projects stalled Revit 2024 on open (13 of 13 checked 2026-11-01; flat title blocks open). Cause not found."""
-    try: y = int(fmt)
-    except (TypeError, ValueError): return entry
-    if nested and y <= 2023 and 'title block' in (category or '').lower() and 'known_bad' not in entry:
-        entry['known_bad'] = 'nested title block in a 4-byte-id year: Revit 2024 hangs in OpenDocumentFile (observed 2026-11-01 on 2020-2023 office families; flat title blocks open)'
-    return entry

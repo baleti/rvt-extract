@@ -16,11 +16,5 @@ class T(unittest.TestCase):
         self.assertIn('known_bad', knownbad.mark({}, 2016, 'c', 'n', experimental=True))
         self.assertNotIn('known_bad', knownbad.mark({}, 2024, 'c', 'n'))
 
-    def test_nested_title_block(self):
-        self.assertIn('known_bad', knownbad.mark_nested_titleblock({}, 2021, 'Title Blocks', True))
-        self.assertNotIn('known_bad', knownbad.mark_nested_titleblock({}, 2021, 'Title Blocks', False))
-        self.assertNotIn('known_bad', knownbad.mark_nested_titleblock({}, 2025, 'Title Blocks', True))
-        self.assertNotIn('known_bad', knownbad.mark_nested_titleblock({}, 2021, 'Doors', True))
-
 
 if __name__ == '__main__': unittest.main()
