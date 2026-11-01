@@ -44,17 +44,19 @@ Projects: 2017-2023 = rst_basic_sample_project of that year (opened in Revit 202
 
 Not covered: 2016 (no project), a real (non-sample) 2017-2023 project, depth 2 beyond 1 to 4 families per project.
 
-## Real-project campaign sample (opens in Revit 2024, 2026-10-31; aggregate numbers only, files stay local)
-Families lifted from real office projects and opened in Revit 2024 (rfacheck). Cells are opened / checked. Batches for 2021 and 2024 of the 382-family stratified sample were still queued when this was written.
+## Real-project campaign sample (opens in Revit 2024, 2026-11-01; aggregate numbers only, files stay local)
+Families lifted from real office projects and opened in Revit 2024 (rfacheck, upgrade open). Stratified sample (382 + 64 families, 2019-2025): 0 rejected among 434 checked non-title-block families (2019 64, 2020 56, 2021 37, 2022 63, 2023 56 + 2024 64, 2025 64). Cells are opened / checked.
 
-| year | stratified sample flat | stratified sample nested | big-file sample flat | big-file sample nested |
-|---|---|---|---|---|
-| 2019 | 28/28 | 36/36 | 2/2 | 6/6 |
-| 2020 | 19/19 | 27/27 | 15/15 | 1/1 |
-| 2021 | pending | pending | 5/5 | 3/3 |
-| 2022 | 12/12 | 22/22 | 36/36 | 8/20 (12 rejected: "needs recovery") |
-| 2023 | 10/10 | 11/11 | - | - |
-| 2024 | pending | pending | 2/2 | 6/6 |
-| 2025 | 27/27 | 37/37 | - | - |
+| year | stratified sample flat | stratified sample nested | nested title blocks |
+|---|---|---|---|
+| 2019 | 28/28 | 36/36 | none in sample |
+| 2020 | 29/29 | 31/31 | 0/1 (hangs) |
+| 2021 | 30/30 | 21/21 | 0/10 (hang) |
+| 2022 | 28/28 | 35/35 | flat title blocks 2/2 open |
+| 2023 | 30/30 | 33/33 | 0/1 (hangs) |
+| 2024 | 31/31 | 33/33 | none in sample |
+| 2025 | 27/27 | 37/37 | 1/1 nested opens |
 
-The 12 rejected 2022 nested families all hold a `ProjectPhase` record in the family document that the opening ones lack; the extractor now marks such families `known_bad` in the manifest (root-cause fix under test).
+Big-file sample (96 families from 12 large projects): before the 2026-11-01 fix 84 open and 12 rejected ("needs recovery"), all 2022 nested. Cause: an integer 0 under an ...Id key was treated as an element reference and pulled the project CategoryElem with id 0 into the family (rfa._eids, tests/test_eids_zero.py). Re-lifted with the fix: 11 of the 12 open, the old versions still rejected. The 12th is a nested title block.
+
+Nested title blocks of the 4-byte-id years (2017-2023) hang Revit 2024 in OpenDocumentFile (no dialog; 13 of 13 checked, plus 4 re-lifted 2022 variants). Flat title blocks open. Cause not found; the extractor marks them `known_bad` in the manifest (rvtx/knownbad.py).
