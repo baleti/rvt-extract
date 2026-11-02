@@ -17,3 +17,13 @@ class T(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class TI(unittest.TestCase):
+    def test_marker(self):
+        t = tempfile.mkdtemp()
+        try:
+            safepath.mark_incomplete(t); self.assertTrue(os.path.exists(os.path.join(t, safepath.INCOMPLETE)))
+            safepath.clear_incomplete(t); safepath.clear_incomplete(t); self.assertFalse(os.path.exists(os.path.join(t, safepath.INCOMPLETE)))
+        finally:
+            shutil.rmtree(t)

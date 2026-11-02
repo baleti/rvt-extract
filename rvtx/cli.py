@@ -84,12 +84,12 @@ def main(argv=None):
         from . import rfa as RFA
         pre_rfa = set(safepath.stale_rfa(a.out, []))      # .rfa already in --out before this run: any of them rewritten below was silently replaced
         pd = RFA.ProjectDocs(prj); B = RFA.Builder(pd); byid = {e['family_id']: e for e in res['families']}; namer = safepath.Namer()
-        ncp = 0
+        ncp = 0; safepath.mark_incomplete(a.out)      # marker stays until the final manifest is written: a killed run is recognisable
         for fr in prj.families():
             e = byid.get(fr['id'])
             if e is None or not e['embedded_doc']: continue
             ncp += 1
-            if ncp % 25 == 0: write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])      # checkpoint: a killed run (OOM) still leaves a manifest next to the files it wrote
+            if True: write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])      # checkpoint: a killed run (OOM) still leaves a manifest next to the files it wrote
             old_fmt = str(pd.fmt).isdigit() and int(pd.fmt) < 2024
             if str(pd.fmt).isdigit() and int(pd.fmt) < 2017 and not a.experimental:
                 e['rfa'] = {'status': 'skipped', 'validation': VALIDATION['older'] + '; use --experimental to write anyway'}; continue
@@ -142,7 +142,7 @@ def main(argv=None):
     man = {'source': os.path.abspath(a.rvt), 'outputs': summary, 'errors': log}
     if 'families' in res:
         man['families'] = res['families']
-        write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])
+        write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families']); safepath.clear_incomplete(a.out)
         stale = safepath.stale_rfa(a.out, res['families'])
         over = sorted(locals().get('pre_rfa', set()) & {os.path.normpath((e.get('rfa') or {}).get('file', '')) for e in res['families'] if e.get('rfa')})
         if over:

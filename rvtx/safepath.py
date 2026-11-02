@@ -88,3 +88,17 @@ def stale_rfa(out, families):
     import os
     listed = {os.path.normpath(os.path.join(out, (e.get('rfa') or {}).get('file', ''))) for e in families if e.get('rfa')}
     return sorted(os.path.relpath(os.path.join(dp, f), out) for dp, _, fs in os.walk(os.path.join(out, 'families')) for f in fs if f.endswith('.rfa') and os.path.normpath(os.path.join(dp, f)) not in listed)
+
+
+INCOMPLETE = os.path.join('families', 'INCOMPLETE')
+
+
+def mark_incomplete(out):
+    """Create families/INCOMPLETE; it is removed only after the final manifest is written (a killed run leaves it, plus a checkpoint manifest at most one family behind)."""
+    os.makedirs(os.path.join(out, 'families'), exist_ok=True)
+    open(os.path.join(out, INCOMPLETE), 'w').write('extraction started; absent when the run finished. .rfa files without a manifest entry may exist.\n')
+
+
+def clear_incomplete(out):
+    try: os.unlink(os.path.join(out, INCOMPLETE))
+    except FileNotFoundError: pass
