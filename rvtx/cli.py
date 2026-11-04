@@ -122,7 +122,7 @@ def main(argv=None):
                         B.build({'id': i, 'fields': t})
                         cat_, stem_ = safepath.rfa_target(a.out, cat, t['m_name']); d = os.path.join(a.out, 'families', cat_); os.makedirs(d, exist_ok=True); fn = os.path.join(d, namer.take(d, stem_, '.rfa'))
                         B.write(fn, t['m_name'], cat); B.last_trees = None; gc.collect(); nd = B.nested_docs(B.k)
-                        ne['rfa'] = {'nested': bool(nd), 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': 'standalone copy of a family nested inside "%s"; ' % parent + (VALIDATION.get(str(pd.fmt)) or 'experimental')}; knownbad.mark(ne['rfa'], pd.fmt, cat, t['m_name'], a.experimental); getattr(B, 'risk', None) and ne['rfa'].setdefault('known_bad', B.risk)
+                        ne['rfa'] = {'nested': bool(nd), 'nested_depth': B.nested_depth(B.k) if nd else 0, 'nested_families': B.nested_names(B.k) if nd else [], 'file': os.path.relpath(fn, a.out), 'status': 'written', 'validation': 'standalone copy of a family nested inside "%s"; ' % parent + (VALIDATION.get(str(pd.fmt)) or 'experimental')}; knownbad.mark(ne['rfa'], pd.fmt, cat, t['m_name'], a.experimental); getattr(B, 'risk', None) and ne['rfa'].setdefault('known_bad', B.risk)
                     except Exception as ex:
                         ne['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: nested rfa failed: %s' % (t['m_name'], ex))
                     res['families'].append(ne)
