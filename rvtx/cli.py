@@ -135,7 +135,9 @@ def _main(argv=None):
         ncp = 0; safepath.mark_incomplete(a.out)      # marker stays until the final manifest is written: a killed run is recognisable
         for fr in prj.families():
             e = byid.get(fr['id'])
-            if e is None or not e['embedded_doc']: continue
+            if e is None: continue
+            if not e['embedded_doc']:
+                e['rfa'] = {'status': 'no_embedded_doc', 'note': 'the project holds no family document for this family (curtain panel/mullion, in-place element, system family); nothing to extract'}; continue
             ncp += 1
             if True: write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])      # checkpoint: a killed run (OOM) still leaves a manifest next to the files it wrote
             old_fmt = str(pd.fmt).isdigit() and int(pd.fmt) < 2024
