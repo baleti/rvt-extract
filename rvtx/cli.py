@@ -141,7 +141,7 @@ def main(argv=None):
         sys.stderr.write('rvt-extract: cannot read source: %s\n' % e); return 2
     except OSError as e:
         import errno
-        if e.errno not in (errno.ENOSPC, errno.EFBIG, errno.EDQUOT, errno.EROFS, errno.EIO): raise
+        if e.errno not in (errno.ENOSPC, errno.EFBIG, errno.EDQUOT, errno.EROFS, errno.EIO, errno.EACCES): raise
         # disk full / quota / size cap / read-only medium while writing output: loud, specific code, partial output is not a finished extraction
         sys.stderr.write('rvt-extract: cannot write output (%s); the output folder is incomplete (families/INCOMPLETE stays), do not use it\n' % e); return 5
     except (TypeError, AttributeError) as e:

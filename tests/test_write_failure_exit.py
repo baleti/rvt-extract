@@ -5,7 +5,7 @@ from rvtx import cli
 
 class WriteFail(unittest.TestCase):
     def test_disk_full_exits_5(self):
-        for en in (errno.ENOSPC, errno.EFBIG, errno.EDQUOT):
+        for en in (errno.ENOSPC, errno.EFBIG, errno.EDQUOT, errno.EACCES):
             with mock.patch.object(cli, '_main', side_effect=OSError(en, 'x')):
                 self.assertEqual(cli.main([]), 5)
 
