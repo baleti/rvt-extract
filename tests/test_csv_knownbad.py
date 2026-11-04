@@ -14,5 +14,16 @@ class T(unittest.TestCase):
         self.assertEqual([r['known_bad'] for r in rows], ['', 'Revit rejects'])
         self.assertEqual(rows[0]['rfa_file'], 'a.rfa')
 
+    def test_awkward_names_roundtrip(self):
+        names = ['a,b', 'q"uote', 'line\nbreak', '=1+1', '\ud800lone', 'caf\u00e9']
+        fams = [{'category': 'C,x', 'name': n, 'types': [], 'parameters': [], 'embedded_records': 0, 'embedded_doc': False} for n in names]
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, 'f.csv'); cli.write_families_csv(p, fams)
+            rows = list(csv.DictReader(open(p, encoding='utf-8', newline='')))
+        self.assertEqual(len(rows), len(names))
+        self.assertEqual([r['name'] for r in rows[:4]], names[:4])
+        self.assertEqual(rows[4]['name'], '?lone'); self.assertEqual(rows[5]['name'], names[5])
+        self.assertEqual(rows[0]['rfa_status'], 'no-embedded-doc')
+
 
 if __name__ == '__main__': unittest.main()
