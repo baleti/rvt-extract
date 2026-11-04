@@ -54,3 +54,13 @@ class TestNamerCaseDirs(unittest.TestCase):
         a = n.take("out/Doors", "Door", ".rfa")
         b = n.take("out/doors", "Door", ".rfa")
         self.assertNotEqual(a.lower(), b.lower())
+
+
+class Collisions(unittest.TestCase):
+    def test_hostile_collisions_never_share_a_filename(self):
+        n = P.Namer(); names = ['x.', 'x', 'X', 'CON', 'con_', 'CON.', 'café', 'café', 'a/b', 'a:b', 'F' * 300, 'F' * 299 + 'G']
+        got = [n.take('d', s, '.rfa') for s in names]
+        import unicodedata
+        keys = [unicodedata.normalize('NFC', g).lower() for g in got]
+        self.assertEqual(len(set(keys)), len(keys), got)
+        for g in got: self.assertLessEqual(len(g), 130); self.assertNotIn(g.split('.')[0].upper(), ('CON', 'PRN', 'AUX', 'NUL'))
