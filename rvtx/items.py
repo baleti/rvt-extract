@@ -41,6 +41,7 @@ def shared_parameters(prj):
     """manifest + a Revit shared-parameter .txt (data type is the stored unit code: Revit's spec names are not recovered, TEXT where unknown)"""
     out = []
     for r in _cls(prj, 'ParamElemExternal'):
+        if _scope(r['fields'])[0]: continue                  # shared parameter element of a loaded family's own document
         d = ob(r['fields'].get('m_pParamDef')) or {}
         g = r['fields'].get('m_externalParamKey', {}).get('m_guidValue', {}).get('m_guid')
         if not g: continue
@@ -73,6 +74,7 @@ def project_parameters(prj):
 def filters(prj):
     out = []
     for r in _cls(prj, 'ParameterFilterElement'):
+        if _scope(r['fields'])[0]: continue
         f = r['fields']; cr = ob(f.get('m_oCategoryRule')) or {}
         out.append({'id': r['id'], 'name': f.get('m_name'), 'categories': [manifest.category_name(c) for c in cr.get('m_categories', [])], 'rules': ob(f.get('m_oRuleCombination'))})
     return out, []
@@ -93,11 +95,25 @@ def _S(o, *path):
     return ob(o)
 
 
+def _scope(f):
+    """(family_internal, design_option) of an element: m_famId set = lives in a loaded family's document; m_designOptionId other than -1 = inside a design option (Revit's default collectors skip those)"""
+    def v(k):
+        x = f.get(k); x = getattr(x, 'v', x)
+        return None if x is None else (x - (1 << 64) if x >= (1 << 63) else x - (1 << 32) if x >= (1 << 31) and x < (1 << 32) else x)
+    return v('m_famId') not in (None, -1), v('m_designOptionId') not in (None, -1)
+
+
 def levels_grids(prj):
-    lv = sorted([{'id': r['id'], 'name': r['fields'].get('m_text', ''), 'elevation_ft': (_S(r['fields'], 'm_pSurface', 'm_origin') or [None] * 3)[2]} for r in _cls(prj, 'Level')],
-                key=lambda l: (l['elevation_ft'] is None, l['elevation_ft']))
-    gr = [{'id': r['id'], 'name': r['fields'].get('m_text', '')} for r in _cls(prj, 'Grid')]
-    rp = [{'id': r['id'], 'name': r['fields'].get('m_text', '')} for r in _cls(prj, 'RefPlane') if r['fields'].get('m_text')]
+    lv = []; gr = []
+    for r in _cls(prj, 'Level'):
+        fam, dopt = _scope(r['fields'])
+        if fam: continue                     # family-internal level, not a project level
+        lv.append({'id': r['id'], 'name': r['fields'].get('m_text', ''), 'elevation_ft': (_S(r['fields'], 'm_pSurface', 'm_origin') or [None] * 3)[2], 'design_option': dopt})
+    lv.sort(key=lambda l: (l['elevation_ft'] is None, l['elevation_ft']))
+    for r in _cls(prj, 'Grid'):
+        fam, dopt = _scope(r['fields'])
+        if not fam: gr.append({'id': r['id'], 'name': r['fields'].get('m_text', ''), 'design_option': dopt})
+    rp = [{'id': r['id'], 'name': r['fields'].get('m_text', '')} for r in _cls(prj, 'RefPlane') if r['fields'].get('m_text') and not _scope(r['fields'])[0]]
     return {'levels': lv, 'grids': gr, 'named_reference_planes': rp}, []
 
 
@@ -110,11 +126,13 @@ def views(prj):
         for r in lst:
             f = r['fields']; n = f.get('m_viewName')
             if n is None: continue
+            fam, dopt = _scope(f)
+            if fam: continue                                 # view of a loaded family's own document
             if c == 'DBViewDrafting' and f.get('m_sheetNumber'):
                 sheets.append({'id': r['id'], 'number': f.get('m_sheetNumber'), 'name': n, 'issue_date': f.get('m_issueDate'), 'drawn_by': f.get('m_drawnBy'),
                                'checked_by': f.get('m_checkedBy'), 'designed_by': f.get('m_designedBy'), 'approved_by': f.get('m_approvedBy'),
                                'viewport_ids': [eid(v) for v in (f.get('m_sheetViewportElemIds') or [])]})
-            else: vs.append({'id': r['id'], 'name': n, 'class': c, 'is_template': bool(f.get('m_isTemplate')), 'scale': f.get('m_scale')})
+            else: vs.append({'id': r['id'], 'name': n, 'class': c, 'is_template': bool(f.get('m_isTemplate')), 'scale': f.get('m_scale'), 'design_option': dopt})
     vp = {r['id']: eid(r['fields'].get('m_dbViewId', -1)) for r in prj.by_class.get('Viewport', [])}
     for sh in sheets: sh['views'] = [names.get(vp[v], '') for v in sh.pop('viewport_ids') if v in vp]
     return {'views': sorted(vs, key=lambda v: (v['class'], v['name'])), 'sheets': sorted(sheets, key=lambda x: str(x['number']))}, []
