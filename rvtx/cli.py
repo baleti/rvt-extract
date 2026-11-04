@@ -11,7 +11,7 @@ HELP = {'families': 'every family: manifest entry (category, types, parameters, 
 
 
 VALIDATION = {'2024': 'validated: opens in Revit 2024, facts equal to EditFamily+SaveAs (Snowdon 177/177, office project 100/100)',
-              '2025': 'validated on sampled families of an office project (Revit 2026 upgrade open); nested families open since the document tail block fix (6 of 6 re-tested)',
+              '2025': 'validated: opens in Revit 2026 (upgrade open): 57 of 57 sampled office-project families incl. nested, and 232 of 232 Snowdon Structural 2025 families; counts equal to Revit 2026 EditFamily+SaveAs on 138 of 138 compared',
               'old': 'Revit 2017-2023 files (4-byte element ids): flat and nested families open in Revit 2024 after its upgrade (Autodesk sample projects 2017, 2018, 2019, 2020, 2021, 2022, 2023: 52 of 52 each, see README)',
               'older': 'Revit 2016 files: partition layout verified against a real 2016 family but no project to test with; not validated',
               '2026': 'streams byte-identical to Revit 2026 output for tested families; Snowdon 2026 sample opens in Revit 2026 (177 of 177)'}
