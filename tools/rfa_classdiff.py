@@ -6,10 +6,14 @@ import olefile, rvt2text as T
 from rvtx import partition as PT
 def recs(p):
     o = olefile.OleFileIO(p); pn = [y for y in ['/'.join(e) for e in o.listdir(streams=True)] if y.startswith('Partitions/')][0]
-    rf = PT.parse_joined(T.joined(o.openstream(pn).read()), 8)[0]
+    j = T.joined(o.openstream(pn).read())
+    try: rf = PT.parse_joined(j, int(os.environ.get('W', 8)))[0]
+    except Exception:
+        if os.environ.get('W'): raise
+        rf = PT.parse_joined(j, 4)[0]  # 2020 and older files use 4-byte ids
     return {i: x for i, x, *_ in rf['R'] if i != (1 << 64) - 1}
 a, b = recs(sys.argv[1]), recs(sys.argv[2])
-tag = lambda x: struct.unpack_from('<H', x, 0)[0]
+tag = lambda x: struct.unpack_from('<H', x, 0)[0] if len(x) > 1 else -1
 ca = collections.Counter(tag(x) for x in a.values()); cb = collections.Counter(tag(x) for x in b.values())
 print(len(a), len(b), 'ids only A', len(set(a) - set(b)), 'only B', len(set(b) - set(a)))
 for t in sorted(set(ca) | set(cb)):
