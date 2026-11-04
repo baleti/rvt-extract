@@ -32,10 +32,10 @@ def main():
         m = json.load(open(os.path.join(d, 'manifest.json')))
         for f in m.get('families', []):
             r = f.get('rfa') or {}
-            if r.get('sha256') and r.get('file'): man[os.path.basename(r['file'])] = r['sha256']
+            if r.get('sha256') and r.get('file'): man[os.path.normpath(r['file'])] = r['sha256']
     for p in glob.glob(os.path.join(d, '**', '*.rfa'), recursive=True):
         n += 1; e = scan(p)
-        h = man.get(os.path.basename(p))
+        h = man.get(os.path.normpath(os.path.relpath(p, d)))
         if h and h != hashlib.sha256(open(p, 'rb').read()).hexdigest(): e.append('manifest sha mismatch')
         if e: bad += 1; print(os.path.basename(p), e[:3])
     print('scanned', n, 'bad', bad, 'manifest-checked', len(man)); sys.exit(1 if bad else 0)
