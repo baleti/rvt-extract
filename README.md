@@ -42,7 +42,7 @@ Projects: 2017-2023 = rst_basic_sample_project of that year (opened in Revit 202
 | 2025 | 141/141 | 32/32 | 4/4 | 99/99 | 8 |
 | 2026 | 141/141 | 32/32 | 4/4 | 99/99 | 8 |
 
-Not covered: 2016 (no project). Real (non-sample) projects: big2 and big3 contain families nested at depth 2 to 5 (up to 125 depth-2 and 25 depth-3 to 5 families in a single project); the Revit open results for those are in the big3 line above (sampled, not exhaustive) and a targeted depth-2-to-5 sample is being checked in Revit 2024.
+Not covered: 2016 (no project). Real (non-sample) projects: big2 and big3 contain families nested at depth 2 to 5 (up to 125 depth-2 and 25 depth-3 to 5 families in a single project); the Revit open results for those are in the big3 line above (sampled, not exhaustive) and a targeted sample of 24 depth-2-to-5 rfa (b4 to b6) opened in Revit 2024: 24/24 isFam=True, 0 rejected (sample only).
 
 ## Real-project campaign sample (opens in Revit 2024, 2026-11-01; aggregate numbers only, files stay local)
 Families lifted from real office projects and opened in Revit 2024 (rfacheck, upgrade open). Stratified sample (382 + 64 families, 2019-2025): 0 rejected among 430 checked non-title-block families (2019 64, 2020 63, 2021 52, 2022 62, 2023 63, 2024 64, 2025 62). Cells are opened / checked.
