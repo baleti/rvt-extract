@@ -68,6 +68,22 @@ def sweep_orphan_tmp(root):
     return gone
 
 
+_LOCKS = []; _LOCKED = set()
+
+
+def _lock_out(out):
+    if out in _LOCKED: return
+    _LOCKED.add(out)
+    """Advisory lock on --out for the life of the process: two concurrent runs into one folder would overwrite each other's manifest and the first finisher would clear INCOMPLETE under the second."""
+    try: import fcntl
+    except ImportError: return      # Windows: no flock, skipped
+    os.makedirs(out, exist_ok=True); fh = open(os.path.join(out, '.rvtx.lock'), 'a')
+    try: fcntl.flock(fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        sys.stderr.write('rvt-extract: another extraction is already running into %s\n' % out); raise SystemExit(2)
+    _LOCKS.append(fh)
+
+
 def write_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     text = json.dumps(data, indent=1, default=str); tmp = path + '.tmp%d' % os.getpid()      # atomic: the manifest is what marks known-bad / error families, never leave it truncated
@@ -152,7 +168,7 @@ def _main(argv=None):
         from . import rfa as RFA
         pre_rfa = set(safepath.stale_rfa(a.out, []))      # .rfa already in --out before this run: any of them rewritten below was silently replaced
         pd = RFA.ProjectDocs(prj); B = RFA.Builder(pd); byid = {e['family_id']: e for e in res['families']}; namer = safepath.Namer()
-        ncp = 0; safepath.mark_incomplete(a.out)      # marker stays until the final manifest is written: a killed run is recognisable
+        ncp = 0; _lock_out(a.out); safepath.mark_incomplete(a.out)      # marker stays until the final manifest is written: a killed run is recognisable
         for fr in prj.families():
             e = byid.get(fr['id'])
             if e is None: continue
@@ -208,7 +224,7 @@ def _main(argv=None):
     print('; '.join('%s=%s' % kv for kv in summary.items()) + ' (%.1fs)' % (time.time() - t0), file=sys.stderr)
     for l in log: print(l, file=sys.stderr)
     if a.list or not a.out: return 0
-    os.makedirs(a.out, exist_ok=True); sweep_orphan_tmp(a.out)
+    _lock_out(a.out); os.makedirs(a.out, exist_ok=True); sweep_orphan_tmp(a.out)
     man = {'source': os.path.abspath(a.rvt), 'outputs': summary, 'errors': log}
     if src_damaged: man['source_damaged'] = dict(src_damaged)
     if 'families' in res:
