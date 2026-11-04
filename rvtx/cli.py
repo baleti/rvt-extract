@@ -198,6 +198,10 @@ def _main(argv=None):
     if src_damaged: man['source_damaged'] = dict(src_damaged)
     if 'families' in res:
         man['families'] = res['families']
+        if src_damaged:
+            for e in res['families']:
+                r = e.get('rfa') or {}
+                if r.get('status') == 'error': r['likely_cause'] = 'source_damaged'      # the failure text alone (e.g. 'no embedded document') hides that the project file itself is damaged
         write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families']); safepath.clear_incomplete(a.out)
         stale = safepath.stale_rfa(a.out, res['families'])
         over = sorted(locals().get('pre_rfa', set()) & {os.path.normpath((e.get('rfa') or {}).get('file', '')) for e in res['families'] if e.get('rfa')})
@@ -234,4 +238,7 @@ def _main(argv=None):
             fp = os.path.join(a.out, k, rel); os.makedirs(os.path.dirname(fp), exist_ok=True); open(fp, 'wb').write(b)
     write_json(os.path.join(a.out, 'manifest.json'), man)
     open(os.path.join(a.out, 'extract.log'), 'w').write('\n'.join(log) + '\n')
+    bad = [e for e in res.get('families', []) if (e.get('rfa') or {}).get('status') == 'error']
+    if src_damaged and bad:
+        print('ERROR: source is damaged and %d family(ies) failed (rfa.likely_cause=source_damaged); exit code 3' % len(bad), file=sys.stderr); return 3
     return 0
