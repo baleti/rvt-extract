@@ -267,7 +267,7 @@ def _main(argv=None):
             CT = {'length': '##length##feet', 'number': '##number##general', 'angle': '##angle##radians', 'area': '##area##squarefeet', 'volume': '##volume##cubicfeet'}
             ctype = lambda c: next((v for k, v in CT.items() if ':%s-' % k in spec.get(c, '')), '##other##')      # values are Revit internal units: feet, radians
             rf = (e.get('rfa') or {}).get('file')      # Revit looks for the catalog next to the .rfa with the same base name
-            base = os.path.join(a.out, os.path.splitext(rf)[0]) if rf else os.path.join(a.out, 'families', safepath.safe_name(e['category']), safe(e['name']))
+            base = os.path.join(a.out, os.path.splitext(rf)[0]) if rf else os.path.join(a.out, 'families', safepath.safe_name(e['category']), safepath.safe_name(e['name']))
             os.makedirs(os.path.dirname(base), exist_ok=True)
             with open(base + '.txt', 'w', encoding='utf-8') as fh:
                 fh.write(','.join([''] + [c.replace(',', ' ') + ctype(c) for c in cols]) + '\n')
