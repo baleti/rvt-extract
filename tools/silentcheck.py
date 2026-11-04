@@ -12,6 +12,7 @@ def audit(path):
         if not r: c['silent'] += 1
         else: c[r.get('status', 'silent')] += 1
         if r and r.get('known_bad'): c['known_bad'] += 1
+        if r and r.get('from_damaged_source'): c['from_damaged_source'] += 1      # informational, not a failure
         if r and r.get('status') == 'written':      # file must exist, be non-empty and an OLE compound file
             fp = os.path.join(os.path.dirname(path), r.get('file', ''))
             try:
