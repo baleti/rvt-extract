@@ -11,7 +11,7 @@ Typical run (measured 2026-10-23, remote-host, one process, under 3 GB): a 7 MB 
 Whole-project loads are heavy: on this machine run them on remote-host (`~/.local/share/offload/h1run`, see HANDOFF.md).
 
 ## Output types (DIR/<type>/...)
-families (manifest.json + families.csv audit table: category, types, parameters, embedded-record census, nested flag, .rfa status; .rfa only where validated), materials (with appearance assets, textures by library path),
+families (manifest.json + families.csv audit table: category, types, parameters, embedded-record census, nested flag, .rfa status, known_bad reason (empty when none); .rfa only where validated), materials (with appearance assets, textures by library path),
 fill_patterns, line_patterns, shared_parameters (+ shared_parameters.txt), project_parameters, filters, phases (phases, phase filters, design options),
 levels_grids, views (incl. view templates, sheets), schedules (columns, headers, category; legend names), revisions, line_styles (user-defined line styles: pattern, pen number, colour; built-in styles carry no name in the file), worksets (user worksets with default visibility), cad_imports (imported/linked DWG: name, units, size, layers), images (embedded PNG/JPEG), project_info (+ preview.png), links (TransmissionData).
 Next to every .rfa a type catalogue `<Family>.txt` (Revit catalog layout, values in Revit internal units, length, number, angle, area and volume parameters typed with their internal unit (feet, radians), others `##other##`, only named non-instance values) is written.
@@ -26,7 +26,7 @@ See HANDOFF.md for the evidence and status of the .rfa assembly.
 
 ## Exit codes and source safety
 The source .rvt is only ever read (checked: read-only copy in a read-only directory, checksum/size/mtime unchanged). Outputs are written tmp + fsync + rename.
-- 0 done (a family can still be listed with rfa.status error / no_embedded_doc / skipped / known_bad: read the manifest)
+- 0 done (a family can still be listed with rfa.status error / no_embedded_doc / skipped / known_bad: read the manifest or the known_bad column of families.csv)
 - 2 bad usage or unreadable source (`--out` is the input or an existing file; truncated/garbage .rvt); nothing written
 - 3 the source has damaged gzip members (manifest.source_damaged): failed families carry rfa.likely_cause=source_damaged, written ones rfa.from_damaged_source, and the family LIST can be incomplete (2019 sample with one flip: 50 of 61 families listed). A flip inside Global/Latest cannot be detected (no checksum)
 - 4 the source changed (size/mtime) while it was being read: discard the output
