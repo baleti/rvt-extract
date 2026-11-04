@@ -21,6 +21,24 @@ def safe(s):
     return re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', s or 'Unnamed').strip(' .') or 'Unnamed'
 
 
+def source_damage(path, x=None):
+    """{stream: damaged gzip members} for the project's Partitions/* and Global/* streams. Uses x['damaged'] when the reader provided it, else checks the file itself (the reader's cache/lowmem paths do not always report it)."""
+    d = dict((x or {}).get('damaged') or {})
+    if d: return d
+    try:
+        import olefile
+        from . import core
+        o = olefile.OleFileIO(path)
+        for st in o.listdir():
+            n = '/'.join(st)
+            if n.startswith(('Partitions/', 'Global/')):
+                k = core.T.damaged_members(o.openstream(st).read())
+                if k: d[n] = k
+    except Exception as e:
+        d['(damage check failed)'] = '%s: %s' % (type(e).__name__, e)
+    return d
+
+
 def sweep_orphan_tmp(root):
     """remove name.rfa.tmpPID / name.json.tmpPID left by a killed run (PID no longer alive); returns the removed paths"""
     gone = []
@@ -98,7 +116,7 @@ def _main(argv=None):
     t0 = time.time()
     prj = core.Project(a.rvt, lowmem=a.low_memory and only == ['families'])
     log = []
-    src_damaged = (getattr(prj, 'x', None) or {}).get('damaged') or {}      # {partition: damaged gzip members}: some families may fail or be incomplete because of this, not because they lack content
+    src_damaged = source_damage(a.rvt, getattr(prj, 'x', None))      # {partition: damaged gzip members}: some families may fail or be incomplete because of this, not because they lack content
     if src_damaged:
         msg = 'WARNING: source has damaged gzip member(s) %s; families that fail below may be victims of this damage' % dict(src_damaged); log.append(msg); print(msg, file=sys.stderr)
     res = {}
