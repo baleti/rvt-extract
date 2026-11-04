@@ -19,7 +19,7 @@ def _shorten(name: str, maxlen: int, original: str) -> str:
     return name[:maxlen - 9] + f"~{checksum:08x}"
 
 
-def safe_name(s: str | None, maxlen=120) -> str:
+def safe_name(s: str | None, maxlen=120, maxbytes=200) -> str:
     """Sanitize a name, preserving NFC Unicode and hashing truncations.
 
     The checksum covers the entire original input, before sanitization.
@@ -34,7 +34,15 @@ def safe_name(s: str | None, maxlen=120) -> str:
     ).strip(" .") or "Unnamed"
     if _DEVICE.fullmatch(name.split(".", 1)[0]):
         name += "_"
-    return _shorten(name, maxlen, original)
+    name = _shorten(name, maxlen, original)
+    if len(name.encode("utf-8")) > maxbytes:
+        # file systems limit a name component to 255 BYTES; 120 CJK/emoji characters are 360-480 bytes
+        tail = f"~{zlib.crc32(original.encode('utf-8')):08x}"
+        head = name
+        while len((head + tail).encode("utf-8")) > maxbytes:
+            head = head[:-1]
+        name = head + tail
+    return name
 
 
 class Namer:
