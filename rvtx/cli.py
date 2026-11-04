@@ -98,6 +98,9 @@ def _main(argv=None):
     t0 = time.time()
     prj = core.Project(a.rvt, lowmem=a.low_memory and only == ['families'])
     log = []
+    src_damaged = (getattr(prj, 'x', None) or {}).get('damaged') or {}      # {partition: damaged gzip members}: some families may fail or be incomplete because of this, not because they lack content
+    if src_damaged:
+        msg = 'WARNING: source has damaged gzip member(s) %s; families that fail below may be victims of this damage' % dict(src_damaged); log.append(msg); print(msg, file=sys.stderr)
     res = {}
     if 'families' in only:
         docs, st = core.scan_family_docs(prj)
@@ -167,6 +170,7 @@ def _main(argv=None):
     if a.list or not a.out: return 0
     os.makedirs(a.out, exist_ok=True); sweep_orphan_tmp(a.out)
     man = {'source': os.path.abspath(a.rvt), 'outputs': summary, 'errors': log}
+    if src_damaged: man['source_damaged'] = dict(src_damaged)
     if 'families' in res:
         man['families'] = res['families']
         write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families']); safepath.clear_incomplete(a.out)
