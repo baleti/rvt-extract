@@ -24,6 +24,14 @@ A project embeds the full document of each loaded family: Family.m_oFamDoc, a pe
 (ADocument-like data plus table rows) and the family-internal element records in the partitions (header: family-local id, project id).
 See HANDOFF.md for the evidence and status of the .rfa assembly.
 
+## Exit codes and source safety
+The source .rvt is only ever read (checked: read-only copy in a read-only directory, checksum/size/mtime unchanged). Outputs are written tmp + fsync + rename.
+- 0 done (a family can still be listed with rfa.status error / no_embedded_doc / skipped / known_bad: read the manifest)
+- 2 bad usage or unreadable source (`--out` is the input or an existing file; truncated/garbage .rvt); nothing written
+- 3 the source has damaged gzip members (manifest.source_damaged) AND at least one family failed (those carry rfa.likely_cause=source_damaged). A flip inside Global/Latest cannot be detected (no checksum)
+- 4 the source changed (size/mtime) while it was being read: discard the output
+`--low-memory` needs a research tree whose rvt_entities.extract accepts window/skip_eh/skip_stubs/reduce (RVT_RESEARCH=~/rvt-research-h1 on remote-host).
+
 ## Limits
 .rfa output status by Revit format (details and numbers in RESULTS.md):
 - 2024: validated. 177 of 177 Snowdon families and 100 of 100 families of a real office project open in Revit 2024; oracle facts (category, types, parameters, formulas, element counts) equal Revit's own EditFamily+SaveAs for 170 of 179 compared (residual: extra pattern records).
