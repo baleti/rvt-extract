@@ -172,6 +172,8 @@ def _main(argv=None):
     bad = [k for k in only if k not in KINDS]
     if bad: ap.error('unknown output type(s): %s' % ','.join(bad))
     t0 = time.time()
+    if not os.path.exists(a.rvt):
+        print('ERROR: %s does not exist; nothing written' % a.rvt, file=sys.stderr); return 2
     st0 = os.stat(a.rvt); sig0 = (st0.st_size, st0.st_mtime_ns)      # a save into the source while we read it would give a torn read: compare again at the end
     w_ = mem_warning(st0.st_size, mem_available(), a.low_memory)
     if w_: print(w_, file=sys.stderr)
