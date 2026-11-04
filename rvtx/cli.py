@@ -66,6 +66,14 @@ def nested_params_types(B, kn, t):
 
 
 def main(argv=None):
+    try:
+        return _main(argv)
+    except ValueError as e:
+        # truncated / corrupt source: fail loudly, cleanly, nothing marked ok
+        sys.stderr.write('rvt-extract: cannot read source: %s\n' % e); return 2
+
+
+def _main(argv=None):
     ap = argparse.ArgumentParser(prog='rvt-extract', description='Extract families and other content from a Revit project without Revit.')
     ap.add_argument('rvt', nargs='?'); ap.add_argument('--out', default=None, help='output folder')
     ap.add_argument('--only', default=None, help='comma list of output types (see --list-kinds): ' + ','.join(KINDS))
