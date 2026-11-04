@@ -119,6 +119,9 @@ def main(argv=None):
     except ValueError as e:
         # truncated / corrupt source: fail loudly, cleanly, nothing marked ok
         sys.stderr.write('rvt-extract: cannot read source: %s\n' % e); return 2
+    except (TypeError, AttributeError) as e:
+        if 'unexpected keyword argument' not in str(e) and 'has no attribute' not in str(e): raise
+        sys.stderr.write('rvt-extract: the research library in RVT_RESEARCH (%s) does not match this version of rvt-extract (%s); use a matching checkout, or drop --low-memory\n' % (os.environ.get('RVT_RESEARCH', '~/rvt-research'), e)); return 2
 
 
 def _main(argv=None):
