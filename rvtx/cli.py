@@ -80,6 +80,10 @@ def main(argv=None):
         for k in KINDS: print('%-20s %s' % (k, HELP.get(k, '')))
         return 0
     if not a.rvt: ap.error('rvt file required')
+    if a.out and not a.list:
+        ro, rr = os.path.realpath(a.out), os.path.realpath(a.rvt)
+        if os.path.isfile(ro): ap.error('--out must be a directory, not an existing file: %s' % a.out)
+        if ro == rr: ap.error('--out must not be the input file')
     only = [k.strip() for k in a.only.split(',')] if a.only else KINDS
     bad = [k for k in only if k not in KINDS]
     if bad: ap.error('unknown output type(s): %s' % ','.join(bad))
