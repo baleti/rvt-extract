@@ -54,3 +54,20 @@ class T(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+@unittest.skipUnless(os.environ.get('RVTX_SLOW') == '1' and os.path.exists(os.environ.get('RVTX_SAMPLE', '')), 'slow; needs RVTX_SLOW=1 and RVTX_SAMPLE')
+class Changed(unittest.TestCase):
+    def test_source_changed_during_run_exits_4(self):
+        """a save into the source while it is being read: exit 4, manifest.source_changed_during_run"""
+        import json
+        tmp = tempfile.mkdtemp()
+        try:
+            src = os.path.join(tmp, 'src.rvt'); shutil.copy(os.environ['RVTX_SAMPLE'], src); out = os.path.join(tmp, 'out')
+            code = ("import sys, os, time; sys.path.insert(0, %r)\nfrom rvtx import cli, core\no = core.Project\n"
+                    "def P(*a, **k):\n    p = o(*a, **k); os.utime(%r, None); time.sleep(0.01); return p\n"
+                    "core.Project = P\nsys.exit(cli.main(['--only', 'families', '--match', '^NoSuchFamilyXYZ', '--out', %r, %r]))\n") % (ROOT, src, out, src)
+            r = subprocess.run([sys.executable, '-c', code], capture_output=True, text=True, timeout=900)
+            self.assertEqual(r.returncode, 4, r.stderr[-500:]); self.assertTrue(json.load(open(os.path.join(out, 'manifest.json')))['source_changed_during_run'])
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)

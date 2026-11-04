@@ -114,6 +114,7 @@ def _main(argv=None):
     bad = [k for k in only if k not in KINDS]
     if bad: ap.error('unknown output type(s): %s' % ','.join(bad))
     t0 = time.time()
+    st0 = os.stat(a.rvt); sig0 = (st0.st_size, st0.st_mtime_ns)      # a save into the source while we read it would give a torn read: compare again at the end
     try:
         prj = core.Project(a.rvt, lowmem=a.low_memory and only == ['families'])
     except Exception as ex:
@@ -238,6 +239,10 @@ def _main(argv=None):
             fp = os.path.join(a.out, k, rel); os.makedirs(os.path.dirname(fp), exist_ok=True); open(fp, 'wb').write(b)
     write_json(os.path.join(a.out, 'manifest.json'), man)
     open(os.path.join(a.out, 'extract.log'), 'w').write('\n'.join(log) + '\n')
+    st1 = os.stat(a.rvt)
+    if (st1.st_size, st1.st_mtime_ns) != sig0:
+        msg = 'ERROR: the source file changed while it was being read (size/mtime differ); outputs may mix two versions, discard %s and run again' % a.out
+        man['source_changed_during_run'] = True; write_json(os.path.join(a.out, 'manifest.json'), man); print(msg, file=sys.stderr); return 4
     bad = [e for e in res.get('families', []) if (e.get('rfa') or {}).get('status') == 'error']
     if src_damaged and bad:
         print('ERROR: source is damaged and %d family(ies) failed (rfa.likely_cause=source_damaged); exit code 3' % len(bad), file=sys.stderr); return 3
