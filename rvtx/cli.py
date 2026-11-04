@@ -121,6 +121,18 @@ def nested_params_types(B, kn, t):
     return sorted(params, key=lambda q: q['name']), types
 
 
+def mem_warning(size, avail, lowmem):
+    """Heuristic (one measured sample: 28 MB rvt peaked at 1.9 GB RSS, ~67x): warn when available memory is below 80x the file size. A native allocation failure aborts with rc 134 and no message."""
+    if avail is None or size * 80 <= avail: return None
+    return 'warning: %.0f MB source, %.0f MB memory available (about 80x the file size is needed); the read may abort with "memory allocation failed" (rc 134)%s' % (size / 1e6, avail / 1e6, '' if lowmem else ', try --low-memory (families only)')
+
+def mem_available():
+    try:
+        for l in open('/proc/meminfo'):
+            if l.startswith('MemAvailable:'): return int(l.split()[1]) * 1024
+    except OSError: pass
+    return None
+
 def main(argv=None):
     try:
         return _main(argv)
@@ -161,6 +173,8 @@ def _main(argv=None):
     if bad: ap.error('unknown output type(s): %s' % ','.join(bad))
     t0 = time.time()
     st0 = os.stat(a.rvt); sig0 = (st0.st_size, st0.st_mtime_ns)      # a save into the source while we read it would give a torn read: compare again at the end
+    w_ = mem_warning(st0.st_size, mem_available(), a.low_memory)
+    if w_: print(w_, file=sys.stderr)
     try:
         prj = core.Project(a.rvt, lowmem=a.low_memory and only == ['families'])
     except Exception as ex:
