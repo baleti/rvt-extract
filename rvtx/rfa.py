@@ -609,7 +609,7 @@ class Builder:
         st['Global/PartitionTable'] = self.global_stream('Global/PartitionTable', SS.PT_SAMPLES[pd.fmt] if (pd.fmt not in ('2024', '2026') and pd.fmt in SS.PT_SAMPLES and not (nested and self.W == 4 and os.environ.get('RVTX_PT4', '1') != '0')) else SS.partition_table(part_guid))      # real Revit nested 2022 family: a single 'Workset1' entry, not the sample's two named partitions
         st['Global/ContentDocuments'] = self.global_stream('Global/ContentDocuments', SS.content_documents([(self.guid_map().get(g_, g_), self.nested_blob(g_, mx_ids)) for _, g_ in sorted(nested, key=lambda n: bytes.fromhex(self.guid_map().get(n[1], n[1])))]) if nested else SS.content_documents_empty())
         st['Partitions/0'] = self.partition_stream()
-        st['BasicFileInfo'] = SS.basic_file_info(path, save_guid, pd.build, pd.fmt)
+        st['BasicFileInfo'] = SS.basic_file_info(os.path.basename(path), save_guid, pd.build, pd.fmt)
         st['Contents'] = pd.contents_stream
         st['TransmissionData'] = SS.transmission_data(self.kn, self.ac)
         st['PartAtom'] = SS.part_atom(family_name, category, os.path.basename(path), when, pd.fmt)
