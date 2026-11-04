@@ -14,3 +14,12 @@ class OutGuard(unittest.TestCase):
             self.assertEqual(r.returncode, 2); self.assertNotIn('Traceback', r.stderr); self.assertIn('--out must', r.stderr)
             self.assertEqual(hashlib.sha1(open(src, 'rb').read()).hexdigest(), h)
         shutil.rmtree(d)
+
+
+class BadSource(unittest.TestCase):
+    def test_garbage_source_clean_error_nothing_written(self):
+        d = tempfile.mkdtemp(); src = os.path.join(d, 'p.rvt'); open(src, 'wb').write(b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1' + b'\0' * 600)
+        out = os.path.join(d, 'out')
+        r = subprocess.run([sys.executable, os.path.join(ROOT, 'bin', 'rvt-extract'), '--only', 'families', '--out', out, src], capture_output=True, text=True, timeout=60)
+        self.assertEqual(r.returncode, 2, r.stderr[-400:]); self.assertNotIn('Traceback', r.stderr); self.assertIn('cannot read', r.stderr)
+        self.assertFalse(os.path.exists(out)); shutil.rmtree(d)

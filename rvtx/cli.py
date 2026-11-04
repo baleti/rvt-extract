@@ -1,4 +1,4 @@
-import argparse, gc, json, os, re, sys, time
+import struct, argparse, gc, json, os, re, sys, time
 from . import core, manifest, items, files, safepath, knownbad
 
 KINDS = ['families'] + list(items.KINDS) + list(files.KINDS)
@@ -114,7 +114,12 @@ def _main(argv=None):
     bad = [k for k in only if k not in KINDS]
     if bad: ap.error('unknown output type(s): %s' % ','.join(bad))
     t0 = time.time()
-    prj = core.Project(a.rvt, lowmem=a.low_memory and only == ['families'])
+    try:
+        prj = core.Project(a.rvt, lowmem=a.low_memory and only == ['families'])
+    except Exception as ex:
+        if type(ex).__module__.startswith('olefile') or isinstance(ex, (OSError, struct.error)):
+            print('ERROR: cannot read %s as a Revit project (%s: %s); nothing written' % (a.rvt, type(ex).__name__, ex), file=sys.stderr); return 2
+        raise
     log = []
     src_damaged = source_damage(a.rvt, getattr(prj, 'x', None))      # {partition: damaged gzip members}: some families may fail or be incomplete because of this, not because they lack content
     if src_damaged:
