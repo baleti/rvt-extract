@@ -32,7 +32,7 @@ def main():
         m = json.load(open(os.path.join(d, 'manifest.json')))
         for f in m.get('families', []):
             r = f.get('rfa') or {}
-            if r.get('sha256') and r.get('path'): man[os.path.basename(r['path'])] = r['sha256']
+            if r.get('sha256') and r.get('file'): man[os.path.basename(r['file'])] = r['sha256']
     for p in glob.glob(os.path.join(d, '**', '*.rfa'), recursive=True):
         n += 1; e = scan(p)
         h = man.get(os.path.basename(p))
