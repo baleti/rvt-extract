@@ -26,6 +26,11 @@ def write_families_csv(path, families):
             w.writerow([e['category'], e['name'], len(e['types']), len(e['parameters']), e.get('shared'), e.get('in_place'), e['embedded_records'], r.get('nested', ''), '; '.join(r.get('nested_families') or []), r.get('status', 'no-embedded-doc' if not e['embedded_doc'] else ''), r.get('file', ''), r.get('validation', ''), r.get('known_bad', '')])
 
 
+def known_bad_files(families):
+    """relative paths of written .rfa whose manifest entry carries known_bad"""
+    return sorted((e['rfa'].get('file') or '') for e in families if (e.get('rfa') or {}).get('known_bad') and e['rfa'].get('status') == 'written')
+
+
 def safe(s):
     return re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', s or 'Unnamed').strip(' .') or 'Unnamed'
 
@@ -277,6 +282,10 @@ def _main(argv=None):
                 elif r.get('status') == 'written': r['from_damaged_source'] = True      # lifted, but the project file had damaged members: not proven identical to an undamaged lift      # the failure text alone (e.g. 'no embedded document') hides that the project file itself is damaged
         write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families']); safepath.clear_incomplete(a.out)
         stale = safepath.stale_rfa(a.out, res['families'])
+        bad = known_bad_files(res['families'])
+        if bad:
+            man['known_bad_rfa'] = bad
+            msg = 'WARNING: %d written .rfa are on the known-bad list (Revit rejects them): %s; see rfa.known_bad in the manifest' % (len(bad), '; '.join(bad[:5]) + (' ...' if len(bad) > 5 else '')); log.append(msg); print(msg, file=sys.stderr)
         over = sorted(locals().get('pre_rfa', set()) & {os.path.normpath((e.get('rfa') or {}).get('file', '')) for e in res['families'] if e.get('rfa')})
         if over:
             man['overwritten_rfa'] = over

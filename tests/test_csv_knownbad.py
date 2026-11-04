@@ -27,3 +27,10 @@ class T(unittest.TestCase):
 
 
 if __name__ == '__main__': unittest.main()
+
+
+class KB(unittest.TestCase):
+    def test_known_bad_files(self):
+        f = [{'rfa': {'status': 'written', 'file': 'b.rfa', 'known_bad': 'x'}}, {'rfa': {'status': 'written', 'file': 'a.rfa'}},
+             {'rfa': {'status': 'error', 'known_bad': 'x'}}, {}]
+        self.assertEqual(cli.known_bad_files(f), ['b.rfa'])
