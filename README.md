@@ -28,7 +28,7 @@ See HANDOFF.md for the evidence and status of the .rfa assembly.
 The source .rvt is only ever read (checked: read-only copy in a read-only directory, checksum/size/mtime unchanged). Outputs are written tmp + fsync + rename.
 - 0 done (a family can still be listed with rfa.status error / no_embedded_doc / skipped / known_bad: read the manifest)
 - 2 bad usage or unreadable source (`--out` is the input or an existing file; truncated/garbage .rvt); nothing written
-- 3 the source has damaged gzip members (manifest.source_damaged) AND at least one family failed (those carry rfa.likely_cause=source_damaged). A flip inside Global/Latest cannot be detected (no checksum)
+- 3 the source has damaged gzip members (manifest.source_damaged): failed families carry rfa.likely_cause=source_damaged, written ones rfa.from_damaged_source, and the family LIST can be incomplete (2019 sample with one flip: 50 of 61 families listed). A flip inside Global/Latest cannot be detected (no checksum)
 - 4 the source changed (size/mtime) while it was being read: discard the output
 `--low-memory` needs a research tree whose rvt_entities.extract accepts window/skip_eh/skip_stubs/reduce (RVT_RESEARCH=~/rvt-research-h1 on remote-host).
 

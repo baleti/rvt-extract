@@ -245,6 +245,6 @@ def _main(argv=None):
         msg = 'ERROR: the source file changed while it was being read (size/mtime differ); outputs may mix two versions, discard %s and run again' % a.out
         man['source_changed_during_run'] = True; write_json(os.path.join(a.out, 'manifest.json'), man); print(msg, file=sys.stderr); return 4
     bad = [e for e in res.get('families', []) if (e.get('rfa') or {}).get('status') == 'error']
-    if src_damaged and bad:
-        print('ERROR: source is damaged and %d family(ies) failed (rfa.likely_cause=source_damaged); exit code 3' % len(bad), file=sys.stderr); return 3
+    if src_damaged:      # damaged members can also hide whole families from the list (2019 sample: 61 listed undamaged, 50 listed damaged), so even with no failed family the result may be incomplete
+        print('ERROR: source has damaged gzip members: %d family(ies) failed, the family list itself may be incomplete; exit code 3' % len(bad), file=sys.stderr); return 3
     return 0
