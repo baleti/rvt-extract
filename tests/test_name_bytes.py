@@ -14,3 +14,10 @@ class NameBytes(unittest.TestCase):
     def test_short_names_unchanged(self):
         self.assertEqual(S.safe_name('Door - Single'), 'Door - Single')
         self.assertEqual(S.safe_name('日本語'), '日本語')
+
+
+def test_lone_surrogate_name_does_not_crash():
+    from rvtx import safepath
+    n = safepath.safe_name('Tag\ud800x')
+    n.encode('utf-8')
+    assert n.startswith('Tag')

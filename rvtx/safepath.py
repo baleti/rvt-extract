@@ -25,7 +25,7 @@ def safe_name(s: str | None, maxlen=120, maxbytes=200) -> str:
     The checksum covers the entire original input, before sanitization.
     A length below nine is supported only when no truncation is needed.
     """
-    original = s or ""
+    original = re.sub("[\ud800-\udfff]", "\ufffd", s or "")   # lone UTF-16 surrogates cannot be encoded as UTF-8
     normalized = unicodedata.normalize("NFC", original)
     name = "".join(
         "_" if char in _FORBIDDEN or unicodedata.category(char) == "Cc"
