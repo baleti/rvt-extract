@@ -247,4 +247,7 @@ def _main(argv=None):
     bad = [e for e in res.get('families', []) if (e.get('rfa') or {}).get('status') == 'error']
     if src_damaged:      # damaged members can also hide whole families from the list (2019 sample: 61 listed undamaged, 50 listed damaged), so even with no failed family the result may be incomplete
         print('ERROR: source has damaged gzip members: %d family(ies) failed, the family list itself may be incomplete; exit code 3' % len(bad), file=sys.stderr); return 3
+    io_bad = [e for e in res.get('families', []) if str((e.get('rfa') or {}).get('error', '')).startswith(('OSError', 'FileNotFoundError', 'PermissionError', 'IsADirectoryError'))]
+    if io_bad:      # disk full / permission / quota: the .rfa could not be written, never report that as success
+        print('ERROR: %d rfa could not be written (I/O error, e.g. disk full); exit code 5' % len(io_bad), file=sys.stderr); return 5
     return 0

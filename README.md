@@ -30,6 +30,7 @@ The source .rvt is only ever read (checked: read-only copy in a read-only direct
 - 2 bad usage or unreadable source (`--out` is the input or an existing file; truncated/garbage .rvt); nothing written
 - 3 the source has damaged gzip members (manifest.source_damaged): failed families carry rfa.likely_cause=source_damaged, written ones rfa.from_damaged_source, and the family LIST can be incomplete (2019 sample with one flip: 50 of 61 families listed). A flip inside Global/Latest cannot be detected (no checksum)
 - 4 the source changed (size/mtime) while it was being read: discard the output
+- 5 at least one .rfa could not be written (I/O error such as disk full or quota); no partial file or tmp residue is left, the manifest records rfa.status=error
 `--low-memory` needs a research tree whose rvt_entities.extract accepts window/skip_eh/skip_stubs/reduce (RVT_RESEARCH=~/rvt-research-h1 on remote-host).
 
 ## Limits
