@@ -1,4 +1,4 @@
-import struct, argparse, gc, json, os, re, sys, time
+import csv, struct, argparse, gc, json, os, re, sys, time
 from . import core, manifest, items, files, safepath, knownbad
 
 KINDS = ['families'] + list(items.KINDS) + list(files.KINDS)
@@ -15,6 +15,15 @@ VALIDATION = {'2024': 'validated: opens in Revit 2024, facts equal to EditFamily
               'old': 'Revit 2017-2023 files (4-byte element ids): flat and nested families open in Revit 2024 after its upgrade (Autodesk sample projects 2017, 2018, 2019, 2020, 2021, 2022, 2023: 52 of 52 each, see README)',
               'older': 'Revit 2016 files: partition layout verified against a real 2016 family but no project to test with; not validated',
               '2026': 'streams byte-identical to Revit 2026 output for tested families; Snowdon 2026 sample opens in Revit 2026 (177 of 177)'}
+
+
+def write_families_csv(path, families):
+    """one row per family for auditing / standards checks; known_bad is the last column"""
+    with open(path, 'w', newline='', encoding='utf-8', errors='replace') as fh:
+        w = csv.writer(fh); w.writerow(['category', 'name', 'types', 'parameters', 'shared', 'in_place', 'embedded_records', 'nested', 'nested_families', 'rfa_status', 'rfa_file', 'validation', 'known_bad'])
+        for e in families:
+            r = e.get('rfa') or {}
+            w.writerow([e['category'], e['name'], len(e['types']), len(e['parameters']), e.get('shared'), e.get('in_place'), e['embedded_records'], r.get('nested', ''), '; '.join(r.get('nested_families') or []), r.get('status', 'no-embedded-doc' if not e['embedded_doc'] else ''), r.get('file', ''), r.get('validation', ''), r.get('known_bad', '')])
 
 
 def safe(s):
@@ -289,11 +298,7 @@ def _main(argv=None):
                 fh.write(','.join([''] + [c.replace(',', ' ') + ctype(c) for c in cols]) + '\n')
                 for t in e['types']: fh.write(','.join([t['name'].replace(',', ' ')] + [str(t['values'].get(c, {}).get('value', '')) for c in cols]) + '\n')
         import csv
-        with open(os.path.join(a.out, 'families', 'families.csv'), 'w', newline='', encoding='utf-8', errors='replace') as fh:      # one row per family for auditing / standards checks
-            w = csv.writer(fh); w.writerow(['category', 'name', 'types', 'parameters', 'shared', 'in_place', 'embedded_records', 'nested', 'nested_families', 'rfa_status', 'rfa_file', 'validation'])
-            for e in res['families']:
-                r = e.get('rfa') or {}
-                w.writerow([e['category'], e['name'], len(e['types']), len(e['parameters']), e.get('shared'), e.get('in_place'), e['embedded_records'], r.get('nested', ''), '; '.join(r.get('nested_families') or []), r.get('status', 'no-embedded-doc' if not e['embedded_doc'] else ''), r.get('file', ''), r.get('validation', '')])
+        write_families_csv(os.path.join(a.out, 'families', 'families.csv'), res['families'])
     for k, v in res.items():
         if k == 'families': continue
         data, fl = v
