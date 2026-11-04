@@ -39,6 +39,20 @@ def source_damage(path, x=None):
     return d
 
 
+def exit_status(changed, src_damaged, families):
+    """(code, [stderr lines]); 0 ok, 3 damaged source (family list may be incomplete), 4 source changed while read, 5 an rfa could not be written; when several apply the code is 4, then 5, then 3 and every message is still printed"""
+    msgs = []; code = 0
+    bad = [e for e in families if (e.get('rfa') or {}).get('status') == 'error']
+    io_bad = [e for e in families if str((e.get('rfa') or {}).get('error', '')).startswith(('OSError', 'FileNotFoundError', 'PermissionError', 'IsADirectoryError'))]
+    if src_damaged:
+        msgs.append('ERROR: source has damaged gzip members: %d family(ies) failed, the family list itself may be incomplete; exit code 3' % len(bad)); code = 3
+    if io_bad:
+        msgs.append('ERROR: %d rfa could not be written (I/O error, e.g. disk full); exit code 5' % len(io_bad)); code = 5
+    if changed:
+        msgs.append('ERROR: the source file changed while it was being read (size/mtime differ); outputs may mix two versions, discard the output and run again; exit code 4'); code = 4
+    return code, msgs
+
+
 def sweep_orphan_tmp(root):
     """remove name.rfa.tmpPID / name.json.tmpPID left by a killed run (PID no longer alive); returns the removed paths"""
     gone = []
@@ -241,13 +255,8 @@ def _main(argv=None):
     write_json(os.path.join(a.out, 'manifest.json'), man)
     open(os.path.join(a.out, 'extract.log'), 'w').write('\n'.join(log) + '\n')
     st1 = os.stat(a.rvt)
-    if (st1.st_size, st1.st_mtime_ns) != sig0:
-        msg = 'ERROR: the source file changed while it was being read (size/mtime differ); outputs may mix two versions, discard %s and run again' % a.out
-        man['source_changed_during_run'] = True; write_json(os.path.join(a.out, 'manifest.json'), man); print(msg, file=sys.stderr); return 4
-    bad = [e for e in res.get('families', []) if (e.get('rfa') or {}).get('status') == 'error']
-    if src_damaged:      # damaged members can also hide whole families from the list (2019 sample: 61 listed undamaged, 50 listed damaged), so even with no failed family the result may be incomplete
-        print('ERROR: source has damaged gzip members: %d family(ies) failed, the family list itself may be incomplete; exit code 3' % len(bad), file=sys.stderr); return 3
-    io_bad = [e for e in res.get('families', []) if str((e.get('rfa') or {}).get('error', '')).startswith(('OSError', 'FileNotFoundError', 'PermissionError', 'IsADirectoryError'))]
-    if io_bad:      # disk full / permission / quota: the .rfa could not be written, never report that as success
-        print('ERROR: %d rfa could not be written (I/O error, e.g. disk full); exit code 5' % len(io_bad), file=sys.stderr); return 5
-    return 0
+    changed = (st1.st_size, st1.st_mtime_ns) != sig0
+    if changed: man['source_changed_during_run'] = True; write_json(os.path.join(a.out, 'manifest.json'), man)
+    code, msgs = exit_status(changed, src_damaged, res.get('families', []))
+    for m_ in msgs: print(m_, file=sys.stderr)
+    return code
