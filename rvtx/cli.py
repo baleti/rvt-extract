@@ -21,6 +21,21 @@ def safe(s):
     return re.sub(r'[<>:"/\\|?*\x00-\x1f]', '_', s or 'Unnamed').strip(' .') or 'Unnamed'
 
 
+def sweep_orphan_tmp(root):
+    """remove name.rfa.tmpPID / name.json.tmpPID left by a killed run (PID no longer alive); returns the removed paths"""
+    gone = []
+    for dp, _, fns in os.walk(root):
+        for fn in fns:
+            m = re.search(r'\.(?:rfa|json)\.tmp(\d+)$', fn)
+            if not m: continue
+            try: os.kill(int(m.group(1)), 0); continue      # owner alive (or not ours): leave it
+            except ProcessLookupError: pass
+            except OSError: continue
+            try: os.unlink(os.path.join(dp, fn)); gone.append(os.path.join(dp, fn))
+            except OSError: pass
+    return gone
+
+
 def write_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     text = json.dumps(data, indent=1, default=str); tmp = path + '.tmp%d' % os.getpid()      # atomic: the manifest is what marks known-bad / error families, never leave it truncated
@@ -138,7 +153,7 @@ def main(argv=None):
     print('; '.join('%s=%s' % kv for kv in summary.items()) + ' (%.1fs)' % (time.time() - t0), file=sys.stderr)
     for l in log: print(l, file=sys.stderr)
     if a.list or not a.out: return 0
-    os.makedirs(a.out, exist_ok=True)
+    os.makedirs(a.out, exist_ok=True); sweep_orphan_tmp(a.out)
     man = {'source': os.path.abspath(a.rvt), 'outputs': summary, 'errors': log}
     if 'families' in res:
         man['families'] = res['families']
