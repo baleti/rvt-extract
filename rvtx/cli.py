@@ -119,6 +119,11 @@ def main(argv=None):
     except ValueError as e:
         # truncated / corrupt source: fail loudly, cleanly, nothing marked ok
         sys.stderr.write('rvt-extract: cannot read source: %s\n' % e); return 2
+    except OSError as e:
+        import errno
+        if e.errno not in (errno.ENOSPC, errno.EFBIG, errno.EDQUOT, errno.EROFS, errno.EIO): raise
+        # disk full / quota / size cap / read-only medium while writing output: loud, specific code, partial output is not a finished extraction
+        sys.stderr.write('rvt-extract: cannot write output (%s); the output folder is incomplete (families/INCOMPLETE stays), do not use it\n' % e); return 5
     except (TypeError, AttributeError) as e:
         if 'unexpected keyword argument' not in str(e) and 'has no attribute' not in str(e): raise
         sys.stderr.write('rvt-extract: the research library in RVT_RESEARCH (%s) does not match this version of rvt-extract (%s); use a matching checkout, or drop --low-memory\n' % (os.environ.get('RVT_RESEARCH', '~/rvt-research'), e)); return 2
