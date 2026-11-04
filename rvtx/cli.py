@@ -202,7 +202,8 @@ def _main(argv=None):
         if src_damaged:
             for e in res['families']:
                 r = e.get('rfa') or {}
-                if r.get('status') == 'error': r['likely_cause'] = 'source_damaged'      # the failure text alone (e.g. 'no embedded document') hides that the project file itself is damaged
+                if r.get('status') == 'error': r['likely_cause'] = 'source_damaged'
+                elif r.get('status') == 'written': r['from_damaged_source'] = True      # lifted, but the project file had damaged members: not proven identical to an undamaged lift      # the failure text alone (e.g. 'no embedded document') hides that the project file itself is damaged
         write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families']); safepath.clear_incomplete(a.out)
         stale = safepath.stale_rfa(a.out, res['families'])
         over = sorted(locals().get('pre_rfa', set()) & {os.path.normpath((e.get('rfa') or {}).get('file', '')) for e in res['families'] if e.get('rfa')})
