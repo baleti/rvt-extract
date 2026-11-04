@@ -1,1 +1,2 @@
 # year	category regex	name regex	reason
+2020		^Pile Cap - (2|4) Pile$	from one local 2020 project: Revit 2024 rejects (Constraints are not satisfied; 2 of 44 nested); the same family from two other projects opens; cause (encoder vs source) unproven
