@@ -9,7 +9,7 @@ import rvt_scan as S, rvt_decode as D, rvt2text as T, rvtfmt, fmt_parser as fp
 EID = D.EID
 TARGET = {'MaterialElem', 'FillPatternElem', 'LinePatternElem', 'AppearanceAssetElem', 'PropertySetElement'}
 if os.environ.get('RVTX_PEE', '1') != '0': TARGET = TARGET | {'ParamElemExternal'}  # shared-parameter closure (Rebar Shape: record set == Revit's); RVTX_PEE=0 disables
-EXTRA = {'ImageSymbol', 'ImageHolder', 'CategoryElem', 'GStyleElem'}  # custom categories / subcategory styles / raster images referenced by the family (own records or the project-side Family record)
+EXTRA = {'ImageSymbol', 'ImageHolder', 'CategoryElem', 'GStyleElem', 'ElectricalLoadClassification', 'ElectricalDemandFactorDefinition', 'ParamElemElectricalLoadClassification'}  # custom categories / subcategory styles / raster images referenced by the family (own records or the project-side Family record)
 SPECIAL_MATERIALS = {'Default', 'Poche', 'Phase-Demo', 'Phase-Exist', 'Phase-Temp'} | set(x for x in os.environ.get('RVTX_MATS', '').split(',') if x)
 KEY = re.compile(r'(Id|Ids|ElemId|Pattern|Material)$')
 
