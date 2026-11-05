@@ -76,6 +76,11 @@ PAYLOAD_SPLIT = 2000      # pages
 TAIL_PAGES = 255
 
 
+def parse_format(t):
+    m = re.search(r'Format: (\d+)', t) or re.search(r'Autodesk Revit (20\d\d)', t)
+    return m.group(1) if m else None
+
+
 class SpillDocs:
     """list of family-document dicts kept on disk (pickled) with a small cache: the documents of a big project add up to GBs; index 0 is None as in the plain list"""
     def __init__(self, cache=6):
@@ -172,7 +177,7 @@ class ProjectDocs:
         else: ET.TRAILER4 = et[-12:-8]
         self._partition_markers()
         t = o.openstream('BasicFileInfo').read().decode('utf-16le', 'ignore') + o.openstream('BasicFileInfo').read()[1:].decode('utf-16le', 'ignore')
-        m = re.search(r'Format: (\d+)', t) or re.search(r'Autodesk Revit (20\d\d)', t); self.fmt = m.group(1) if m else None      # BasicFileInfo of 2016-2018 files has no 'Format:' line
+        self.fmt = parse_format(t)      # BasicFileInfo of 2016-2018 files has no 'Format:' line
         m = re.search(r'Build: (\S+\(x64\))', t); self.build = m.group(1) if m else SS.BUILD
         self.contents_guid, self.contents_stream = SS.CONTENTS_BY_FORMAT.get(self.fmt, (None, None))
 
