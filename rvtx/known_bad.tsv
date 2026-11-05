@@ -1,2 +1,4 @@
 # year	category regex	name regex	reason
 2020		^Pile Cap - (2|4) Pile$	from one local 2020 project: Revit 2024 rejects (Constraints are not satisfied; 2 of 44 nested); the same family from two other projects opens; cause (encoder vs source) unproven
+2024	Lighting Fixtures	^Lobby Chandelier$	from the Autodesk Snowdon Electrical 2024 sample: Revit 2024 open fails (ModificationForbiddenException, document is being loaded; reproduced alone), Revit own EditFamily+SaveAs of it opens; cause (encoder vs source) unproven
+2026	Lighting Fixtures	^Lobby Chandelier$	from the Autodesk Snowdon Electrical 2026 sample: Revit 2026 open fails like the 2024 one; the 2025 sample copy opens in Revit 2026; cause unproven

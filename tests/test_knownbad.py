@@ -24,5 +24,11 @@ class T(unittest.TestCase):
             self.assertIsNone(knownbad.reason(2020, 'Structural Foundations', n), n)
         self.assertIsNone(knownbad.reason(2021, 'Structural Foundations', 'Pile Cap - 4 Pile'))
 
+    def test_shipped_registry_lobby_chandelier(self):
+        for y in (2024, '2026'):
+            self.assertTrue(knownbad.reason(y, 'Lighting Fixtures', 'Lobby Chandelier'), y)
+        self.assertIsNone(knownbad.reason(2025, 'Lighting Fixtures', 'Lobby Chandelier'))
+        self.assertIsNone(knownbad.reason(2024, 'Lighting Fixtures', 'Lobby Chandelier 2'))
+
 
 if __name__ == '__main__': unittest.main()
