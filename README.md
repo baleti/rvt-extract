@@ -27,6 +27,7 @@ See HANDOFF.md for the evidence and status of the .rfa assembly.
 ## Exit codes and source safety
 The source .rvt is only ever read (checked: read-only copy in a read-only directory, checksum/size/mtime unchanged). Outputs are written tmp + fsync + rename.
 - 0 done (a family can still be listed with rfa.status error / no_embedded_doc / skipped / known_bad: read the manifest or the known_bad column of families.csv)
+- families.csv is written verbatim (RFC 4180 quoting, names unmodified): a family or type name that starts with = + - @ is kept as is, so a spreadsheet may evaluate it as a formula when the CSV is opened. Import it as text, or read manifest.json instead.
 - 2 bad usage or unreadable source (`--out` is the input or an existing file; truncated/garbage .rvt); nothing written
 - 3 the source has damaged gzip members (manifest.source_damaged): failed families carry rfa.likely_cause=source_damaged, written ones rfa.from_damaged_source, and the family LIST can be incomplete (2019 sample with one flip: 50 of 61 families listed). A flip inside Global/Latest cannot be detected (no checksum)
 - 4 the source changed (size/mtime) while it was being read: discard the output
