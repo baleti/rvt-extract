@@ -13,6 +13,9 @@ class OutGuard(unittest.TestCase):
             r = self.run_cli('--out', out, src)
             self.assertEqual(r.returncode, 2); self.assertNotIn('Traceback', r.stderr); self.assertIn('--out must', r.stderr)
             self.assertEqual(hashlib.sha1(open(src, 'rb').read()).hexdigest(), h)
+        r = self.run_cli('--out', os.path.join(src, 'sub', 'deeper'), src)
+        self.assertEqual(r.returncode, 2); self.assertNotIn('Traceback', r.stderr); self.assertIn('below an existing file', r.stderr)
+        self.assertEqual(hashlib.sha1(open(src, 'rb').read()).hexdigest(), h)
         shutil.rmtree(d)
 
 

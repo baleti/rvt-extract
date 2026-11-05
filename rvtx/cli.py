@@ -182,6 +182,9 @@ def _main(argv=None):
         ro, rr = os.path.realpath(a.out), os.path.realpath(a.rvt)
         if os.path.isfile(ro): ap.error('--out must be a directory, not an existing file: %s' % a.out)
         if ro == rr: ap.error('--out must not be the input file')
+        anc = os.path.dirname(ro)
+        while anc and not os.path.exists(anc) and anc != os.path.dirname(anc): anc = os.path.dirname(anc)
+        if anc and os.path.exists(anc) and not os.path.isdir(anc): ap.error('--out is below an existing file (%s); nothing written' % os.path.basename(anc))
     only = [k.strip() for k in a.only.split(',')] if a.only else KINDS
     bad = [k for k in only if k not in KINDS]
     if bad: ap.error('unknown output type(s): %s' % ','.join(bad))
