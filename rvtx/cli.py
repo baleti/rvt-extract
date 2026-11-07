@@ -282,7 +282,7 @@ def _main(argv=None):
     if src_damaged: man['source_damaged'] = dict(src_damaged)
     if 'families' in res:
         man['families'] = res['families']
-        if src_damaged:
+        if any(k != '(damage check failed)' for k in src_damaged):      # a check that could not run proves nothing: no per-family damage claim
             for e in res['families']:
                 r = e.get('rfa') or {}
                 if r.get('status') == 'error': r['likely_cause'] = 'source_damaged'
