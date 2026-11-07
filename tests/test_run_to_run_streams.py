@@ -1,10 +1,11 @@
 """Two unpinned extractions of the same family differ ONLY in the GUID/time metadata streams
-(BasicFileInfo, Global/History, PartAtom). Any other stream differing means the encoder is
+(BasicFileInfo, Global/History, PartAtom, Global/DocumentIncrementTable [save time]). Any other stream differing means the encoder is
 nondeterministic (would hide regressions in hash comparisons). Opt-in: RVTX_SAMPLE_RVT=<any rvt>."""
 import os, sys, unittest, subprocess, tempfile, shutil, glob
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SAMPLE = os.environ.get('RVTX_SAMPLE_RVT')
-META = {'BasicFileInfo', 'Global/History', 'PartAtom'}
+# DocumentIncrementTable holds the save time twice (smallstreams.document_increment_table); it is compressed, so one changed second shows as ~66 differing stored bytes
+META = {'BasicFileInfo', 'Global/History', 'PartAtom', 'Global/DocumentIncrementTable'}
 
 
 @unittest.skipUnless(SAMPLE and os.path.exists(SAMPLE), 'set RVTX_SAMPLE_RVT')
