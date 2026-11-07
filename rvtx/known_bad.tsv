@@ -1,3 +1,4 @@
 # year	category regex	name regex	reason
 2020		^Pile Cap - (2|4) Pile$	from one local 2020 project: Revit 2024 rejects (Constraints are not satisfied; 2 of 44 nested); the same family from two other projects opens; cause (encoder vs source) unproven
 2020		^TV_STAND_6078$	Autodesk 2020 Residential sample: Revit 2024 own EditFamily+SaveAs copy fails the same VM open check (ArgumentException: The input curve is not bound), so source/harness property, not an encoder defect (c7x-fam2020 2026-11-07)
+2020	Plumbing Fixtures	^Corner Shower$	Autodesk 2020 Residential sample: Revit 2024 own EditFamily+SaveAs copy fails the same VM open check (ArgumentException: The input curve is not bound), so source/harness property, not an encoder defect (c7x-fam2020 2026-11-07)
