@@ -203,7 +203,11 @@ def _main(argv=None):
     log = []
     src_damaged = source_damage(a.rvt, getattr(prj, 'x', None))      # {partition: damaged gzip members}: some families may fail or be incomplete because of this, not because they lack content
     if src_damaged:
-        msg = 'WARNING: source has damaged gzip member(s) %s; families that fail below may be victims of this damage' % dict(src_damaged); log.append(msg); print(msg, file=sys.stderr)
+        if '(damage check failed)' in src_damaged:
+            msg = 'WARNING: the damage check could not run (%s); the source is NOT known to be damaged, usually the research tree lacks rvt2text.damaged_members (use a matching RVT_RESEARCH)' % src_damaged['(damage check failed)']
+        else:
+            msg = 'WARNING: source has damaged gzip member(s) %s; families that fail below may be victims of this damage' % dict(src_damaged)
+        log.append(msg); print(msg, file=sys.stderr)
     res = {}
     if 'families' in only:
         docs, st = core.scan_family_docs(prj)
