@@ -14,3 +14,23 @@ class Truncated(unittest.TestCase):
             self.assertEqual(r.returncode, 2, r.stderr[-300:]); self.assertNotIn('Traceback', r.stderr)
             self.assertEqual([f for _, _, fs in os.walk(out) for f in fs if f.endswith('.rfa')], [])
         shutil.rmtree(d)
+
+
+@unittest.skipUnless(SAMPLE and os.path.exists(SAMPLE), 'set RVTX_SAMPLE_RVT')
+class Garbage(unittest.TestCase):
+    def _run(self, d, src, tag):
+        out = os.path.join(d, 'o' + tag)
+        r = subprocess.run([sys.executable, os.path.join(ROOT, 'bin', 'rvt-extract'), '--out', out, src], capture_output=True, text=True, timeout=300)
+        self.assertNotIn('Traceback', r.stderr, tag)
+        self.assertNotEqual(r.returncode, 0, tag)
+        self.assertEqual([f for _, _, fs in os.walk(out) for f in fs if f.endswith('.rfa')], [], tag)
+
+    def test_garbage_variants_refused_clean(self):
+        d = tempfile.mkdtemp(); data = open(SAMPLE, 'rb').read()
+        cases = {'empty': b'', 'zeros': bytes(4096), 'random': os.urandom(100000),
+                 'head512': data[:512], 'hdrzero': bytes(2048) + data[2048:],
+                 'tailzero': data[:len(data) // 2] + bytes(len(data) - len(data) // 2)}
+        for tag, blob in cases.items():
+            src = os.path.join(d, tag + '.rvt'); open(src, 'wb').write(blob)
+            self._run(d, src, tag)
+        shutil.rmtree(d)
