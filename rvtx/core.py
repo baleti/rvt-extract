@@ -19,7 +19,7 @@ def eid(v):
     return int(getattr(v, 'v', v))
 
 
-WINDOW = 96 << 20     # lowmem: decode partitions in windows of this many bytes (peak memory no longer scales with the partition size)
+WINDOW = int(os.environ.get("RVTX_WINDOW", 96 << 20))     # lowmem: decode partitions in windows of this many bytes (peak memory no longer scales with the partition size)
 
 LOWMEM_KEEP = {'Family', 'FamilySymbol', 'KeynoteTable', 'AssemblyCodeTable', 'MaterialElem', 'FillPatternElem', 'LinePatternElem', 'AppearanceAssetElem',
                'PropertySetElement', 'ImageSymbol', 'ImageHolder', 'CategoryElem', 'GStyleElem'}
