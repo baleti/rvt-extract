@@ -186,6 +186,7 @@ def _main(argv=None):
     if not a.rvt: ap.error('rvt file required')
     if a.out and not a.list:
         ro, rr = os.path.realpath(a.out), os.path.realpath(a.rvt)
+        if os.path.islink(a.out.rstrip('/')) and not os.path.isdir(a.out): ap.error('--out is a symlink that does not lead to a directory: %s' % a.out)
         if os.path.isfile(ro): ap.error('--out must be a directory, not an existing file: %s' % a.out)
         if ro == rr: ap.error('--out must not be the input file')
         anc = os.path.dirname(ro)
