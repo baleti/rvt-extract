@@ -331,7 +331,9 @@ def _main(argv=None):
     open(os.path.join(a.out, 'extract.log'), 'w', encoding='utf-8', errors='replace').write('\n'.join(log) + '\n')
     st1 = os.stat(a.rvt)
     changed = (st1.st_size, st1.st_mtime_ns) != sig0
-    if changed: man['source_changed_during_run'] = True; write_json(os.path.join(a.out, 'manifest.json'), man)
+    if changed:
+        man['source_changed_during_run'] = True; write_json(os.path.join(a.out, 'manifest.json'), man)
+        safepath.mark_incomplete(a.out)      # outputs may mix two source versions: a folder that looks finished must not be trusted
     code, msgs = exit_status(changed, src_damaged, res.get('families', []))
     for m_ in msgs: print(m_, file=sys.stderr)
     return code
