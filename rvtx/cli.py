@@ -147,6 +147,9 @@ def mem_available():
     except OSError: pass
     return None
 
+_OUT_DIR = [None]
+
+
 def main(argv=None):
     try:
         return _main(argv)
@@ -157,6 +160,9 @@ def main(argv=None):
         import errno
         if e.errno not in (errno.ENOSPC, errno.EFBIG, errno.EDQUOT, errno.EROFS, errno.EIO, errno.EACCES): raise
         # disk full / quota / size cap / read-only medium while writing output: loud, specific code, partial output is not a finished extraction
+        try:      # the run may have cleared the marker before the failing write: put it back so the message is true
+            if _OUT_DIR[0]: open(os.path.join(_OUT_DIR[0], safepath.INCOMPLETE), 'w').write('write failed (%s); output unusable\n' % e)
+        except OSError: pass
         sys.stderr.write('rvt-extract: cannot write output (%s); the output folder is incomplete (families/INCOMPLETE stays), do not use it\n' % e); return 5
     except (TypeError, AttributeError) as e:
         if 'unexpected keyword argument' not in str(e) and 'has no attribute' not in str(e): raise
@@ -221,7 +227,7 @@ def _main(argv=None):
         from . import rfa as RFA
         pre_rfa = set(safepath.stale_rfa(a.out, []))      # .rfa already in --out before this run: any of them rewritten below was silently replaced
         pd = RFA.ProjectDocs(prj); B = RFA.Builder(pd); byid = {e['family_id']: e for e in res['families']}; namer = safepath.Namer()
-        ncp = 0; _lock_out(a.out); safepath.mark_incomplete(a.out)      # marker stays until the final manifest is written: a killed run is recognisable
+        ncp = 0; _lock_out(a.out); safepath.mark_incomplete(a.out); _OUT_DIR[0] = a.out      # marker stays until the final manifest is written: a killed run is recognisable
         for fr in prj.families():
             e = byid.get(fr['id'])
             if e is None: continue
