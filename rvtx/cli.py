@@ -32,6 +32,11 @@ def family_source_warning(path, nfam):
         return 'WARNING: %s looks like a family document, not a project; it contains no embedded families, so 0 were extracted (rvt-extract reads .rvt/.rte projects)' % os.path.basename(path)
 
 
+def pre2017_refused(fmt, experimental):
+    """2016 (and older) projects: .rfa only with --experimental; an unknown format is never treated as old"""
+    return str(fmt).isdigit() and int(fmt) < 2017 and not experimental
+
+
 def known_bad_files(families):
     """relative paths of written .rfa whose manifest entry carries known_bad"""
     return sorted((e['rfa'].get('file') or '') for e in families if (e.get('rfa') or {}).get('known_bad') and e['rfa'].get('status') == 'written')
@@ -245,7 +250,7 @@ def _main(argv=None):
             ncp += 1
             if True: write_json(os.path.join(a.out, 'families', 'manifest.json'), res['families'])      # checkpoint: a killed run (OOM) still leaves a manifest next to the files it wrote
             old_fmt = str(pd.fmt).isdigit() and int(pd.fmt) < 2024
-            if str(pd.fmt).isdigit() and int(pd.fmt) < 2017 and not a.experimental:
+            if pre2017_refused(pd.fmt, a.experimental):
                 e['rfa'] = {'status': 'skipped', 'validation': VALIDATION['older'] + '; use --experimental to write anyway'}; continue
             try:
                 B.build(fr)
@@ -255,7 +260,7 @@ def _main(argv=None):
                 e['rfa'] = {'status': 'error', 'error': '%s: %s' % (type(ex).__name__, ex)}; log.append('%s: rfa failed: %s' % (e['name'], ex))
                 if os.environ.get('RVTX_TB'): import traceback; traceback.print_exc()
         # families that exist only as nested documents inside other families (not loaded in the project itself): extract them standalone too
-        if not (str(pd.fmt).isdigit() and int(pd.fmt) < 2017 and not a.experimental):
+        if not (pre2017_refused(pd.fmt, a.experimental)):
             have = {e['content_doc_guid'] for e in res['families'] if e.get('content_doc_guid')}; todo = [(fr['id'], B.pd.family_doc_index(fr), e['name']) for fr in prj.families() for e in [byid.get(fr['id'])] if e and e['embedded_doc'] and e.get('rfa', {}).get('status') == 'written']
             seen = set()
             while todo:
