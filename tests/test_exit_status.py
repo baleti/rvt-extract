@@ -30,3 +30,15 @@ class MassFailure(unittest.TestCase):
         self.assertEqual(code, 0); self.assertTrue(any('failed run' in m for m in msgs))
         self.assertEqual(exit_status(False, {}, [emb('written')] * 30 + [emb('error')]), (0, []))      # 1 of 31: quiet
         self.assertEqual(exit_status(False, {}, [{'embedded_doc': False, 'rfa': {'status': 'no_embedded_doc'}}] * 9), (0, []))
+
+
+class RiskNote(unittest.TestCase):
+    def test_risk_note_is_not_known_bad(self):
+        from rvtx.cli import known_bad_files
+        e = {'rfa': {'status': 'written', 'file': 'a.rfa', 'risk_note': 'unverified risk: x'}}
+        self.assertEqual(known_bad_files([e]), [])
+        e['rfa']['known_bad'] = 'y'; self.assertEqual(known_bad_files([e]), ['a.rfa'])
+
+    def test_cli_does_not_promote_risk_to_known_bad(self):
+        import inspect, rvtx.cli as c
+        self.assertNotIn("setdefault('known_bad', B.risk)", inspect.getsource(c))
