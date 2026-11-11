@@ -191,6 +191,9 @@ def _main(argv=None):
     ap.add_argument('--list', action='store_true', help='print what the file contains and exit')
     ap.add_argument('--list-kinds', action='store_true', help='print the output types and exit')
     a = ap.parse_args(argv)
+    if a.match:
+        try: re.compile(a.match)
+        except re.error as ex: print('ERROR: --match is not a valid regular expression (%s); nothing written' % ex, file=sys.stderr); return 2
     if a.list_kinds:
         for k in KINDS: print('%-20s %s' % (k, HELP.get(k, '')))
         return 0
