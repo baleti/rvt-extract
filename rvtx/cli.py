@@ -69,6 +69,10 @@ def exit_status(changed, src_damaged, families):
     msgs = []; code = 0
     bad = [e for e in families if (e.get('rfa') or {}).get('status') == 'error']
     io_bad = [e for e in families if str((e.get('rfa') or {}).get('error', '')).startswith(('OSError', 'FileNotFoundError', 'PermissionError', 'IsADirectoryError'))]
+    emb = [e for e in families if e.get('embedded_doc')]
+    emb_bad = [e for e in emb if (e.get('rfa') or {}).get('status') == 'error']
+    if emb and len(emb_bad) * 10 > len(emb):      # exit code stays 0 (per-family errors are manifest rows) but a mass failure must not pass quietly
+        msgs.append('WARNING: %d of %d families with an embedded document could not be written (rfa.status error); this looks like a failed run (memory cap? damaged source?), do not trust the output' % (len(emb_bad), len(emb)))
     if src_damaged:
         msgs.append('ERROR: source has damaged gzip members: %d family(ies) failed, the family list itself may be incomplete; exit code 3' % len(bad)); code = 3
     if io_bad:

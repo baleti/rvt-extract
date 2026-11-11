@@ -20,3 +20,13 @@ class T(unittest.TestCase):
         self.assertEqual(c, 4); self.assertEqual(len(m), 3)
         c, m = exit_status(False, {'Partitions/1': 1}, [fam('error', 'OSError: full')])
         self.assertEqual((c, len(m)), (5, 2))
+
+
+class MassFailure(unittest.TestCase):
+    def test_mass_error_on_embedded_rows_warns(self):
+        def emb(status): return {'embedded_doc': True, 'rfa': {'status': status}}
+        fams = [emb('written')] * 34 + [emb('error')] * 242      # shape of the bad memory-capped big-file run: rc 0 but must warn
+        code, msgs = exit_status(False, {}, fams)
+        self.assertEqual(code, 0); self.assertTrue(any('failed run' in m for m in msgs))
+        self.assertEqual(exit_status(False, {}, [emb('written')] * 30 + [emb('error')]), (0, []))      # 1 of 31: quiet
+        self.assertEqual(exit_status(False, {}, [{'embedded_doc': False, 'rfa': {'status': 'no_embedded_doc'}}] * 9), (0, []))
