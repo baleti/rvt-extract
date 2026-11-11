@@ -96,6 +96,17 @@ def sweep_orphan_tmp(root):
 _LOCKS = []; _LOCKED = set()
 
 
+def out_unwritable(out):
+    """reason string when --out cannot be created or written (nearest existing ancestor is no writable directory), else None; creates nothing"""
+    d = os.path.abspath(out)
+    if os.path.lexists(d): return None      # existing --out (dir, file, symlink): the later guards give their own specific message
+    while not os.path.lexists(d):
+        d = os.path.dirname(d)
+    if not os.path.isdir(d): return None      # an ancestor that is a file: the later guard words that
+    if not os.access(d, os.W_OK | os.X_OK): return 'cannot write in %s' % d
+    return None
+
+
 def _lock_out(out):
     if out in _LOCKED: return
     _LOCKED.add(out)
@@ -191,6 +202,9 @@ def _main(argv=None):
     ap.add_argument('--list', action='store_true', help='print what the file contains and exit')
     ap.add_argument('--list-kinds', action='store_true', help='print the output types and exit')
     a = ap.parse_args(argv)
+    if a.out and not a.list:
+        why_ = out_unwritable(a.out)
+        if why_: print('ERROR: --out %s: %s; nothing written' % (a.out, why_), file=sys.stderr); return 2
     if a.match:
         try: re.compile(a.match)
         except re.error as ex: print('ERROR: --match is not a valid regular expression (%s); nothing written' % ex, file=sys.stderr); return 2
