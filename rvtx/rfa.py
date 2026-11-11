@@ -284,7 +284,7 @@ class Builder:
         if self.W == 4 and os.environ.get('RVTX_DROPOBS', '1') != '0':      # Revit 2024 saves no LynxTracker (obsolete class of the older formats)
             self.dropped = {i for i, (b, s_) in oR.items() if len(b) > 2 and self.class_of(b) in self.OBSOLETE}; own -= self.dropped
         fid = next(i for i, (b, s) in oR.items() if self.class_of(b) == 'Family')
-        self.risk = 'unverified risk: 2022 nested families whose document holds a ProjectPhase record were rejected by Revit 2024 (needs recovery) in an old-code sample (12 of 12, 2026-10-31); at HEAD 2 of 2 re-extracted ones open (2026-11-05), so this flag may be stale' if (self.W == 4 and self.nested_docs(kdoc) and any(len(b) > 2 and self.class_of(b) == 'ProjectPhase' for b, s_ in oR.values())) else None
+        self.risk = 'unverified risk: 2022 nested families whose document holds a ProjectPhase record were rejected by Revit 2024 (needs recovery) in an old-code sample (12 of 12, 2026-10-31); at HEAD 2 of 2 re-extracted ones open (2026-11-05); 2019 real-project nested family (studyx_MEPSymbol_MVHR) opens and LoadFamily ok in Revit 2024 (2026-11-11), so this flag may be stale' if (self.W == 4 and self.nested_docs(kdoc) and any(len(b) > 2 and self.class_of(b) == 'ProjectPhase' for b, s_ in oR.values())) else None
         # shared set: standard + dependencies of the family's own records
         deps = set()
         nest_recs = [] if os.environ.get('RVTX_NESTDEPS', '0') == '0' else [(kn_, b) for kn_, _g in self.nested_docs(kdoc) for i, b, *_ in pd.docs[kn_]['R'][:-1]]     # nested documents reference materials / shared parameters of the parent (Revit keeps them; dangling ones make the family 'corrupt' on open)
