@@ -23,3 +23,7 @@ class Digest(unittest.TestCase):
                     b = open(os.path.join(out, r['file']), 'rb').read(); n += 1
                     self.assertEqual(r['sha256'], hashlib.sha256(b).hexdigest()); self.assertEqual(r['bytes'], len(b))
             self.assertGreater(n, 0)
+            listed = {(e.get('rfa') or {}).get('file') for e in m['families'] if (e.get('rfa') or {}).get('status') == 'written'}
+            disk = {os.path.relpath(os.path.join(a, f), out) for a, _, fs in os.walk(out) for f in fs if f.endswith('.rfa')}
+            self.assertEqual(disk - listed, set(), 'rfa on disk that the manifest does not list')
+            self.assertEqual(listed - disk, set(), 'manifest lists rfa missing on disk')
