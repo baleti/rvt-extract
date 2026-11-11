@@ -1,4 +1,4 @@
-import csv, struct, argparse, gc, json, os, re, sys, time
+import csv, stat, struct, argparse, gc, json, os, re, sys, time
 from . import core, manifest, items, files, safepath, knownbad
 
 KINDS = ['families'] + list(items.KINDS) + list(files.KINDS)
@@ -226,6 +226,8 @@ def _main(argv=None):
     t0 = time.time()
     if not os.path.exists(a.rvt):
         print('ERROR: %s does not exist; nothing written' % a.rvt, file=sys.stderr); return 2
+    if not stat.S_ISREG(os.stat(a.rvt).st_mode) and not os.path.isdir(a.rvt):
+        print('ERROR: %s is not a regular file (pipe, device or socket); nothing written' % a.rvt, file=sys.stderr); return 2
     st0 = os.stat(a.rvt); sig0 = (st0.st_size, st0.st_mtime_ns)      # a save into the source while we read it would give a torn read: compare again at the end
     w_ = mem_warning(st0.st_size, mem_available(), a.low_memory)
     if w_: print(w_, file=sys.stderr)
