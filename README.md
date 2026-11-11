@@ -59,6 +59,7 @@ Added 2026-11-07 (Revit 2024 upgrade-open, open facts only, no geometry/LoadFami
 
 ## Semantic check against Revit's own save (Snowdon Structural 2024, 2026-11-04)
 `tools/gtcmp.py INDEX.tsv rfacheck.tsv...` compares what Revit reads in an extracted .rfa (types, parameters, reference planes) with the index of the same family saved by Revit itself (EditFamily + SaveAs). On all 276 families opened in Revit 2024 (276 open as families, 0 open failures), the 177 that have an index row are identical on all three counts, 0 differ; 99 have no index row. Counts only, not values or geometry.
+Note on type counts: manifest `types[]` (and the families.csv `types` column) include the blank-named default type that Revit stores next to real types, so it is one higher than the type list Revit shows when a family has named types (14 Autodesk 2022 families: non-blank names equal Revit's TYPE rows in 13, the 14th has only the blank type). Count names that are not blank when comparing with Revit.
 
 ## Real-project campaign sample (opens in Revit 2024, 2026-11-01; aggregate numbers only, files stay local)
 Families lifted from real office projects and opened in Revit 2024 (rfacheck, upgrade open). Stratified sample (382 + 64 families, 2019-2025): 0 rejected among 430 checked non-title-block families (2019 64, 2020 63, 2021 52, 2022 62, 2023 63, 2024 64, 2025 62). Cells are opened / checked.
