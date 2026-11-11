@@ -26,6 +26,12 @@ def write_families_csv(path, families):
             w.writerow([e['category'], e['name'], len(e['types']), len(e['parameters']), e.get('shared'), e.get('in_place'), e['embedded_records'], r.get('nested', ''), '; '.join(r.get('nested_families') or []), r.get('status', 'no-embedded-doc' if not e['embedded_doc'] else ''), r.get('file', ''), r.get('validation', ''), r.get('known_bad', '')])
 
 
+def family_source_warning(path, nfam):
+    """a .rfa/.rft fed in as the source holds no family table: 0 families is expected there, say so instead of a silent empty result"""
+    if nfam == 0 and os.path.splitext(path)[1].lower() in ('.rfa', '.rft'):
+        return 'WARNING: %s looks like a family document, not a project; it contains no embedded families, so 0 were extracted (rvt-extract reads .rvt/.rte projects)' % os.path.basename(path)
+
+
 def known_bad_files(families):
     """relative paths of written .rfa whose manifest entry carries known_bad"""
     return sorted((e['rfa'].get('file') or '') for e in families if (e.get('rfa') or {}).get('known_bad') and e['rfa'].get('status') == 'written')
@@ -222,6 +228,8 @@ def _main(argv=None):
         for fr in sorted(prj.families(), key=lambda r: r['fields'].get('m_name') or ''):
             if fr['fields'].get('m_name') and (not a.match or re.search(a.match, fr['fields']['m_name'] + ' ' + (manifest.family_entry(prj, fr, docs.get(fr['id']))['category'] or ''), re.I)): ents.append(manifest.family_entry(prj, fr, docs.get(fr['id'])))
         res['families'] = ents
+        w_ = family_source_warning(a.rvt, len(ents))
+        if w_: log.append(w_); print(w_, file=sys.stderr)
         if a.list or not a.out:
             for e in ents: print('%-28s %-50s types=%-3d params=%-3d records=%d' % (e['category'], e['name'], len(e['types']), len(e['parameters']), e['embedded_records']))
     if 'families' in only and a.out and not a.no_rfa and not a.list:
