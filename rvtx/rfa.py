@@ -382,7 +382,7 @@ class Builder:
             for pair in pr:      # Revit's EditFamily lists the project-side symbol names ("450x450mm"), the Family record keeps the names at load time ("450 x 450mm")
                 nm = pd.symbol_names(fam_rec['id']).get(_norm_type(pair['name']))
                 if nm: pair['name'] = nm
-            if os.environ.get('RVTX_PRUNETYPES', '0') != '0':      # Revit's EditFamily lists exactly the project-side FamilySymbols: drop Family-record types the project does not have (c6x 2026-11-11, real 2019 project: 11 of 38 families listed more types than Revit's own save)
+            if os.environ.get('RVTX_PRUNETYPES', '1') != '0':      # Revit's EditFamily lists exactly the project-side FamilySymbols: drop Family-record types the project does not have (c6x 2026-11-11, real 2019 project: 11 of 38 families listed more types than Revit's own save)
                 keep = {_norm_type(n) for n in pd.symbol_names(fam_rec['id']).values()}
                 if keep and any(_norm_type(x['name']) in keep for x in pr):
                     cur = int(t['m_pFamilyTypes']['obj']['m_idx']); names = [x['name'] for x in pr]
