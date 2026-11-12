@@ -150,6 +150,17 @@ class ProjectDocs:
         self._project_constants()
         self.standard = self._standard_shared()
 
+    def symbol_types(self, family_id):
+        """[(element id, name, m_pParams obj)] of the project-side FamilySymbols of a family, by element id; named symbols that carry parameter values only"""
+        if not hasattr(self, '_symtypes'):
+            self._symtypes = {}
+            for i, r in self.byid.items():
+                if r['class'] != 'FamilySymbol': continue
+                si = r['fields'].get('m_symbolInfo'); nm = si.get('obj', {}).get('m_name') if isinstance(si, dict) else None
+                pp = (r['fields'].get('m_pParams') or {}).get('obj') if isinstance(r['fields'].get('m_pParams'), dict) else None
+                if nm and pp and pp.get('m_params') is not None: self._symtypes.setdefault(int(r['fields'].get('m_familyId', -1)), []).append((i, nm, pp))
+        return sorted(self._symtypes.get(int(family_id), []), key=lambda x: x[0])
+
     def symbol_names(self, family_id):
         """{normalised name: name} of the project-side FamilySymbols of a family (unique normalised names only)"""
         if not hasattr(self, '_symnames'):
@@ -382,6 +393,14 @@ class Builder:
             for pair in pr:      # Revit's EditFamily lists the project-side symbol names ("450x450mm"), the Family record keeps the names at load time ("450 x 450mm")
                 nm = pd.symbol_names(fam_rec['id']).get(_norm_type(pair['name']))
                 if nm: pair['name'] = nm
+            if os.environ.get('RVTX_SYMTYPES', '1') != '0':      # Revit's EditFamily lists exactly the project-side FamilySymbols with the PROJECT's current type values (the Family record keeps the load-time list); build the pairs from them (c6x 2026-11-12)
+                sy = pd.symbol_types(fam_rec['id'])
+                if sy:
+                    cur = int(t['m_pFamilyTypes']['obj']['m_idx']); curname = _norm_type(pr[cur]['name']) if 0 <= cur < len(pr) else None
+                    had_pairs = bool(pr)
+                    pr[:] = [{'name': nm_, 'params': _null_exprs(copy.deepcopy(pp_))} for _i, nm_, pp_ in sy]
+                    if not had_pairs and len(pr) == 1 and pr[0]['name'] == f.get('m_name'): pr[:] = []      # no types in the record and one symbol named like the family: Revit lists no type
+                    t['m_pFamilyTypes']['obj']['m_idx'] = next((k_ for k_, (_i, nm_, _p) in enumerate(sy) if _norm_type(nm_) == curname), 0)
             if os.environ.get('RVTX_PARAMREMAP', '1') != '0' and pr:      # type values reference PROJECT-side ParamElemFamily ids (e.g. 18134 'Width'); the lifted family document has its own ids for the same parameters: map by caption (c6x 2026-11-12, tvalcmp 5/30 identical before)
                 cap_ = lambda d_: ((d_.get('m_pParamDef') or {}).get('obj') or {}).get('m_caption')
                 doc_by_cap = {}
