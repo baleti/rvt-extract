@@ -68,7 +68,7 @@ Year table 2026-11-12 (Autodesk rst_basic sample of each year, HEAD with all typ
 | 2018 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
 | 2019 | 52/52 | 48/52 (0) | 39/41 | 26/29 |
 | 2020 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
-| 2021 | 52/52 | 49/52 (0) | 39/41 | 24/29 |
+| 2021 | 52/52 | 49/52 (0) | 41/41 (after item-94 fix) | 24/29 (pre-fix, not re-measured) |
 | 2022 | 52/52 | 49/52 (0) | 41/41 (after item-94 fix) | 24/30 |
 | 2023 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
 The not-ok loads are loads into a project that already holds the family name (not a file defect, not re-verified one by one). The 2 count differences in 2017, 2019, 2021, 2022 are the same two families (Brick - UK Standard, M_Elevation Mark Body_Circle-12mm1: 0 types vs Revit's 1), present before the type work; 2018, 2020, 2023 are free of them. These are flat+nested mixed (12 nested of 52); depth-2 and nested type values are not separately measured. 2024-2026 not re-run with the new switches.
