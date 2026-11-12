@@ -42,3 +42,10 @@ class RiskNote(unittest.TestCase):
     def test_cli_does_not_promote_risk_to_known_bad(self):
         import inspect, rvtx.cli as c
         self.assertNotIn("setdefault('known_bad', B.risk)", inspect.getsource(c))
+
+
+class OwnFamilyPick(unittest.TestCase):
+    def test_source_has_own_family_selection(self):
+        import inspect, rvtx.rfa as r
+        src = inspect.getsource(r)
+        self.assertIn("RVTX_OWNFAMILY", src); self.assertIn("fcands", src)

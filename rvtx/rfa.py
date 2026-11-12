@@ -294,7 +294,15 @@ class Builder:
         own = set(oH)
         if self.W == 4 and os.environ.get('RVTX_DROPOBS', '1') != '0':      # Revit 2024 saves no LynxTracker (obsolete class of the older formats)
             self.dropped = {i for i, (b, s_) in oR.items() if len(b) > 2 and self.class_of(b) in self.OBSOLETE}; own -= self.dropped
-        fid = next(i for i, (b, s) in oR.items() if self.class_of(b) == 'Family')
+        fcands = [i for i, (b, s) in oR.items() if self.class_of(b) == 'Family']
+        fid = fcands[0]
+        if len(fcands) > 1 and os.environ.get('RVTX_OWNFAMILY', '1') != '0':      # a document that holds nested shared families has several Family records: the document's own one has an empty name and is not shared (c6x 2026-11-12: 2017/2019/2021/2022 Brick - UK Standard took a nested family's record and listed no types)
+            def _own(i_):
+                got = []
+                def _g(t_): got.append((t_.get('m_name'), t_.get('m_bShared'))); return t_
+                self.edit(oR[i_][0], _g)
+                return got and not got[0][0] and not got[0][1]
+            fid = next((i_ for i_ in fcands if _own(i_)), fcands[0])
         self.risk = 'unverified risk: 2022 nested families whose document holds a ProjectPhase record were rejected by Revit 2024 (needs recovery) in an old-code sample (12 of 12, 2026-10-31); at HEAD 2 of 2 re-extracted ones open (2026-11-05); 2019 real-project nested family (studyx_MEPSymbol_MVHR) opens and LoadFamily ok in Revit 2024 (2026-11-11), so this flag may be stale' if (self.W == 4 and self.nested_docs(kdoc) and any(len(b) > 2 and self.class_of(b) == 'ProjectPhase' for b, s_ in oR.values())) else None
         # shared set: standard + dependencies of the family's own records
         deps = set()
