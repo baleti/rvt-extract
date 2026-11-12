@@ -408,7 +408,7 @@ class Builder:
                     if len(b_) > 2 and self.class_of(b_) == 'ParamElemFamily':
                         def _g(t_, i_=i_): doc_by_cap.setdefault(cap_(t_), i_); return t_
                         self.edit(b_, _g)
-                _okids = set(int(x) for x in all_ids); _eid_exp = os.environ.get('RVTX_REMAPEID', '0') != '0'      # experimental: also remap ElementId entries whose value exists in the family document (unverified in Revit)
+                _okids = set(int(x) for x in all_ids); _eid_exp = os.environ.get('RVTX_REMAPEID', '1') != '0'      # ElementId entries are remapped only when their value exists in the family document (Revit 2024: no LoadFamily failure on 154 families; RVTX_REMAPEID=0 skips all of them)
                 pmap = {}
                 for i_, r_ in pd.byid.items():
                     if r_['class'] == 'ParamElemFamily' and int(r_['fields'].get('m_famId', -1)) == int(fam_rec['id']):
