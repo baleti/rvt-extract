@@ -69,7 +69,7 @@ Year table 2026-11-12 (Autodesk rst_basic sample of each year, HEAD with all typ
 | 2019 | 52/52 | 48/52 (0) | 39/41 | 26/29 |
 | 2020 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
 | 2021 | 52/52 | 49/52 (0) | 39/41 | 24/29 |
-| 2022 | 52/52 | 48/52 (0) | 39/41 | 26/29 |
+| 2022 | 52/52 | 49/52 (0) | 41/41 (after item-94 fix) | 24/30 |
 | 2023 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
 The not-ok loads are loads into a project that already holds the family name (not a file defect, not re-verified one by one). The 2 count differences in 2017, 2019, 2021, 2022 are the same two families (Brick - UK Standard, M_Elevation Mark Body_Circle-12mm1: 0 types vs Revit's 1), present before the type work; 2018, 2020, 2023 are free of them. These are flat+nested mixed (12 nested of 52); depth-2 and nested type values are not separately measured. 2024-2026 not re-run with the new switches.
 Update 2026-11-12 (final state of the day, Revit 2024, fresh EditFamily+SaveAs ground truth, all three data sets): Autodesk 2020 rst_basic, Autodesk 2023 rst_basic and the real 5.3 MB 2019 office project: every lifted rfa opens (52/52, 52/52, 50/50), no LoadFamily failure (the 3+3+1 not-ok loads are the name-already-present case, loaded into a project that already holds the name), type/parameter/refplane counts identical to Revit's own save for all families with ground truth (41/41, 41/41, 38/38; 26/38 on the office project before the day's work), per-type parameter values identical in 24/30, 24/30 and 28/32 families (5/30 and 22/32 at the start). Remaining value differences are not analysed yet (a brick family, joist, door and some shared/ElementId parameters). Env switches: RVTX_SYMTYPES, RVTX_PARAMREMAP, RVTX_REMAPEID, RVTX_PRUNETYPES (all default on; 0 disables).
