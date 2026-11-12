@@ -382,6 +382,28 @@ class Builder:
             for pair in pr:      # Revit's EditFamily lists the project-side symbol names ("450x450mm"), the Family record keeps the names at load time ("450 x 450mm")
                 nm = pd.symbol_names(fam_rec['id']).get(_norm_type(pair['name']))
                 if nm: pair['name'] = nm
+            if os.environ.get('RVTX_PARAMREMAP', '1') != '0' and pr:      # type values reference PROJECT-side ParamElemFamily ids (e.g. 18134 'Width'); the lifted family document has its own ids for the same parameters: map by caption (c6x 2026-11-12, tvalcmp 5/30 identical before)
+                cap_ = lambda d_: ((d_.get('m_pParamDef') or {}).get('obj') or {}).get('m_caption')
+                doc_by_cap = {}
+                for i_, (b_, s_) in oR.items():
+                    if len(b_) > 2 and self.class_of(b_) == 'ParamElemFamily':
+                        def _g(t_, i_=i_): doc_by_cap.setdefault(cap_(t_), i_); return t_
+                        self.edit(b_, _g)
+                pmap = {}
+                for i_, r_ in pd.byid.items():
+                    if r_['class'] == 'ParamElemFamily' and int(r_['fields'].get('m_famId', -1)) == int(fam_rec['id']):
+                        c_ = cap_(r_['fields'])
+                        if c_ in doc_by_cap and doc_by_cap[c_] != i_: pmap[i_] = doc_by_cap[c_]
+                def _rm(o_):
+                    if isinstance(o_, dict):
+                        for k_, v_ in list(o_.items()):
+                            if k_ == 'm_paramId' and not isinstance(v_, (dict, list)) and int(v_) in pmap:
+                                o_[k_] = EID(pmap[int(v_)])
+                                if 'm_elemId' in o_ and int(o_['m_elemId']) != 0xFFFFFFFF: o_['m_elemId'] = EID(0xFFFFFFFF)      # an ElementId value points into the PROJECT: invalid in the family document
+                            else: _rm(v_)
+                    elif isinstance(o_, list):
+                        for v_ in o_: _rm(v_)
+                if pmap: _rm(pr)
             if os.environ.get('RVTX_PRUNETYPES', '1') != '0':      # Revit's EditFamily lists exactly the project-side FamilySymbols: drop Family-record types the project does not have (c6x 2026-11-11, real 2019 project: 11 of 38 families listed more types than Revit's own save)
                 keep = {_norm_type(n) for n in pd.symbol_names(fam_rec['id']).values()}
                 if keep and any(_norm_type(x['name']) in keep for x in pr):
