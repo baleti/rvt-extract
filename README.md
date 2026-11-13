@@ -66,7 +66,7 @@ Year table 2026-11-12 (Autodesk rst_basic sample of each year, HEAD with all typ
 |---|---|---|---|---|
 | 2017 | 52/52 (after item-94 fix, merged slices) | 47/51 (0 LOADFAIL) | 40/40 (after item-94 fix) | 24/30 (re-measured at cd82d45; 6 differ: 4 type-parameter values present only in our rfa as "(none)", 2 value mismatches) |
 | 2018 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
-| 2019 | 52/52 (after item-94 fix, merged slices) | 50/51 (0 LOADFAIL) | 41/41 (after item-94 fix) | 26/29 (pre-fix, not re-measured) |
+| 2019 | 52/52 (after item-94 fix, merged slices) | 50/51 (0 LOADFAIL) | 41/41 (after item-94 fix) | 24/30 (re-measured at cd82d45; same 6 families differ as 2017) |
 | 2020 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
 | 2021 | 52/52 | 49/52 (0) | 41/41 (after item-94 fix) | 24/29 (pre-fix, not re-measured) |
 | 2022 | 52/52 | 49/52 (0) | 41/41 (after item-94 fix) | 24/30 |
