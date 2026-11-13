@@ -53,6 +53,8 @@ Projects: 2017-2023 = rst_basic_sample_project of that year (opened in Revit 202
 | 2025 | 141/141 | 32/32 | 4/4 | 99/99 | 8 |
 | 2026 | 141/141 | 32/32 | 4/4 | 99/99 | 8 |
 
+Added 2026-11-13 (Revit 2026 open facts only, no LoadFamily/geometry; from c7x-famlift item 161, progress log): HEAD extraction of the Snowdon Structural 2026 wrote 276 rfa, Revit 2026 open 276/276 (isFam=True, 0 failures), diskaudit 0 findings; the 4 Boundary Condition families open (the earlier CorruptModelException came from a stale Oct-24 output, not HEAD).
+
 Not covered: 2016 (no project). Real (non-sample) projects: big2 and big3 contain families nested at depth 2 to 5 (up to 125 depth-2 and 25 depth-3 to 5 families in a single project); the Revit open results for those are in the big3 line above (sampled, not exhaustive) and a targeted sample of 24 depth-2-to-5 rfa (b4 to b6) opened in Revit 2024: 24/24 isFam=True, 0 rejected (sample only).
 
 Added 2026-11-07 (Revit 2024 upgrade-open, open facts only, no geometry/LoadFamily): HEAD 2017 and 2018 rst_basic outputs 52/52 open each; 30-file sample (every 27th) of the 800 families lifted from one 157 MB real 2019 project 30/30 open. Control for the 2020 Pile Cap known_bad: on the public 2020 rst_advanced sample both Revit's own copy and our lift of the 3 Pile families open (3/3 each), so that registry entry is specific to one local client project and its cause stays unproven. There is no native Revit 2019 oracle (add-in is signed only for 2024/2026 in the VM); 2019-2023 are always upgrade-open checks in Revit 2024.
