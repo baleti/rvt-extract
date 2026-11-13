@@ -67,7 +67,7 @@ Year table 2026-11-12 (Autodesk rst_basic sample of each year, HEAD with all typ
 | 2017 | 52/52 (after item-94 fix, merged slices) | 47/51 (0 LOADFAIL) | 40/40 (after item-94 fix) | 24/30 (re-measured after the own-family caption fix: 6 families differ, 8 values in all: 6 are ElementId values we clear on purpose, 2 are built-in defaults of timber_door_int; no regression) |
 | 2018 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
 | 2019 | 52/52 (after item-94 fix, merged slices) | 50/51 (0 LOADFAIL) | 41/41 (after item-94 fix) | 24/30 (re-measured after the own-family caption fix: same 6 families differ, 9 values in all: 6 ElementId values cleared on purpose, 3 built-in defaults (door Analytic Construction, Define Thermal Properties by; Brick Height 0); no regression) |
-| 2020 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
+| 2020 | 52/52 (HEAD 5bbdf8e, merged slices, 0 OPENFAIL) | 49/52 (0 LOADFAIL, HEAD) | 41/41 (earlier run; no ground-truth dir at HEAD, not re-compared) | 24/30 (earlier run, not re-measured at HEAD) |
 | 2021 | 52/52 (HEAD 5bbdf8e, merged slices) | 49/52 (0 LOADFAIL) | 41/41 | 24/30 (re-measured at HEAD: 6 families differ: 5 are ElementId values cleared on purpose, 1 (timber_door_int) shows 2 built-in defaults Analytic Construction / Define Thermal Properties by) |
 | 2022 | 52/52 | 49/52 (0) | 41/41 (after item-94 fix) | 24/30 |
 | 2023 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
