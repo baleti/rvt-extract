@@ -54,6 +54,7 @@ Projects: 2017-2023 = rst_basic_sample_project of that year (opened in Revit 202
 | 2026 | 141/141 | 32/32 | 4/4 | 99/99 | 8 |
 
 Added 2026-11-13 (Revit 2026 open facts only, no LoadFamily/geometry; from c7x-famlift item 161, progress log): HEAD extraction of the Snowdon Structural 2026 wrote 276 rfa, Revit 2026 open 276/276 (isFam=True, 0 failures), diskaudit 0 findings; the 4 Boundary Condition families open (the earlier CorruptModelException came from a stale Oct-24 output, not HEAD).
+Added 2026-11-13 (Revit 2026 open facts only, c7x-famlift item 163): HEAD extraction of the Snowdon Structural 2025 wrote 276 rfa, diskaudit 0 findings, Revit 2026 upgrade-open 276/276 (isFam=True, 0 exceptions; run as two slices of 147 and 131 with 2 overlapping).
 
 Not covered: 2016 (no project). Real (non-sample) projects: big2 and big3 contain families nested at depth 2 to 5 (up to 125 depth-2 and 25 depth-3 to 5 families in a single project); the Revit open results for those are in the big3 line above (sampled, not exhaustive) and a targeted sample of 24 depth-2-to-5 rfa (b4 to b6) opened in Revit 2024: 24/24 isFam=True, 0 rejected (sample only).
 
