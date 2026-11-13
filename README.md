@@ -68,7 +68,7 @@ Year table 2026-11-12 (Autodesk rst_basic sample of each year, HEAD with all typ
 | 2018 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
 | 2019 | 52/52 (after item-94 fix, merged slices) | 50/51 (0 LOADFAIL) | 41/41 (after item-94 fix) | 24/30 (re-measured after the own-family caption fix: same 6 families differ, 9 values in all: 6 ElementId values cleared on purpose, 3 built-in defaults (door Analytic Construction, Define Thermal Properties by; Brick Height 0); no regression) |
 | 2020 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
-| 2021 | 52/52 | 49/52 (0) | 41/41 (after item-94 fix) | 24/29 (pre-fix, not re-measured) |
+| 2021 | 52/52 (HEAD 5bbdf8e, merged slices) | 49/52 (0 LOADFAIL) | 41/41 | 24/30 (re-measured at HEAD: 6 families differ: 5 are ElementId values cleared on purpose, 1 (timber_door_int) shows 2 built-in defaults Analytic Construction / Define Thermal Properties by) |
 | 2022 | 52/52 | 49/52 (0) | 41/41 (after item-94 fix) | 24/30 |
 | 2023 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
 The not-ok loads are loads into a project that already holds the family name (not a file defect, not re-verified one by one). The 2 count differences in 2017, 2019, 2021, 2022 are the same two families (Brick - UK Standard, M_Elevation Mark Body_Circle-12mm1: 0 types vs Revit's 1), present before the type work; 2018, 2020, 2023 are free of them. These are flat+nested mixed (12 nested of 52); depth-2 and nested type values are not separately measured. 2024-2026 not re-run with the new switches.
