@@ -23,7 +23,7 @@ foreach (var path in Directory.GetFiles(dir, "*.rfa").OrderBy(x => x)) {
       string dt = ""; try { var gd = p.Definition.GetType().GetMethod("GetDataType"); if (gd != null) dt = Convert.ToString(Prop(gd.Invoke(p.Definition, null), "TypeId")); } catch { }
       sb.AppendLine("PARAM\t" + name + "\t" + p.Definition.Name + "\tinst=" + p.IsInstance + "\tstore=" + p.StorageType + "\tformula=" + (p.Formula ?? "") + "\tshared=" + p.IsShared + "\tdt=" + dt); }
     foreach (FamilyType t in fm.Types) foreach (FamilyParameter p in fm.Parameters) {      // per-type values (2026-11-12): TVAL name type param value
-      string v = ""; try { if (t.HasValue(p)) { switch (p.StorageType) { case StorageType.Double: v = t.AsDouble(p).Value.ToString("R"); break; case StorageType.Integer: v = t.AsInteger(p).Value.ToString(); break; case StorageType.String: v = t.AsString(p); break; case StorageType.ElementId: v = "id:" + t.AsElementId(p).IntegerValue; break; } } else v = "(none)"; } catch (Exception) { v = "(err)"; }
+      string v = ""; try { if (t.HasValue(p)) { switch (p.StorageType) { case StorageType.Double: v = t.AsDouble(p).Value.ToString("R"); break; case StorageType.Integer: v = t.AsInteger(p).Value.ToString(); break; case StorageType.String: v = t.AsString(p); break; case StorageType.ElementId: v = "id:" + t.AsElementId(p).ToString(); break; } } else v = "(none)"; } catch (Exception) { v = "(err)"; }
       sb.AppendLine("TVAL\t" + name + "\t" + t.Name + "\t" + p.Definition.Name + "\t" + v); }
     var cnt = new SortedDictionary<string, int>();
     foreach (var e in new FilteredElementCollector(d).WhereElementIsNotElementType().ToElements()) { string k = e.GetType().Name; int c; cnt.TryGetValue(k, out c); cnt[k] = c + 1; }
