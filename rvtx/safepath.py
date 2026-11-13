@@ -33,7 +33,8 @@ def safe_name(s: str | None, maxlen=120, maxbytes=200) -> str:
         for char in normalized
     ).strip(" .") or "Unnamed"
     if _DEVICE.fullmatch(name.split(".", 1)[0]):
-        name += "_"
+        first, dot, rest = name.partition(".")      # Windows treats 'AUX.x.rfa' as the device too: the suffix goes on the first segment
+        name = first + "_" + dot + rest
     name = _shorten(name, maxlen, original)
     if len(name.encode("utf-8")) > maxbytes:
         # file systems limit a name component to 255 BYTES; 120 CJK/emoji characters are 360-480 bytes
