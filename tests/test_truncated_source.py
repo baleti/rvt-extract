@@ -34,3 +34,18 @@ class Garbage(unittest.TestCase):
             src = os.path.join(d, tag + '.rvt'); open(src, 'wb').write(blob)
             self._run(d, src, tag)
         shutil.rmtree(d)
+
+
+@unittest.skipUnless(SAMPLE and os.path.exists(SAMPLE), 'set RVTX_SAMPLE_RVT')
+class AppendedTail(unittest.TestCase):
+    def test_appended_bytes_do_not_change_families(self):
+        """item 21 (2026-11-13): 64 KiB of random bytes after the end of a real rvt are ignored; the family set is the same as for the clean copy."""
+        d = tempfile.mkdtemp(); data = open(SAMPLE, 'rb').read(); names = []
+        for tag, blob in (('clean', data), ('tail', data + os.urandom(65536))):
+            src = os.path.join(d, tag + '.rvt'); open(src, 'wb').write(blob)
+            out = os.path.join(d, 'o' + tag)
+            r = subprocess.run([sys.executable, os.path.join(ROOT, 'bin', 'rvt-extract'), '--match', '^[A-Z]', '--only', 'families', '--out', out, src], capture_output=True, text=True, timeout=1500)
+            self.assertEqual(r.returncode, 0, r.stderr[-300:]); self.assertNotIn('Traceback', r.stderr)
+            names.append(sorted(os.path.relpath(os.path.join(a, f), out) for a, _, fs in os.walk(out) for f in fs if f.endswith('.rfa')))
+        self.assertTrue(names[0]); self.assertEqual(names[0], names[1])
+        shutil.rmtree(d)
