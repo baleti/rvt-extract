@@ -64,7 +64,7 @@ Update 2026-11-12 (per-type values, partial fix): type value records referenced 
 Year table 2026-11-12 (Autodesk rst_basic sample of each year, HEAD with all type/value switches, Revit 2024 open + LoadFamily, vs Revit's own EditFamily+SaveAs of the same file; 52 families lifted each): 
 | year | open | LoadFamily ok (LOADFAIL) | counts identical (with ground truth) | per-type values identical |
 |---|---|---|---|---|
-| 2017 | 52/52 (after item-94 fix, merged slices) | 47/51 (0 LOADFAIL) | 40/40 (after item-94 fix) | 24/30 (re-measured at cd82d45; 6 differ: 4 type-parameter values present only in our rfa as "(none)", 2 value mismatches) |
+| 2017 | 52/52 (after item-94 fix, merged slices) | 47/51 (0 LOADFAIL) | 40/40 (after item-94 fix) | 24/30 (re-measured at cd82d45; 6 differ: Revit has a value, our rfa has none for those type parameters) |
 | 2018 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
 | 2019 | 52/52 (after item-94 fix, merged slices) | 50/51 (0 LOADFAIL) | 41/41 (after item-94 fix) | 24/30 (re-measured at cd82d45; same 6 families differ as 2017) |
 | 2020 | 52/52 | 49/52 (0) | 41/41 | 24/30 |
