@@ -187,6 +187,8 @@ def main(argv=None):
         sys.stderr.write('rvt-extract: cannot read source: %s\n' % e); return 2
     except OSError as e:
         import errno
+        if e.errno == errno.ENAMETOOLONG:
+            sys.stderr.write('rvt-extract: a path is too long for this filesystem (%s); nothing usable written, choose a shorter --out\n' % e.filename); return 2
         if e.errno not in (errno.ENOSPC, errno.EFBIG, errno.EDQUOT, errno.EROFS, errno.EIO, errno.EACCES): raise
         # disk full / quota / size cap / read-only medium while writing output: loud, specific code, partial output is not a finished extraction
         try:      # the run may have cleared the marker before the failing write: put it back so the message is true
