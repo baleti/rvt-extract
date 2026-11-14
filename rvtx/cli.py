@@ -179,6 +179,9 @@ _OUT_DIR = [None]
 def main(argv=None):
     try:
         return _main(argv)
+    except KeyboardInterrupt:
+        # Ctrl-C mid-run: no traceback; families/INCOMPLETE (written at start) stays, a half-written rfa is only ever a tmp file
+        sys.stderr.write('rvt-extract: interrupted; the output folder is incomplete (families/INCOMPLETE stays), do not use it\n'); return 130
     except ValueError as e:
         # truncated / corrupt source: fail loudly, cleanly, nothing marked ok
         sys.stderr.write('rvt-extract: cannot read source: %s\n' % e); return 2
