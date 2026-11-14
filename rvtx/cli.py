@@ -144,9 +144,19 @@ def _digest(fn):
     return {'sha256': h.hexdigest(), 'bytes': n}
 
 
+def _finite(o):
+    """non-finite floats become the strings 'NaN' / 'Infinity' / '-Infinity' so the file stays strict JSON"""
+    if isinstance(o, float) and (o != o or o in (float('inf'), float('-inf'))): return 'NaN' if o != o else ('Infinity' if o > 0 else '-Infinity')
+    if isinstance(o, dict): return {k: _finite(v) for k, v in o.items()}
+    if isinstance(o, (list, tuple)): return [_finite(v) for v in o]
+    return o
+
+
 def write_json(path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    text = json.dumps(data, indent=1, default=str); tmp = path + '.tmp%d' % os.getpid()      # atomic: the manifest is what marks known-bad / error families, never leave it truncated
+    try: text = json.dumps(data, indent=1, default=str, allow_nan=False)
+    except ValueError: text = json.dumps(_finite(data), indent=1, default=str, allow_nan=False)      # NaN/Infinity are not JSON: strict readers (JS, jq) reject the whole manifest
+    tmp = path + '.tmp%d' % os.getpid()      # atomic: the manifest is what marks known-bad / error families, never leave it truncated
     try:
         with open(tmp, 'w', encoding='utf-8') as fh: fh.write(text); fh.flush(); os.fsync(fh.fileno())
         os.replace(tmp, path)
