@@ -143,13 +143,19 @@ def views(prj):
     return {'views': sorted(vs, key=lambda v: (v['class'], v['name'])), 'sheets': sorted(sheets, key=lambda x: str(x['number']))}, []
 
 
+def image_file(rid, nm):
+    """output name of a project image: the image name is untrusted and may exceed the 255-byte file name limit (lone surrogates, 300+ CJK characters)"""
+    from .safepath import safe_name
+    return 'images/%d_%s' % (rid, safe_name(re.sub(r'[^\w.\- ]', '_', str(nm)), maxlen=80, maxbytes=150))
+
+
 def images(prj):
     out = []; files = []
     for r in _cls(prj, 'ImageHolder'):
         f = r['fields']; blob = ob(f.get('m_pRasterImage') or {}).get('m_compressedImage')
         nm = ob(f.get('m_symbolInfo') or {}).get('m_name') or 'image_%d' % r['id']
         if isinstance(blob, (bytes, bytearray)) and blob[:4] == b'\x89PNG' or isinstance(blob, (bytes, bytearray)) and blob[:2] == b'\xff\xd8':
-            fn = 'images/%d_%s' % (r['id'], re.sub(r'[^\w.\- ]', '_', nm)); files.append((fn, bytes(blob))); out.append({'id': r['id'], 'name': nm, 'file': fn, 'bytes': len(blob)})
+            fn = image_file(r['id'], nm); files.append((fn, bytes(blob))); out.append({'id': r['id'], 'name': nm, 'file': fn, 'bytes': len(blob)})
     return out, files
 
 
