@@ -446,7 +446,7 @@ class Builder:
             d = t['m_parents']['obj']['m_deletion']
             t['m_parents']['obj']['m_deletion'] = [EID(e) for e in sorted({int(x) for x in d} | set(shared_sorted), key=lambda v: v - (1 << 64) if v >> 63 else v)]   # signed order: negative ids first (Revit)
         H[fid] = self.edit(H[fid], fam_h)
-        self.fam_rec = fam_rec; self.fid = fid; self.kn = kn; self.ac = ac; self.shared = shared; self.own = own; self.all_ids = all_ids; self.H, self.R, self.Z = H, R, Z; self.blob = blob; self.k = kdoc
+        self._gmap = None; self.fam_rec = fam_rec; self.fid = fid; self.kn = kn; self.ac = ac; self.shared = shared; self.own = own; self.all_ids = all_ids; self.H, self.R, self.Z = H, R, Z; self.blob = blob; self.k = kdoc
         return self
 
     # ---- assemble streams
