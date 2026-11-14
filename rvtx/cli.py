@@ -306,6 +306,8 @@ def _main(argv=None):
         for fr in sorted(prj.families(), key=lambda r: r['fields'].get('m_name') or ''):
             if fr['fields'].get('m_name') and (not a.match or re.search(a.match, fr['fields']['m_name'] + ' ' + (manifest.family_entry(prj, fr, docs.get(fr['id']))['category'] or ''), re.I)): ents.append(manifest.family_entry(prj, fr, docs.get(fr['id'])))
         res['families'] = ents
+        if a.match and not ents:      # a mistyped --match must not look like a successful run
+            w_ = 'WARNING: --match %r matched 0 families; nothing was extracted for it (the pattern is a case-insensitive regex on "name category")' % a.match; log.append(w_); print(w_, file=sys.stderr)
         w_ = family_source_warning(a.rvt, len(ents))
         if w_: log.append(w_); print(w_, file=sys.stderr)
         if a.list or not a.out:
