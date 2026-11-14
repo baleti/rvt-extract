@@ -17,6 +17,11 @@ VALIDATION = {'2024': 'validated: opens in Revit 2024, facts equal to EditFamily
               '2026': 'streams byte-identical to Revit 2026 output for tested families; Snowdon 2026 sample opens in Revit 2026 (177 of 177)'}
 
 
+def catalog_cell(v):
+    """type catalog .txt has no quoting: a comma or line break inside a name or value would add columns or rows"""
+    return re.sub(r'[,\r\n\u2028\u2029\x0b\x0c\x85]', ' ', str(v))
+
+
 def csv_cell(v):
     """spreadsheet formula injection: a family name such as =HYPERLINK(...) or @SUM(...) would run when families.csv is opened in Excel; neutralise with a leading apostrophe (text cells only)"""
     return "'" + v if isinstance(v, str) and v[:1] in ('=', '+', '-', '@', '\t', '\r') else v
@@ -368,8 +373,8 @@ def _main(argv=None):
             base = os.path.join(a.out, os.path.splitext(rf)[0]) if rf else os.path.join(a.out, 'families', safepath.safe_name(e['category']), safepath.safe_name(e['name']))
             os.makedirs(os.path.dirname(base), exist_ok=True)
             with open(base + '.txt', 'w', encoding='utf-8', errors='replace') as fh:
-                fh.write(','.join([''] + [c.replace(',', ' ') + ctype(c) for c in cols]) + '\n')
-                for t in e['types']: fh.write(','.join([t['name'].replace(',', ' ')] + [str(t['values'].get(c, {}).get('value', '')) for c in cols]) + '\n')
+                fh.write(','.join([''] + [catalog_cell(c) + ctype(c) for c in cols]) + '\n')
+                for t in e['types']: fh.write(','.join([catalog_cell(t['name'])] + [catalog_cell(t['values'].get(c, {}).get('value', '')) for c in cols]) + '\n')
         import csv
         write_families_csv(os.path.join(a.out, 'families', 'families.csv'), res['families'])
     for k, v in res.items():
