@@ -416,8 +416,8 @@ def _main(argv=None):
             fp = os.path.join(a.out, k, rel); os.makedirs(os.path.dirname(fp), exist_ok=True); open(fp, 'wb').write(b)
     write_json(os.path.join(a.out, 'manifest.json'), man)
     open(os.path.join(a.out, 'extract.log'), 'w', encoding='utf-8', errors='replace').write('\n'.join(log) + '\n')
-    st1 = os.stat(a.rvt)
-    changed = (st1.st_size, st1.st_mtime_ns) != sig0
+    try: st1 = os.stat(a.rvt); changed = (st1.st_size, st1.st_mtime_ns) != sig0
+    except OSError as e: changed = True; log.append('source no longer readable at the end of the run: %s' % e)      # deleted or moved during the run
     if not changed and fp0 is not None and _fingerprint(a.rvt) != fp0:
         changed = True; log.append('source content changed during the run with size and mtime restored')
     if not changed and not src_damaged:      # size+mtime can be restored by an in-place edit: when families fail en masse, re-check the content
