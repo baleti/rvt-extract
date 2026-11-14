@@ -3,8 +3,10 @@ import json, os, collections
 from . import RESEARCH
 from .core import eid
 
-_cat = json.load(open(os.path.join(RESEARCH, 'category_names.json')))
-_par = json.load(open(os.path.join(RESEARCH, 'param_names.json')))
+with open(os.path.join(RESEARCH, 'category_names.json')) as _f:
+    _cat = json.load(_f)
+with open(os.path.join(RESEARCH, 'param_names.json')) as _f:
+    _par = json.load(_f)
 
 
 def sgn(v):
