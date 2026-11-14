@@ -198,7 +198,8 @@ def line_styles(prj):
     gst = {r['id']: r for r in _cls(prj, 'GStyleElem')}; out = []
     for r in _cls(prj, 'CategoryElem'):
         c = ob(r['fields'].get('m_pCategory') or {}) or {}
-        if sg(c.get('m_parentCategoryId')) != -2002000: continue
+        par = c.get('m_parentCategoryId')
+        if par is None or sg(par) != -2002000: continue   # top-level categories have no parent id (a real 2020 project made sg(None) raise and dropped the whole section)
         e = {'id': r['id'], 'name': c.get('m_name'), 'pattern': None, 'pen_number': None, 'color_rgb': None}
         for gid in r['fields'].get('m_gstyleIds') or []:
             g = gst.get(int(gid))
