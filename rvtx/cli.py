@@ -179,6 +179,8 @@ _OUT_DIR = [None]
 def main(argv=None):
     try:
         return _main(argv)
+    except MemoryError:
+        sys.stderr.write('rvt-extract: out of memory while reading the project (about 80x the file size is needed); try --low-memory (families only) or a host with more memory. Any output folder is incomplete (families/INCOMPLETE stays if present)\n'); return 6
     except KeyboardInterrupt:
         # Ctrl-C mid-run: no traceback; families/INCOMPLETE (written at start) stays, a half-written rfa is only ever a tmp file
         sys.stderr.write('rvt-extract: interrupted; the output folder is incomplete (families/INCOMPLETE stays), do not use it\n'); return 130
