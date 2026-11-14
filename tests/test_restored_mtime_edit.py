@@ -24,5 +24,26 @@ class RestoredMtimeEdit(unittest.TestCase):
             self.assertEqual(p.returncode, 4, err[-400:])
 
 
+SAMPLE22 = os.environ.get('RVTX_SAMPLE_2022')
+
+
+@unittest.skipUnless(SAMPLE22 and os.path.exists(SAMPLE22), 'needs RVTX_SAMPLE_2022 (public 2022 rst_basic)')
+class HarmlessRestoredMtimeEdit(unittest.TestCase):
+    def test_valid_edit_no_family_breaks_is_rc4(self):
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with tempfile.TemporaryDirectory() as d:
+            src = os.path.join(d, 's.rvt'); shutil.copy(SAMPLE22, src); out = os.path.join(d, 'o')
+            os.utime(src, (1577836800, 1577836800))
+            p = subprocess.Popen([sys.executable, os.path.join(root, 'bin', 'rvt-extract'), src, '--out', out, '--only', 'project_info'],
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=dict(os.environ, RVT_NOCACHE='1'))
+            time.sleep(2)
+            with open(src, 'r+b') as f:      # F:\\Git -> G:\\Git (UTF-16) at 17478: bytes the extractor does not read, so no family breaks
+                f.seek(17478); f.write('G'.encode('utf-16-le'))
+            os.utime(src, (1577836800, 1577836800))
+            _, err = p.communicate()
+            if p.returncode == 0: self.skipTest('run finished before the edit')
+            self.assertEqual(p.returncode, 4, err[-300:])
+
+
 if __name__ == '__main__':
     unittest.main()
