@@ -120,3 +120,5 @@ Added 2026-11-14: Revit 2020 same-year open (not upgrade) of all 52 families ext
 Added 2026-11-14: Revit 2021 same-year open (not upgrade) of all 52 families extracted from the public 2021 rst_basic sample: 52/52 opened as families, 0 failures (open facts only).
 
 Added 2026-11-14: Revit 2022 same-year open (not upgrade) of all 52 families extracted from the public 2022 rst_basic sample: 52/52 opened as families, 0 failures (open facts only).
+
+Added 2026-11-14: Revit 2023 same-year open (not upgrade) of all 52 families extracted from the public 2023 rst_basic sample: 52/52 opened as families, 0 failures (open facts only). Same-year checks so far: 2020, 2021, 2022, 2023, each 52/52; 2017 to 2019 only checked by upgrade-open in Revit 2024.
