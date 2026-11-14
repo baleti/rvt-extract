@@ -74,6 +74,18 @@ def source_damage(path, x=None):
     return d
 
 
+def _fingerprint(path, limit=4 << 30):
+    """sha1 of the whole source (None when unreadable or above limit): size+mtime can be restored by an in-place edit, content cannot"""
+    try:
+        import hashlib
+        if os.path.getsize(path) > limit: return None
+        h = hashlib.sha1()
+        with open(path, 'rb') as f:
+            for b in iter(lambda: f.read(1 << 22), b''): h.update(b)
+        return h.hexdigest()
+    except OSError: return None
+
+
 def exit_status(changed, src_damaged, families):
     """(code, [stderr lines]); 0 ok, 3 damaged source (family list may be incomplete), 4 source changed while read, 5 an rfa could not be written; when several apply the code is 4, then 5, then 3 and every message is still printed"""
     msgs = []; code = 0
@@ -90,7 +102,7 @@ def exit_status(changed, src_damaged, families):
     if io_bad:
         msgs.append('ERROR: %d rfa could not be written (I/O error, e.g. disk full); exit code 5' % len(io_bad)); code = 5
     if changed:
-        msgs.append('ERROR: the source file changed while it was being read (size/mtime differ); outputs may mix two versions, discard the output and run again; exit code 4'); code = 4
+        msgs.append('ERROR: the source file changed while it was being read (size, mtime or content differ); outputs may mix two versions, discard the output and run again; exit code 4'); code = 4
     return code, msgs
 
 
@@ -269,6 +281,7 @@ def _main(argv=None):
         print('ERROR: %s does not exist; nothing written' % a.rvt, file=sys.stderr); return 2
     if not stat.S_ISREG(os.stat(a.rvt).st_mode) and not os.path.isdir(a.rvt):
         print('ERROR: %s is not a regular file (pipe, device or socket); nothing written' % a.rvt, file=sys.stderr); return 2
+    fp0 = _fingerprint(a.rvt)
     st0 = os.stat(a.rvt); sig0 = (st0.st_size, st0.st_mtime_ns)      # a save into the source while we read it would give a torn read: compare again at the end
     w_ = mem_warning(st0.st_size, mem_available(), a.low_memory)
     if w_: print(w_, file=sys.stderr)
@@ -405,6 +418,8 @@ def _main(argv=None):
     open(os.path.join(a.out, 'extract.log'), 'w', encoding='utf-8', errors='replace').write('\n'.join(log) + '\n')
     st1 = os.stat(a.rvt)
     changed = (st1.st_size, st1.st_mtime_ns) != sig0
+    if not changed and fp0 is not None and _fingerprint(a.rvt) != fp0:
+        changed = True; log.append('source content changed during the run with size and mtime restored')
     if not changed and not src_damaged:      # size+mtime can be restored by an in-place edit: when families fail en masse, re-check the content
         _fam = res.get('families', []); _emb = [e for e in _fam if e.get('embedded_doc')]
         if _emb and sum(1 for e in _emb if (e.get('rfa') or {}).get('status') == 'error') * 10 > len(_emb):
