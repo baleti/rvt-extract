@@ -114,3 +114,5 @@ Added 2026-11-14 (sweep slices, Revit 2024 upgrade-open, open facts only): 8 sli
 Added 2026-11-14: 12 pile families lifted at HEAD from a real 2020 project (kept local): Revit 2024 upgrade-open 12/12 opened as families, 0 failures (open facts only). Pile families lifted in October 2026 with the old encoder had been rejected (11/11, CArchiveException 105); that does not reproduce at HEAD.
 
 Added 2026-11-14: Revit 2025 same-year open (not upgrade) of 26 families sampled evenly from the 2025 Snowdon Structural extraction: 26/26 opened as families, 0 failures (open facts only; a sample, the exhaustive 276/276 check was in Revit 2026).
+
+Added 2026-11-14: Revit 2020 same-year open (not upgrade) of all 52 families extracted from the public 2020 rst_basic sample: 52/52 opened as families, 0 failures (open facts only).
