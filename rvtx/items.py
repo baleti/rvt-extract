@@ -13,7 +13,7 @@ def ob(o):
 
 
 def sg(v):
-    return manifest.sgn(v)
+    return None if v is None else manifest.sgn(v)   # absent id field (seen in real projects: schedule without category, category without parent) is None, not a crash that drops the section
 
 
 def _cls(prj, c):
