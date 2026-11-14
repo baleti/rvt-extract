@@ -198,7 +198,15 @@ def mem_available():
 _OUT_DIR = [None]
 
 
+def safe_stdio():
+    """under LANG=C (cron, systemd) stdout/stderr are ASCII and printing a CJK family name raised UnicodeEncodeError in the middle of a run: never fail on a log line"""
+    for st in (sys.stdout, sys.stderr):
+        try: st.reconfigure(errors='backslashreplace')
+        except Exception: pass
+
+
 def main(argv=None):
+    safe_stdio()
     try:
         return _main(argv)
     except MemoryError:
@@ -397,6 +405,12 @@ def _main(argv=None):
     open(os.path.join(a.out, 'extract.log'), 'w', encoding='utf-8', errors='replace').write('\n'.join(log) + '\n')
     st1 = os.stat(a.rvt)
     changed = (st1.st_size, st1.st_mtime_ns) != sig0
+    if not changed and not src_damaged:      # size+mtime can be restored by an in-place edit: when families fail en masse, re-check the content
+        _fam = res.get('families', []); _emb = [e for e in _fam if e.get('embedded_doc')]
+        if _emb and sum(1 for e in _emb if (e.get('rfa') or {}).get('status') == 'error') * 10 > len(_emb):
+            _d2 = source_damage(a.rvt, getattr(prj, 'x', None))
+            if _d2 and set(_d2) != {'(damage check failed)'}:
+                changed = True; log.append('source now has damaged gzip member(s) %s that the start check did not see: modified during the run' % dict(_d2))
     if changed:
         man['source_changed_during_run'] = True; write_json(os.path.join(a.out, 'manifest.json'), man)
         safepath.mark_incomplete(a.out)      # outputs may mix two source versions: a folder that looks finished must not be trusted
