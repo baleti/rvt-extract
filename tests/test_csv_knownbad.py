@@ -21,7 +21,7 @@ class T(unittest.TestCase):
             p = os.path.join(d, 'f.csv'); cli.write_families_csv(p, fams)
             rows = list(csv.DictReader(open(p, encoding='utf-8', newline='')))
         self.assertEqual(len(rows), len(names))
-        self.assertEqual([r['name'] for r in rows[:4]], names[:4])
+        self.assertEqual([r['name'] for r in rows[:4]], names[:3] + ["'=1+1"])      # formula-like names get a leading apostrophe (Excel formula injection); the exact name stays in manifest.json
         self.assertEqual(rows[4]['name'], '?lone'); self.assertEqual(rows[5]['name'], names[5])
         self.assertEqual(rows[0]['rfa_status'], 'no-embedded-doc')
 

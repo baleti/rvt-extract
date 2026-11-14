@@ -17,13 +17,18 @@ VALIDATION = {'2024': 'validated: opens in Revit 2024, facts equal to EditFamily
               '2026': 'streams byte-identical to Revit 2026 output for tested families; Snowdon 2026 sample opens in Revit 2026 (177 of 177)'}
 
 
+def csv_cell(v):
+    """spreadsheet formula injection: a family name such as =HYPERLINK(...) or @SUM(...) would run when families.csv is opened in Excel; neutralise with a leading apostrophe (text cells only)"""
+    return "'" + v if isinstance(v, str) and v[:1] in ('=', '+', '-', '@', '\t', '\r') else v
+
+
 def write_families_csv(path, families):
     """one row per family for auditing / standards checks; known_bad is the last column"""
     with open(path, 'w', newline='', encoding='utf-8', errors='replace') as fh:
         w = csv.writer(fh); w.writerow(['category', 'name', 'types', 'parameters', 'shared', 'in_place', 'embedded_records', 'nested', 'nested_families', 'rfa_status', 'rfa_file', 'validation', 'known_bad'])
         for e in families:
             r = e.get('rfa') or {}
-            w.writerow([e['category'], e['name'], len(e['types']), len(e['parameters']), e.get('shared'), e.get('in_place'), e['embedded_records'], r.get('nested', ''), '; '.join(r.get('nested_families') or []), r.get('status', 'no-embedded-doc' if not e['embedded_doc'] else ''), r.get('file', ''), r.get('validation', ''), r.get('known_bad', '')])
+            w.writerow([csv_cell(c) for c in [e['category'], e['name'], len(e['types']), len(e['parameters']), e.get('shared'), e.get('in_place'), e['embedded_records'], r.get('nested', ''), '; '.join(r.get('nested_families') or []), r.get('status', 'no-embedded-doc' if not e['embedded_doc'] else ''), r.get('file', ''), r.get('validation', ''), r.get('known_bad', '')]])
 
 
 def family_source_warning(path, nfam):
