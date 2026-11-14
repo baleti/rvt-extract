@@ -7,6 +7,7 @@ import zlib
 
 
 _FORBIDDEN = frozenset('<>:"/\\|?*')
+_BIDI = frozenset("\u061c\u200e\u200f\u202a\u202b\u202c\u202d\u202e\u2066\u2067\u2068\u2069")      # bidi controls reorder the displayed name (\u202e + "txt.rfa" shows as "afr.txt")
 _DEVICE = re.compile(r"^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$", re.I)
 
 
@@ -28,7 +29,7 @@ def safe_name(s: str | None, maxlen=120, maxbytes=200) -> str:
     original = re.sub("[\ud800-\udfff]", "\ufffd", s or "")   # lone UTF-16 surrogates cannot be encoded as UTF-8
     normalized = unicodedata.normalize("NFC", original)
     name = "".join(
-        "_" if char in _FORBIDDEN or unicodedata.category(char) == "Cc"
+        "_" if char in _FORBIDDEN or char in _BIDI or unicodedata.category(char) == "Cc"
         else char
         for char in normalized
     ).strip(" .") or "Unnamed"

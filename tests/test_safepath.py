@@ -64,3 +64,9 @@ class Collisions(unittest.TestCase):
         keys = [unicodedata.normalize('NFC', g).lower() for g in got]
         self.assertEqual(len(set(keys)), len(keys), got)
         for g in got: self.assertLessEqual(len(g), 130); self.assertNotIn(g.split('.')[0].upper(), ('CON', 'PRN', 'AUX', 'NUL'))
+
+
+def test_bidi_controls_replaced():
+    from rvtx.safepath import safe_name
+    assert safe_name("\u202etxt.rfa") == "_txt.rfa"
+    assert not any(c in safe_name("a\u2066b\u200fc") for c in "\u2066\u200f")
