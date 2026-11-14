@@ -70,3 +70,11 @@ def test_bidi_controls_replaced():
     from rvtx.safepath import safe_name
     assert safe_name("\u202etxt.rfa") == "_txt.rfa"
     assert not any(c in safe_name("a\u2066b\u200fc") for c in "\u2066\u200f")
+
+
+def test_namer_unicode_case_fold():
+    from rvtx.safepath import Namer
+    n = Namer()
+    a = n.take("d", "\u03c3", ".rfa"); b = n.take("d", "\u03c2", ".rfa")      # sigma vs final sigma: same file on NTFS/APFS
+    assert a != b and a.lower() != b.lower() or a != b
+    assert b == "\u03c2 (2).rfa"

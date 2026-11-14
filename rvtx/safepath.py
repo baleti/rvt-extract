@@ -47,6 +47,11 @@ def safe_name(s: str | None, maxlen=120, maxbytes=200) -> str:
     return name
 
 
+def _fold(s: str) -> str:
+    """key for case-insensitive file systems: NTFS/APFS fold with upper-case tables, so final sigma and sigma (or dotless i, sharp s) collide although str.lower() keeps them apart"""
+    return s.casefold().upper().lower()
+
+
 class Namer:
     """Allocate names in memory, with independent state per directory key."""
 
@@ -55,14 +60,14 @@ class Namer:
 
     def take(self, directory: str, name: str, ext: str = "") -> str:
         """Return an unused sanitized name, preserving the supplied extension."""
-        seen = self._seen.setdefault(directory.lower(), set())
+        seen = self._seen.setdefault(_fold(directory), set())
         base = safe_name(name)
         candidate = base + ext
         number = 2
-        while candidate.lower() in seen:
+        while _fold(candidate) in seen:
             candidate = f"{base} ({number}){ext}"
             number += 1
-        seen.add(candidate.lower())
+        seen.add(_fold(candidate))
         return candidate
 
 
