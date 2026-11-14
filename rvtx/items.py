@@ -37,6 +37,11 @@ def line_patterns(prj):
     return out, []
 
 
+def _sp_clean(v):
+    """shared-parameter file is tab separated, one record per line: a tab or line break inside a name/description corrupts the record"""
+    return re.sub(r'[\t\r\n\u2028\u2029\x0b\x0c\x85]+', ' ', str(v if v is not None else ''))
+
+
 def shared_parameters(prj):
     """manifest + a Revit shared-parameter .txt (data type is the stored unit code: Revit's spec names are not recovered, TEXT where unknown)"""
     out = []
@@ -53,7 +58,7 @@ def shared_parameters(prj):
     lines = ['# This is a Revit shared parameter file reconstructed by rvt-extract.', '*META\tVERSION\tMINVERSION', 'META\t2\t1', '*GROUP\tID\tNAME', 'GROUP\t1\tExtracted',
              '*PARAM\tGUID\tNAME\tDATATYPE\tDATACATEGORY\tGROUP\tVISIBLE\tDESCRIPTION\tUSERMODIFIABLE\tHIDEWHENNOVALUE']
     for p in sorted(out, key=lambda p: p['name'] or ''):
-        lines.append('PARAM\t%s\t%s\tTEXT\t\t1\t%d\t%s\t%d\t0' % (p['guid'], p['name'], p['visible'], p['description'].replace('\t', ' '), p['user_modifiable']))
+        lines.append('PARAM\t%s\t%s\tTEXT\t\t1\t%d\t%s\t%d\t0' % (p['guid'], _sp_clean(p['name']), p['visible'], _sp_clean(p['description']), p['user_modifiable']))
     return out, [('shared_parameters.txt', ('\r\n'.join(lines) + '\r\n').encode('utf-16le'))]
 
 
