@@ -73,7 +73,9 @@ def exit_status(changed, src_damaged, families):
     emb_bad = [e for e in emb if (e.get('rfa') or {}).get('status') == 'error']
     if emb and len(emb_bad) * 10 > len(emb):      # exit code stays 0 (per-family errors are manifest rows) but a mass failure must not pass quietly
         msgs.append('WARNING: %d of %d families with an embedded document could not be written (rfa.status error); this looks like a failed run (memory cap? damaged source?), do not trust the output' % (len(emb_bad), len(emb)))
-    if src_damaged:
+    if src_damaged and set(src_damaged) == {'(damage check failed)'}:
+        msgs.append('ERROR: the damage check could not run, so the source is unverified (not known to be damaged); output not trusted, exit code 3 (use a matching RVT_RESEARCH)'); code = 3
+    elif src_damaged:
         msgs.append('ERROR: source has damaged gzip members: %d family(ies) failed, the family list itself may be incomplete; exit code 3' % len(bad)); code = 3
     if io_bad:
         msgs.append('ERROR: %d rfa could not be written (I/O error, e.g. disk full); exit code 5' % len(io_bad)); code = 5
