@@ -112,3 +112,5 @@ Exit codes and the INCOMPLETE marker (verified by real kill/limit/truncate runs,
 Added 2026-11-14 (sweep slices, Revit 2024 upgrade-open, open facts only): 8 slices of 45 extracted families each (360 families): 360 opened as families, 0 open failures. Partial: only these slices of the sweep were checked.
 
 Added 2026-11-14: 12 pile families lifted at HEAD from a real 2020 project (kept local): Revit 2024 upgrade-open 12/12 opened as families, 0 failures (open facts only). Pile families lifted in October 2026 with the old encoder had been rejected (11/11, CArchiveException 105); that does not reproduce at HEAD.
+
+Added 2026-11-14: Revit 2025 same-year open (not upgrade) of 26 families sampled evenly from the 2025 Snowdon Structural extraction: 26/26 opened as families, 0 failures (open facts only; a sample, the exhaustive 276/276 check was in Revit 2026).
