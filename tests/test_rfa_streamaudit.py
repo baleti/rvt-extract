@@ -1,0 +1,23 @@
+import glob, os, shutil, sys, tempfile, unittest
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'tools'))
+SRC = sorted(glob.glob(os.path.expanduser('~/famlift-run/rl2019/families/*/*.rfa')))[:1]
+
+
+@unittest.skipUnless(SRC, 'no local public-sample re-lift (famlift-run/rl2019)')
+class T(unittest.TestCase):
+    def mut(self, stream, off):
+        import olefile, rfa_streamaudit as A
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, 'x.rfa'); shutil.copy(SRC[0], p)
+            o = olefile.OleFileIO(p, write_mode=True)
+            data = bytearray(o.openstream(stream).read()); data[off] ^= 0x40; o.write_stream(stream, bytes(data)); o.close()
+            return A.audit(p)
+
+    def test_control_clean_and_flips_found(self):
+        import rfa_streamaudit as A
+        self.assertEqual(A.audit(SRC[0]), [])
+        self.assertTrue(self.mut('Contents', 200))
+        self.assertTrue(self.mut('TransmissionData', 50))
+        import olefile
+        part = [n for n in olefile.OleFileIO(SRC[0]).listdir() if n[0] == 'Partitions'][0]
+        self.assertTrue(self.mut('/'.join(part), 2000))
