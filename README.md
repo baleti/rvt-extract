@@ -122,3 +122,5 @@ Added 2026-11-14: Revit 2021 same-year open (not upgrade) of all 52 families ext
 Added 2026-11-14: Revit 2022 same-year open (not upgrade) of all 52 families extracted from the public 2022 rst_basic sample: 52/52 opened as families, 0 failures (open facts only).
 
 Added 2026-11-14: Revit 2023 same-year open (not upgrade) of all 52 families extracted from the public 2023 rst_basic sample: 52/52 opened as families, 0 failures (open facts only). Same-year checks so far: 2020, 2021, 2022, 2023, each 52/52; 2017 to 2019 only checked by upgrade-open in Revit 2024.
+
+Added 2026-11-14: single-byte fault injection on the public 2022 rst_basic sample (10 flips spread from 5% to 95% of the file, no Revit): no traceback in any run; 8 runs exit 3 with 0 rfa written (41 families failed), 1 exits 2 (corrupt CFB), 2 exit 3 but still write families (52 and 51), every written rfa identical to the clean extraction apart from the GUID-carrying streams (BasicFileInfo, Global/History, PartAtom), and the one failed family is recorded as error in the manifest. Two clean extractions differ only in those three streams.
