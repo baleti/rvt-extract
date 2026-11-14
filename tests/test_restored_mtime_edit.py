@@ -45,5 +45,20 @@ class HarmlessRestoredMtimeEdit(unittest.TestCase):
             self.assertEqual(p.returncode, 4, err[-300:])
 
 
+
+@unittest.skipUnless(SAMPLE and os.path.exists(SAMPLE), 'needs RVTX_SAMPLE')
+class SourceDeletedDuringRun(unittest.TestCase):
+    def test_deleted_source_is_rc4_not_traceback(self):
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with tempfile.TemporaryDirectory() as d:
+            src = os.path.join(d, 's.rvt'); shutil.copy(SAMPLE, src); out = os.path.join(d, 'o')
+            p = subprocess.Popen([sys.executable, os.path.join(root, 'bin', 'rvt-extract'), src, '--out', out, '--only', 'project_info'],
+                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=dict(os.environ, RVT_NOCACHE='1'))
+            time.sleep(2); os.unlink(src)
+            _, err = p.communicate()
+            if p.returncode == 0: self.skipTest('run finished before the delete')
+            self.assertEqual(p.returncode, 4, err[-300:]); self.assertNotIn('Traceback', err)
+
+
 if __name__ == '__main__':
     unittest.main()
