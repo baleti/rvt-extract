@@ -116,3 +116,5 @@ Added 2026-11-14: 12 pile families lifted at HEAD from a real 2020 project (kept
 Added 2026-11-14: Revit 2025 same-year open (not upgrade) of 26 families sampled evenly from the 2025 Snowdon Structural extraction: 26/26 opened as families, 0 failures (open facts only; a sample, the exhaustive 276/276 check was in Revit 2026).
 
 Added 2026-11-14: Revit 2020 same-year open (not upgrade) of all 52 families extracted from the public 2020 rst_basic sample: 52/52 opened as families, 0 failures (open facts only).
+
+Added 2026-11-14: Revit 2021 same-year open (not upgrade) of all 52 families extracted from the public 2021 rst_basic sample: 52/52 opened as families, 0 failures (open facts only).
