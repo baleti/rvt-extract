@@ -35,6 +35,11 @@ The source .rvt is only ever read (checked: read-only copy in a read-only direct
 `--low-memory` needs a research tree whose rvt_entities.extract accepts window/skip_eh/skip_stubs/reduce (RVT_RESEARCH=~/rvt-research-h1 on remote-host).
 A stderr warning appears when available memory is under about 80 times the source size (measured once: a 28 MB project peaked at 1.9 GB); a native allocation failure otherwise aborts with rc 134 and no message.
 
+## Checking and repairing extracted .rfa (no Revit needed)
+- `tools/rfa_streamaudit.py DIR...`: structural audit (OLE, PartAtom XML, TransmissionData, Contents/Partitions gzip CRC). Structural only, not a Revit open.
+- `tools/rfa_fix_partatom.py IN.rfa OUT.rfa`: repairs an .rfa written before the PartAtom XML-escape fix (raw `&` in a family title). Rewrites only PartAtom, copies every other stream byte for byte, never writes in place. Not yet verified by a Revit open.
+- Re-lifting the same input gives different bytes only in BasicFileInfo, Global/History and PartAtom (GUIDs, timestamp); compare other streams for regression tests.
+
 ## Limits
 .rfa output status by Revit format (details and numbers in RESULTS.md):
 - 2024: validated. 177 of 177 Snowdon families and 100 of 100 families of a real office project open in Revit 2024; oracle facts (category, types, parameters, formulas, element counts) equal Revit's own EditFamily+SaveAs for 170 of 179 compared (residual: extra pattern records).
