@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """rfa_streamaudit.py DIR [DIR...] : VM-free structural audit of every .rfa below the directories (public-sample or local runs; prints aggregate counts and short ids only).
 Checks per file: OLE opens; PartAtom parses as XML; TransmissionData = 4-byte length + UTF-16 XML that parses and whose length matches; the first gzip member of Contents and Partitions/* decompresses completely (CRC valid); BasicFileInfo non-empty. Exit 1 on any finding."""
-import sys, os, glob, zlib, struct
+import re, sys, os, glob, zlib, struct
 import xml.etree.ElementTree as ET
 import olefile
 
@@ -32,7 +32,9 @@ def audit(f):
             if n * 2 != len(t) - 4: bad.append('TransmissionData length %d chars vs %d bytes' % (n, len(t) - 4))
             ET.fromstring(t[4:].decode('utf-16le').lstrip('﻿'))
         except Exception as e: bad.append('TransmissionData: %s' % e)
-        if not o.openstream('BasicFileInfo').read(): bad.append('BasicFileInfo empty')
+        bfi = o.openstream('BasicFileInfo').read()
+        if not bfi: bad.append('BasicFileInfo empty')
+        elif re.search(r'(?:[/\\]home[/\\]|[A-Za-z]:[/\\])', bfi.decode('utf-16le', 'replace')): bad.append('BasicFileInfo carries an absolute host path (pre-fix output: re-lift)')
         for s in sorted(names):
             if s == 'Contents' or s.startswith('Partitions/'):
                 d = o.openstream(s).read(); i = d.find(b'\x1f\x8b\x08')      # a short header precedes the gzip data

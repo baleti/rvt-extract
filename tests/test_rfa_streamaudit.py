@@ -21,3 +21,17 @@ class T(unittest.TestCase):
         import olefile
         part = [n for n in olefile.OleFileIO(SRC[0]).listdir() if n[0] == 'Partitions'][0]
         self.assertTrue(self.mut('/'.join(part), 2000))
+
+
+@unittest.skipUnless(SRC, 'no local public-sample re-lift (famlift-run/rl2019)')
+class TPath(unittest.TestCase):
+    def test_host_path_in_basicfileinfo_found(self):
+        import olefile, rfa_streamaudit as A
+        with tempfile.TemporaryDirectory() as d:
+            p = os.path.join(d, 'x.rfa'); shutil.copy(SRC[0], p)
+            self.assertEqual(A.audit(p), [])
+            o = olefile.OleFileIO(p, write_mode=True)
+            b = o.openstream('BasicFileInfo').read()
+            tail = ('/home/u/x.rfa').encode('utf-16le')
+            o.write_stream('BasicFileInfo', b[:40] + tail + b[40 + len(tail):]); o.close()
+            self.assertTrue(any('host path' in x for x in A.audit(p)))
