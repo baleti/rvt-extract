@@ -52,7 +52,7 @@ def audit(f):
         except Exception as e: bad.append('TransmissionData: %s' % e)
         bfi = o.openstream('BasicFileInfo').read()
         if not bfi: bad.append('BasicFileInfo empty')
-        elif re.search(r'(?:[/\\]home[/\\]|[A-Za-z]:[/\\])', bfi.decode('utf-16le', 'replace')): bad.append('BasicFileInfo carries an absolute host path (pre-fix output: re-lift)')
+        elif re.search(r'(?:[/\\]home[/\\]|[A-Za-z]:[/\\]|\w[/\\]\w)', bfi.decode('utf-16le', 'replace')): bad.append('BasicFileInfo carries a host path (absolute or relative) (pre-fix output: re-lift)')
         for s in sorted(names):
             if s == 'Contents' or s.startswith('Partitions/'):
                 d = o.openstream(s).read(); i = d.find(b'\x1f\x8b\x08')      # a short header precedes the gzip data
