@@ -27,7 +27,9 @@ def main(a, b):
     part = [k for k in st if k.startswith('Partitions/')]
     if 'PartAtom' not in st or len(part) != 1: print('refused: unexpected stream layout'); return 2
     st['PartAtom'] = fix_partatom(st['PartAtom'])
-    data = cfbw.write_rfa(st, part[0]); tmp = b + '.tmp%d' % os.getpid()
+    try: data = cfbw.write_rfa(st, part[0])
+    except AssertionError as x: print('refused: %s' % x); return 2
+    tmp = b + '.tmp%d' % os.getpid()
     open(tmp, 'wb').write(data); os.replace(tmp, b)
     o2 = olefile.OleFileIO(b)
     for k, v in st.items():

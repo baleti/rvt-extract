@@ -29,4 +29,14 @@ class T(unittest.TestCase):
     def test_never_in_place(self):
         a, b, rc = self.run_fix(b'x'); self.assertEqual(F.main(a, a), 2); self.assertEqual(F.main(a, b), 2)
 
+    def test_unexpected_stream_refused_cleanly(self):
+        d = tempfile.mkdtemp(); st = synth(b'A & B'); a = os.path.join(d, 'a.rfa'); b = os.path.join(d, 'b.rfa')
+        open(a, 'wb').write(cfbw.write_rfa(st))
+        orig = F.cfbw.write_rfa
+        def boom(*x, **k): raise AssertionError('unexpected stream Foo')
+        F.cfbw.write_rfa = boom
+        try: rc = F.main(a, b)
+        finally: F.cfbw.write_rfa = orig
+        self.assertEqual(rc, 2); self.assertFalse(os.path.exists(b))
+
 if __name__ == '__main__': unittest.main()
