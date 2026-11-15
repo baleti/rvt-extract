@@ -18,6 +18,24 @@ def members(data):
     return n, None
 
 
+def _fullparse(d):
+    try:
+        import sys as _s, os as _o
+        _r = _o.path.dirname(_o.path.dirname(_o.path.abspath(__file__)))
+        for q in (_r, _o.path.join(_r, 'rvtx')):
+            if q not in _s.path: _s.path.insert(0, q)
+        from rvtx import partition as PT
+        import rvt2text as T
+    except Exception: return None      # decoder not importable: first-member check only
+    try: j = T.joined(d)
+    except Exception as e: return 'stream does not decode: %s' % str(e)[:60]
+    last = None
+    for W in (4, 8):
+        try: PT.parse_joined(j, W); return None
+        except Exception as e: last = e
+    return 'documents do not parse to the end: %s' % str(last)[:60]
+
+
 def audit(f):
     bad = []
     try: o = olefile.OleFileIO(f)
@@ -43,6 +61,9 @@ def audit(f):
                 try: z.decompress(d[i:])
                 except zlib.error as e: bad.append('%s: gzip error %s' % (s, e)); continue
                 if not z.eof: bad.append('%s: truncated gzip member' % s)
+                if s.startswith('Partitions/'):      # whole stream: every ECC page + gzip member decodes and the documents parse to the end (W=4 up to 2023, 8 from 2024)
+                    err = _fullparse(d)
+                    if err: bad.append('%s: %s' % (s, err))
     finally: o.close()
     return bad
 

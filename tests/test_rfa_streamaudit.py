@@ -22,6 +22,13 @@ class T(unittest.TestCase):
         part = [n for n in olefile.OleFileIO(SRC[0]).listdir() if n[0] == 'Partitions'][0]
         self.assertTrue(self.mut('/'.join(part), 2000))
 
+    def test_late_chunk_flip_found_by_full_parse(self):
+        import olefile
+        part = '/'.join([n for n in olefile.OleFileIO(SRC[0]).listdir() if n[0] == 'Partitions'][0])
+        n = len(olefile.OleFileIO(SRC[0]).openstream(part).read())
+        hits = [self.mut(part, n * k // 20) for k in range(11, 20)]      # past the first gzip member: only the whole-stream parse can see these
+        self.assertTrue(any(any('do not parse' in x for x in h) for h in hits), hits)
+
 
 @unittest.skipUnless(SRC, 'no local public-sample re-lift (famlift-run/rl2019)')
 class TPath(unittest.TestCase):
